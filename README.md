@@ -21,7 +21,7 @@ generators but very few features beyond generation. The goal is to find
 a way to feed noise into AccidentalNoise transformation functions from
 FastNoiseSIMD generators. Chunk terrain generation will be a major 
 bottleneck without work on this
-
+\n
 ========================================================================
 
 TODO:
@@ -36,9 +36,9 @@ TODO:
 - Investigate greedy meshing methods and how to work this into tiling
   texture scheme
 - Primitive 2D noise generation demonstrations with FastNoiseSIMD
-- 
+\n
 ========================================================================
-
+\n
 References:
 - The Polyvox engine/mesh processor has provided a tremendous body of
   knowledge to work from. Not giving credit would be uncouth. What follows
