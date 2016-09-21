@@ -5,7 +5,6 @@ Attempt 1.1 at building a voxel engine framework.
     CONSOLE APPLICATION : HephaestusEngine Project Overview
     
 ========================================================================
-
 Rudimentary attempt at building a C++ based voxel engine, primarily 
 focused on an efficient backend system making interfacing with an 
 eventual OpenGL rendering engine easier. PolyVox is providing inspiration
@@ -21,10 +20,8 @@ generators but very few features beyond generation. The goal is to find
 a way to feed noise into AccidentalNoise transformation functions from
 FastNoiseSIMD generators. Chunk terrain generation will be a major 
 bottleneck without work on this
-\n
-========================================================================
-
 TODO:
+========================================================================
 - Implementation of Block class, Chunk class, Region class
 - Header files for Chunk and Region classes
 - Investigate methods of compressing vertex data using Union structures
@@ -36,10 +33,8 @@ TODO:
 - Investigate greedy meshing methods and how to work this into tiling
   texture scheme
 - Primitive 2D noise generation demonstrations with FastNoiseSIMD
-\n
-========================================================================
-\n
 References:
+========================================================================
 - The Polyvox engine/mesh processor has provided a tremendous body of
   knowledge to work from. Not giving credit would be uncouth. What follows
   is a link to their main PolyVox engine landing page:
