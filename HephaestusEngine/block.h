@@ -46,10 +46,10 @@ typedef struct {
 // Generic container for vertices. std::vectors have useful properties for organizing meta-lists, namely grabbing the amount
 // of elements in them and using push_back and pull() to modify lists on the fly (e.g. removing face vertices)
 typedef std::vector<vertex> Verts;
-// enum specifying the block types. Typedef again used to insure access outside of this class - we can use it later to 
+// enum specifying the block types. as long as we are careful about our scope, we can use this enum later to help
 // set texture coordinates based on a blocks individual vertices, and saving texturing for later makes things like 
 // greedy meshing easier since we can first reduce based on blockType's THEN use a gridded texture or something like that
-typedef enum blockType {
+enum blockType {
 	blockType_Default,
 	Grass,
 	Stone,
@@ -69,7 +69,7 @@ class Block {
 public:
 	// Constructor
 	Block(bool active = false,blockType Type = blockType_Default);
-
+	~Block();
 	// Methods
 	// Returns bool this->Active
 	bool isActive();

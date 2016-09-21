@@ -7,7 +7,7 @@ Block::Block(bool active, blockType type){
 }
 // Delete block data
 Block::~Block() {
-	for (int i = 0; i < this->blockVerts.size(); ++i) {
+	for (unsigned int i = 0; i < this->blockVerts.size(); ++i) {
 		delete[] &blockVerts;
 	}
 	delete[] &blockFaces;

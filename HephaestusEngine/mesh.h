@@ -4,9 +4,6 @@
 // STD libs
 #include "stdafx.h"
 #include <stdint.h>
-#include <algorithm>
-#include <memory>
-#include <set>
 #include <assert.h>
 // external libs
 #include <glm/glm.hpp>
