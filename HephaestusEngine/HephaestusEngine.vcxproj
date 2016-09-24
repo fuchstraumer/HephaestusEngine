@@ -87,13 +87,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\MSVC\OpenGL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\MSVC\OpenGL\include;C:\MSVC\FastNoise-SIMD\include;C:\MSVC\accidental_noise\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise-SIMD\lib;C:\MSVC\accidental_noise\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:\MSVC\FastNoise-SIMD\lib\FastNoise-SIMD.lib";"C:\MSVC\accidental_noise\lib\anl.lib";"C:\MSVC\accidental_noise\lib\Noise.lib";"C:\MSVC\accidental_noise\lib\Imaging.lib";"C:\MSVC\accidental_noise\lib\Volume.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -144,6 +145,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="array3.h" />
     <ClInclude Include="block.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
@@ -151,6 +153,7 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Terrain_Gen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="block.cpp" />

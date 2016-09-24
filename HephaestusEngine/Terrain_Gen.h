@@ -8,17 +8,23 @@
 using namespace anl;
 using namespace std;
 /*
-Idea:
-1. First pass. Generate base terrain rest sits on. Boolean array. If true, block is stone.
-2. Cave generator and ore placement. Boolean array for caves. If true, do something like remove stone or keep stone depending on output.
-3. Ore placement - not boolean array. Array of ints clamped to a range. Weighted for higher values at lower z. Lower ints represent low-tier ores. Higher ints represent
-higher tiers.
-4. Terrain differentiation. For now, just apply a layer of grass and dirt over stone base. more later.
+	Class: Terrain Generator
+	Primary terrain generation system for this library/engine. The "build_generator" function builds and links the terrain generator pipeline.
+	If struggling for speed, try lowering the octave count on any noise generators. This is the primary performance culprit. Switching to cubic
+	or even linear interpolation for the noise generators may also increase speed, but at a significant expense with regards to quality.
+
+	Caves are currently a big bugged and/or odd. Widen too steeply too swiftly into chasms you could drop a building into.
+
+	Use Terrain_Chunk to get 3D terrain data. Use Terrain_Img to get a vague idea of what the terrain at a given location will look. 
+	The height is currently restrained to effectively run from -1 to 1. X is endless though. With the default range values, keep the x_range of 
+	Terrain_Img exactly twice that of y_range. If you want to increase the x_range and not y_range, adjust the SMappingRange and increase the x values. 
+	The y_range should stay fixed at -1 to 1 though, and jsut be sure to account for the proportions between the ranges set.
+
 */
 
 class Terrain_Generator {
 public:
-	void generate_terrain()
+	void build_generator()
 	{
 		// Base gradient defining range of terrain
 		CImplicitGradient ground_gradient; ground_gradient.setGradient(0.0, 0.0, 0.0, 1.0);
@@ -73,14 +79,14 @@ public:
 
 		this->final_output = final_out;
 	}
-
+	// Generate chunk of 3D terrain data, with size specified by the first three parameters. Centered at "chunk_pos", given as XZ coordinates.
 	CArray3Dd Terrain_Chunk(int x_range, int y_range, int z_range, glm::vec2 chunk_pos = glm::vec2(0, 0)) {
 		CArray3Dd terrain(x_range,y_range,z_range);
 		map3D(SEAMLESS_NONE, terrain, this->final_output, SMappingRanges());
 		return terrain;
 	}
-
-	CArray2Dd Terrain_Img(int x_range, int y_range, SMappingRanges range = SMappingRanges(), string filename = "img.png") {
+	// Writes an image to "filename", centered at "range". I recommend keeping y_range half of x_range, otherwise things get warped.
+	CArray2Dd Terrain_Img(int x_range = 1024, int y_range = 512, SMappingRanges range = SMappingRanges(-2,2,-1,1), string filename = "img.png") {
 		CArray2Dd img(x_range, y_range);
 		map2DNoZ(SEAMLESS_NONE, img, this->final_output, range);
 		saveDoubleArray(filename, &img);
