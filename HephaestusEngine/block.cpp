@@ -29,6 +29,6 @@ void Block::setActive(bool act) {
 	this->Active = act;
 }
 // build the data needed to construct a mesh for this block
-void setupMesh() {
+void setupMesh(){
 	// Question- how to build mesh, and then build vertices too?
 }

@@ -2,7 +2,8 @@
 
 #define BLOCK_H
 
-/*	Type: Class. Object: Block. 
+/*	
+	Type: Class. Object: Block. 
 	Data: enum blockType, vector blockVerts, vector blockFaces, bool blockActive
 	Methods: bool isActive, void setActive,blockType getType,void setType,void setupMesh, vector<blockVerts,blockFaces> getMesh
 
@@ -17,7 +18,6 @@
 
 	Keeping track of these indices and what face is where is important for later functions used to optimize rendering, primarily by not rendering
 	obscured triangles.
-
 */
 
 #include "stdafx.h"

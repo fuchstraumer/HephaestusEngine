@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <assert.h>
 // external libs
+#define GLM_FORCE_INLINE
 #include <glm/glm.hpp>
 
 /*
@@ -35,8 +36,10 @@ struct vertex {
 template<typename _Datatype>
 struct compressed_vertex {
 	typedef _Datatype datatype;
-	// Each position component is stored using fixed-point encoding (8.8)
+	// Each position component is stored using fixed-point encoding (8.8). The vector has a size of 12bytes
 	glm::mediump_uvec3 position;
+	// 4 byte padding data, enable or disable as needed
+	//uint8_t _pad[4];
 	// The normal is encoded as a 16 bit unsigned int using oct16 encoding found here http://jcgt.org/published/0003/02/01/
 	uint16_t normal;
 	// extra data as needed. If so, consider alignment still!
