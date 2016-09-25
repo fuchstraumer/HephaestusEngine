@@ -5,6 +5,9 @@
 #include "stdafx.h"
 #include "block.h"
 #include <glm/glm.hpp>
+#include "mesh.h"
+#include "Terrain_Gen.h"
+#include "shader.h"
 /*
 	Type: Class Object: Chunk -> holds subclass Block
 	Data: Blocks[x][y][z] (pointer array), bool Active
@@ -31,14 +34,19 @@ class Chunk {
 public:
 	Chunk();
 	~Chunk();
-	void setupBlocks(glm::vec3 pos);
+	
+	void createCube(float x, float y, float z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
+		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();
-	void chunkUpdate(float dt);
-	void chunkRender(int* gl_renderer_pointer);
-
+	//void chunkUpdate(float dt);
+	void chunkRender();
+	Mesh mesh;
+	CArray3Dd terrain;
+	int activecount;
 	// chunk size constants
 	static const int CHUNK_SIZE = 32;
 	static const int CHUNK_SIZE_Z = 64;
+	GLuint VAO, VBO, EBO;
 private:
 	Block*** chunkBlocks;
 

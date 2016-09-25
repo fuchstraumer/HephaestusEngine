@@ -24,7 +24,7 @@ using namespace std;
 
 class Terrain_Generator {
 public:
-	void build_generator()
+	CArray3Dd generator(int x_range, int y_range, int z_range, glm::vec2 chunk_pos = glm::vec2(0, 0))
 	{
 		// Base gradient defining range of terrain
 		CImplicitGradient ground_gradient; ground_gradient.setGradient(0.0, 0.0, 0.0, 1.0);
@@ -75,24 +75,18 @@ public:
 		CImplicitSelect cave_select; cave_select.setControlSource(&cave_perturb); cave_select.setLowSource(1.0); cave_select.setHighSource(0.0); cave_select.setThreshold(0.48);
 		cave_select.setFalloff(0.0);
 		// Final output
+		CArray3Dd terrain(x_range, y_range, z_range);
 		CImplicitCombiner final_out(MULT); final_out.setSource(0, &cave_select); final_out.setSource(1, &ground_select);
-
-		this->final_output = final_out;
-	}
-	// Generate chunk of 3D terrain data, with size specified by the first three parameters. Centered at "chunk_pos", given as XZ coordinates.
-	CArray3Dd Terrain_Chunk(int x_range, int y_range, int z_range, glm::vec2 chunk_pos = glm::vec2(0, 0)) {
-		CArray3Dd terrain(x_range,y_range,z_range);
-		map3D(SEAMLESS_NONE, terrain, this->final_output, SMappingRanges());
+		map3D(SEAMLESS_NONE, terrain, final_out, SMappingRanges());
 		return terrain;
 	}
 	// Writes an image to "filename", centered at "range". I recommend keeping y_range half of x_range, otherwise things get warped.
-	CArray2Dd Terrain_Img(int x_range = 1024, int y_range = 512, SMappingRanges range = SMappingRanges(-2,2,-1,1), string filename = "img.png") {
+	/*CArray2Dd Terrain_Img(int x_range = 1024, int y_range = 512, SMappingRanges range = SMappingRanges(-2,2,-1,1), string filename = "img.png") {
 		CArray2Dd img(x_range, y_range);
-		map2DNoZ(SEAMLESS_NONE, img, this->final_output, range);
+		map2DNoZ(SEAMLESS_NONE, img, , range);
 		saveDoubleArray(filename, &img);
-	}
+	}*/
 
-	CImplicitCombiner final_output;
 
 	/// Terrain Generation parameters and class attributes follow
 	// Basis types drastically change how the noise will prevent itself. Changing this will result in completely undocumented behavior.

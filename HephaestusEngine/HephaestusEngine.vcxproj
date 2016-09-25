@@ -94,7 +94,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise-SIMD\lib;C:\MSVC\accidental_noise\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:\MSVC\FastNoise-SIMD\lib\FastNoise-SIMD.lib";"C:\MSVC\accidental_noise\lib\anl.lib";"C:\MSVC\accidental_noise\lib\Noise.lib";"C:\MSVC\accidental_noise\lib\Imaging.lib";"C:\MSVC\accidental_noise\lib\Volume.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:/MSVC/OpenGL/lib/glfw3.lib";"C:\MSVC\FastNoise-SIMD\lib\FastNoise-SIMD.lib";"C:\MSVC\accidental_noise\lib\anl.lib";"C:\MSVC\accidental_noise\lib\Noise.lib";"C:\MSVC\accidental_noise\lib\Imaging.lib";"C:\MSVC\accidental_noise\lib\Volume.lib";"opengl32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
