@@ -54,16 +54,17 @@ int main(){
 	Shader ourShader("./compressed_vertex.glsl", "./compressed_fragment.glsl");
 	glViewport(0, 0, WIDTH, HEIGHT);
 	// Setup some OpenGL options
-	glEnable(GL_DEPTH_TEST);
-
+	//glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
 	t = clock();
 	Chunk chunk0;
+	ourShader.Use();
 	chunk0.buildRender();
 	t = clock() - t;
 	std::cerr << "Time elapsed to generate terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds." << std::endl;
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
-
+		
 		// Set frame time
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -79,13 +80,14 @@ int main(){
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
 		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
+		
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
 		// Pass the matrices to the shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		chunk0.chunkRender();
+		chunk0.chunkRender(ourShader);
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);
 	} 

@@ -18,7 +18,7 @@ vec2 signnotzero(vec2 v){
 
 void main(){
 	// This conversion is exactly how we do it in our other code as well
-	vec3 decodedPosition = position;
+	vec4 decodedPosition = vec4(position.xyz,1.0);
 	decodedPosition.xyz = decodedPosition.xyz * (1.0 / 256);
 
 	//Get the encoded bytes of the normal
@@ -37,7 +37,7 @@ void main(){
 	worldNormal.w = 1.0;
 
 	// And now for our good ol' standard OpenGL transformations
-	worldPosition = vec4(decodedPosition,1.0);
+	worldPosition = decodedPosition;
 	vec4 cameraPosition = view * worldPosition;
 	gl_Position = projection * cameraPosition;
 }

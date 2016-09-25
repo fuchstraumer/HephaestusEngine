@@ -34,18 +34,18 @@ class Chunk {
 public:
 	Chunk();
 	~Chunk();
-	
+	glm::vec3 chunkPos;
 	void createCube(float x, float y, float z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
 		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();
 	//void chunkUpdate(float dt);
-	void chunkRender();
+	void chunkRender(Shader shader);
 	Mesh mesh;
 	CArray3Dd terrain;
 	int activecount;
 	// chunk size constants
 	static const int CHUNK_SIZE = 32;
-	static const int CHUNK_SIZE_Z = 64;
+	static const int CHUNK_SIZE_Y = 64;
 	GLuint VAO, VBO, EBO;
 private:
 	Block*** chunkBlocks;

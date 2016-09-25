@@ -6,7 +6,7 @@
 #pragma once
 
 #include "targetver.h"
-
+#pragma warning (disable:4244)
 #include <stdio.h>
 #include <tchar.h>
 #include <vector>

@@ -14,5 +14,5 @@ void main(){
 	//vec3 normal = normalize(cross(dFdy(worldPosition.xyz), dFdx(worldPosition.xyz)));
 
 	// We're just using a flat shader for this demo
-	outColor = vec4(abs(worldNormal.xyz) * 0.5 + vec3(0.5,0.5,0.5),1.0);
+	outColor = vec4(abs(worldNormal.xyz) * 0.5 + vec3(0.0,1.0,0.0),1.0);
 }

@@ -30,6 +30,7 @@ public:
 		CImplicitGradient ground_gradient; ground_gradient.setGradient(0.0, 0.0, 0.0, 1.0);
 		// Lowland generator
 		CImplicitFractal lowland_shape_fractal(BILLOW, this->Lowland_Basis_Type, this->Terrain_Fractal_Interpolation, this->LowlandOctaves, this->LowlandFrequency, false);
+		lowland_shape_fractal.setSeed(this->Lowland_Seed);
 		CImplicitAutoCorrect lowland_autocorrect; lowland_autocorrect.setSource(&lowland_shape_fractal); lowland_autocorrect.setRange(0, 1);
 		CImplicitScaleOffset lowland_scale; lowland_scale.setScale(this->LowlandScale); lowland_scale.setOffset(-0.45);
 		CImplicitScaleDomain lowland_y_scale; lowland_y_scale.setYScale(0.0);
@@ -37,6 +38,7 @@ public:
 
 		// Highland terrain
 		CImplicitFractal highland_shape_fractal(FBM, this->Highland_Basis_Type, this->Terrain_Fractal_Interpolation, this->HighlandOctaves, this->HighlandFrequency, false);
+		highland_shape_fractal.setSeed(this->Highland_Seed);
 		CImplicitAutoCorrect highland_autocorrect; highland_autocorrect.setSource(&highland_shape_fractal); highland_autocorrect.setRange(-1, 1);
 		CImplicitScaleOffset highland_scale; highland_scale.setScale(this->HighlandScale); highland_scale.setOffset(0.0); highland_scale.setSource(&highland_autocorrect);
 		CImplicitScaleDomain highland_y_scale; highland_y_scale.setYScale(0.0); highland_y_scale.setSource(&highland_scale);
@@ -44,6 +46,7 @@ public:
 
 		// Mountain terrain
 		CImplicitFractal mountain_shape_fractal(RIDGEDMULTI, this->Mountain_Basis_Type, this->Terrain_Fractal_Interpolation, this->MountainOctaves, this->MountainFrequency, false);
+		mountain_shape_fractal.setSeed(this->Mountain_Seed);
 		CImplicitAutoCorrect mountain_autocorrect; mountain_autocorrect.setSource(&mountain_shape_fractal); mountain_autocorrect.setRange(-1, 1);
 		CImplicitScaleOffset mountain_scale; mountain_scale.setScale(this->MountainScale); mountain_scale.setOffset(0.15);
 		CImplicitScaleDomain mountain_y_scale; mountain_y_scale.setSource(&mountain_scale); mountain_y_scale.setYScale(0.25);
@@ -89,6 +92,12 @@ public:
 
 
 	/// Terrain Generation parameters and class attributes follow
+
+	// Noise gen seeds
+	ANLFloatType Lowland_Seed = 6266;
+	ANLFloatType Highland_Seed = 6266;
+	ANLFloatType Mountain_Seed = 6266;
+	ANLFloatType Cave_Seed = 6266;
 	// Basis types drastically change how the noise will prevent itself. Changing this will result in completely undocumented behavior.
 	// Simply, it's sorta highly recommended this remain unchanged.
 	EBasisTypes Lowland_Basis_Type = GRADIENT;
