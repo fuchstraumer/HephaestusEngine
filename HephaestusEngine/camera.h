@@ -25,9 +25,9 @@ enum Camera_Movement {
 // Default camera values
 const GLfloat YAW = -90.0f;
 const GLfloat PITCH = 0.0f;
-const GLfloat SPEED = 3.0f;
+const GLfloat SPEED = 6.0f;
 const GLfloat SENSITIVTY = 0.25f;
-const GLfloat ZOOM = 75.0f;
+const GLfloat ZOOM = 45.0f;
 
 
 // An abstract camera class that processes input and calculates the corresponding Eular Angles, Vectors and Matrices for use in OpenGL
@@ -85,6 +85,7 @@ public:
 			this->Position -= this->Right * velocity;
 		if (direction == RIGHT)
 			this->Position += this->Right * velocity;
+		std::cerr << "(" << this->Position.x<< ", "<< this->Position.y << ", " << this->Position.z<< ")" << endl;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
@@ -118,6 +119,7 @@ public:
 			this->Zoom = 1.0f;
 		if (this->Zoom >= 45.0f)
 			this->Zoom = 45.0f;
+		//std::cerr << this->Zoom << std::endl;
 	}
 
 private:

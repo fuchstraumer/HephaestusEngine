@@ -6,8 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include "stdafx.h"
-#define GLEW_STAITC
-#include <GL/glew.h>
+
 class Shader
 {
 public:

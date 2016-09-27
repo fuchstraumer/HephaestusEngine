@@ -21,7 +21,6 @@
 */
 
 #include "stdafx.h"
-#include <glm/glm.hpp>
 
 // Type and structure definitions
 
@@ -54,6 +53,9 @@ public:
 	bool isActive();
 	// Sets bool this->Active
 	void setActive(bool act);
+	void setPos(glm::vec3 pos);
+	void setPos(float x, float y, float z);
+	glm::vec3 getPos();
 	// returns enum blockType this->Type
 	blockType getType();
 	// sets this->Type as blockType type
@@ -67,6 +69,7 @@ public:
 	// so lets leave those public
 	blockType Type;
 	bool Active;
+	glm::vec3 blockPos;
 };
 
 #endif // !BLOCK_H

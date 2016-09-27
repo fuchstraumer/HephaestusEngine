@@ -26,6 +26,10 @@ class Terrain_Generator {
 public:
 	CArray3Dd generator(int x_range, int y_range, int z_range, glm::vec2 chunk_pos = glm::vec2(0, 0))
 	{
+		ANLFloatType x_min = chunk_pos.x - 1; ANLFloatType x_max = chunk_pos.x + 1;
+		ANLFloatType z_min = chunk_pos.y - 1; ANLFloatType z_max = chunk_pos.y + 1;
+		ANLFloatType y_min = -1; ANLFloatType y_max = 3;
+		SMappingRanges(x_min, x_max, y_min, y_max, z_min, z_max);
 		// Base gradient defining range of terrain
 		CImplicitGradient ground_gradient; ground_gradient.setGradient(0.0, 0.0, 0.0, 1.0);
 		// Lowland generator
@@ -110,20 +114,20 @@ public:
 	EInterpTypes Cave_Fractal_Interpolation = QUINTIC; // Modifies only the cave base generators
 
 	// This uniformly controls the scale of the primary noise output used to make this terrain type.
-	double LowlandScale = 0.125;
+	double LowlandScale = 0.250;
 	double HighlandScale = 0.250;
 	double MountainScale = 0.450;
 
 	// This effectively controls the complexity of the primary noise output used to make this terrain type.
 	int LowlandOctaves = 2;
-	int HighlandOctaves = 4;
-	int MountainOctaves = 4;
+	int HighlandOctaves = 3;
+	int MountainOctaves = 3;
 	int TunnelOctaves = 1; // Octaves for the simple noise used to generate tunnels. Values > 1 may cause strange tunnel behavior.
-	int CaveGrainOctaves = 5; // Octaves for the noise used to add grain and detail to the tunnels - makes them more than wormy cylinders.
+	int CaveGrainOctaves = 3; // Octaves for the noise used to add grain and detail to the tunnels - makes them more than wormy cylinders.
 
 	// This could best be seen as adjusting the density of terrain features: higher frequency means more of the same noise gets packed into the same area as a lower setting.
 	// Scale makes all features "bigger", this just makes "more" of everything.
-	double LowlandFrequency = 0.250;
+	double LowlandFrequency = 0.350;
 	double HighlandFrequency = 2.0;
 	double MountainFrequency = 1.0;
 	double CaveFrequency = 4.0;

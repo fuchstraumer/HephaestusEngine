@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 #include "block.h"
-#include <glm/glm.hpp>
 #include "mesh.h"
 #include "Terrain_Gen.h"
 #include "shader.h"
@@ -35,11 +34,12 @@ public:
 	Chunk();
 	~Chunk();
 	glm::vec3 chunkPos;
-	void createCube(float x, float y, float z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
+	void createCube(GLfloat x, GLfloat y, GLfloat z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
 		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();
 	//void chunkUpdate(float dt);
 	void chunkRender(Shader shader);
+	void exportMesh();
 	Mesh mesh;
 	CArray3Dd terrain;
 	int activecount;

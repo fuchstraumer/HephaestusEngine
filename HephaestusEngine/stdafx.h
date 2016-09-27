@@ -12,10 +12,16 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
+#include <string>
+
 
 // Import glew for OpenGl pointers and handlers
 #define GLEW_STATIC
 #include <GL/glew.h>
 
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // TODO: reference additional headers your program requires here

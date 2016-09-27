@@ -25,8 +25,8 @@
 // Simple template for a vertex. datatype exists to allow us to add data as needed later (texture, color, AO maths, etc)
 
 struct vertex {
-	glm::vec3 position;
-	glm::vec3 normal;
+	glm::highp_vec3 position;
+	glm::highp_vec3 normal;
 };
 // This more complex template is a highly compressed vertex format. A decoder is implemented in this class,
 // but it would be wiser to decode on the GPU. Smaller mesh data helps program and rendering speed in
@@ -43,7 +43,7 @@ struct compressed_vertex {
 
 // Define index type here, and change it here too
 typedef uint32_t index_t;
-typedef compressed_vertex vertType;
+typedef vertex vertType;
 
 class Mesh {
 public:
@@ -92,12 +92,12 @@ inline index_t Mesh::getNumVerts(void) const{
 }
 
 
-inline const compressed_vertex& Mesh::getVertexData(index_t index){
+inline const vertType& Mesh::getVertexData(index_t index){
 	return meshVerts[index];
 }
 
 
-inline const compressed_vertex* Mesh::getRawVertexData(void) const{
+inline const vertType* Mesh::getRawVertexData(void) const{
 	return meshVerts.data();
 }
 

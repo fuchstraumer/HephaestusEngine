@@ -2,17 +2,16 @@
 //
 
 #include "stdafx.h"
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <time.h>
-#include <GLFW/glfw3.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "shader.h"
 #include "chunk.h"
 #include "camera.h"
 
 
-static GLuint WIDTH = 960, HEIGHT = 480;
+
+static GLuint WIDTH = 1440, HEIGHT = 720;
 clock_t t;
 
 // Function declarations
@@ -52,41 +51,66 @@ int main(){
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glewExperimental = GL_TRUE; glewInit();
 	Shader ourShader("./compressed_vertex.glsl", "./compressed_fragment.glsl");
+
 	glViewport(0, 0, WIDTH, HEIGHT);
 	// Setup some OpenGL options
-	//glEnable(GL_DEPTH_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
+	glEnable(GL_DEPTH_TEST);
+	//glDepthRange(0.1, 1);
+	glDepthFunc(GL_LEQUAL);
+	//glEnable(GL_POLYGON_SMOOTH);
+	//glCullFace(GL_FRONT_AND_BACK);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
 	t = clock();
 	Chunk chunk0;
-	ourShader.Use();
+	glm::vec3 lightPos(15, 10, 15);
 	chunk0.buildRender();
 	t = clock() - t;
-	std::cerr << "Time elapsed to generate terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds." << std::endl;
+	std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
-		
+
+		ourShader.Use();
 		// Set frame time
+
 		GLfloat currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
+
 		// Event handling
 		glfwPollEvents();
 		Do_Movement();
+
 		// Clear the buffers
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Do lighting stuff
+		GLint objectColorLoc = glGetUniformLocation(ourShader.Program, "objectColor");
+		GLint lightColorLoc = glGetUniformLocation(ourShader.Program, "lightColor");
+		GLint lightPosLoc = glGetUniformLocation(ourShader.Program, "lightPos");
+		GLint viewPosLoc = glGetUniformLocation(ourShader.Program, "viewPos");
+
+		glUniform3f(objectColorLoc, 0.4f, 1.0f, 0.4f);
+		glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+
 		// Prepare to draw objects
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
 		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.1f, 100.0f);
-		
+		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
+
 		// Pass the matrices to the shader
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		glm::mat4 trans;
+		trans = glm::translate(trans, glm::vec3(0.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
 		chunk0.chunkRender(ourShader);
 		glBindVertexArray(0);
 		glfwSwapBuffers(window);

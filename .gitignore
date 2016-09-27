@@ -244,3 +244,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 HephaestusEngine/chunkbuffers.cpp
+HephaestusEngine/test_light.h
+HephaestusEngine/test_light.cpp

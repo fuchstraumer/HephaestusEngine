@@ -68,3 +68,17 @@ Mesh Block::setupMesh(){
 void Block::setActive(bool act) {
 	this->Active = act;
 }
+
+void Block::setPos(glm::vec3 pos) {
+	this->blockPos = pos;
+}
+
+void Block::setPos(float x, float y, float z) {
+	this->blockPos.x = x;
+	this->blockPos.y = y;
+	this->blockPos.z = z;
+}
+
+glm::vec3 Block::getPos() {
+	return this->blockPos;
+}
