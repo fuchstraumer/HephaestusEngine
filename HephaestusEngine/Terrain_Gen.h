@@ -2,9 +2,11 @@
 #define TERRAIN_GEN_H
 
 #include "stdafx.h"
+#define GLM_SWIZZLE
 #include "glm/glm.hpp"
 #include <Noise\anl_noise.h>
 #include <Imaging\anl_imaging.h>
+#include <math.h>
 using namespace anl;
 using namespace std;
 /*
@@ -21,15 +23,78 @@ using namespace std;
 	The y_range should stay fixed at -1 to 1 though, and jsut be sure to account for the proportions between the ranges set.
 
 */
+clock_t t5;
+
+// Interp functions for making more volume of noise out of less actual generation calls
+static float lerp(float x, float x1, float x2, float q00, float q01) {
+	return ((x2 - x) / (x2 - x1)) * q00 + ((x - x1) / (x2 - x1)) * q01;
+}
+
+static float biLerp(float x, float y, float q11, float q12, float q21, float q22, float x1, float x2, float y1, float y2) {
+	float r1 = lerp(x, x1, x2, q11, q21);
+	float r2 = lerp(x, x1, x2, q12, q22);
+
+	return lerp(y, y1, y2, r1, r2);
+}
+
+/*static float triLerp(float x, float y, float z, float q000, float q001, float q010, float q011, float q100, float q101, float q110, float q111, float x1, float x2, float y1, float y2, float z1, float z2) {
+	// The eight q points are around our cube of interest
+	float x00 = lerp(x, x1, x2, q000, q100);
+	float x10 = lerp(x, x1, x2, q010, q110);
+	float x01 = lerp(x, x1, x2, q001, q101);
+	float x11 = lerp(x, x1, x2, q011, q111);
+	float r0 = lerp(y, y1, y2, x00, x01);
+	float r1 = lerp(y, y1, y2, x10, x11);
+
+	return lerp(z, z1, z2, r0, r1);
+}*/
+/* Vxyz = V(0,0,0)*(1-x)*(1-y)*(1-z) +
+		  V(1,0,0)*x*(1-y)*(1-z)     +
+		  V(0,1,0)*(1-x)*y*(1-z)     +
+		  V(0,0,1)*(1-x)*(1-y)*z     +
+		  V(1,0,1)*x*(1-y)*z         +
+		  V(0,1,1)*(1-x)*y*z         +
+		  V(1,1,0)*x*y*(1-z)         +
+		  V(1,1,1)*x*y*z
+	Returns the value at x,y,z given the corner points
+*/
+static float triLerp(float x, float y, float z, float V000, float V100, float V010, float V001, float V101, float V011, float V110, float V111) {
+	float s1 = V000 * (1 - x) * (1 - y) * (1 - z);
+	float s2 = V100 * x * (1 - y) * (1 - z);
+	float s3 = V010 * (1 - x) * y * (1 - z);
+	float s4 = V001 * (1 - x) * (1 - y) * z;
+	float s5 = V101 * x * (1 - y) * z;
+	float s6 = V011 * (1 - x) * y * z;
+	float s7 = V110 * x * y * (1 - z);
+	float s8 = V111 * x * y * z;
+	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
+}
+
+
+
+struct triLerpCube {
+	std::vector<glm::vec4> cube_verts{
+		glm::vec4(0,0,0,0), // V000
+		glm::vec4(32,0,0,0), // V100
+		glm::vec4(0,64,0,0), // V010
+		glm::vec4(0,0,32,0), // V001
+		glm::vec4(32,0,32,0), // V101
+		glm::vec4(0,64,32,0), // V011
+		glm::vec4(32,64,0,0), // V110
+		glm::vec4(32,64,32,0), // V111
+	};
+};
 
 class Terrain_Generator {
 public:
 	CArray3Dd generator(int x_range, int y_range, int z_range, glm::vec2 chunk_pos = glm::vec2(0, 0))
 	{
-		ANLFloatType x_min = chunk_pos.x - 1; ANLFloatType x_max = chunk_pos.x + 1;
-		ANLFloatType z_min = chunk_pos.y - 1; ANLFloatType z_max = chunk_pos.y + 1;
-		ANLFloatType y_min = -1; ANLFloatType y_max = 3;
+		ANLFloatType x_min = (chunk_pos.x - 1); ANLFloatType x_max = (chunk_pos.x + 1);
+		ANLFloatType z_min = (chunk_pos.y - 1); ANLFloatType z_max = (chunk_pos.y + 1);
+		ANLFloatType y_min = 0; ANLFloatType y_max = 2;
 		SMappingRanges(x_min, x_max, y_min, y_max, z_min, z_max);
+		// Create boxes/cubes for trilerp
+		triLerpCube cube; 
 		// Base gradient defining range of terrain
 		CImplicitGradient ground_gradient; ground_gradient.setGradient(0.0, 0.0, 0.0, 1.0);
 		// Lowland generator
@@ -68,7 +133,7 @@ public:
 		// Declare cache to cache output and decrease how often we have to generate noise.
 		CImplicitCache highland_lowland_cache; highland_lowland_cache.setSource(&highland_lowland_select);
 		CImplicitSelect ground_select; ground_select.setLowSource(0.0); ground_select.setHighSource(1.0); ground_select.setControlSource(&highland_lowland_cache);
-		ground_select.setThreshold(0.5);
+		ground_select.setThreshold(0.5); ground_select.setFalloff(0.0);
 
 		// Cave generation system
 		CImplicitMath cave_attenuate_bias(BIAS, &highland_lowland_cache, this->CaveBias); // This is set well. This changes how sharply the caves widen under the first layer of terrain
@@ -82,18 +147,30 @@ public:
 		CImplicitSelect cave_select; cave_select.setControlSource(&cave_perturb); cave_select.setLowSource(1.0); cave_select.setHighSource(0.0); cave_select.setThreshold(0.48);
 		cave_select.setFalloff(0.0);
 		// Final output
-		CArray3Dd terrain(x_range, y_range, z_range);
-		CImplicitCombiner final_out(MULT); final_out.setSource(0, &cave_select); final_out.setSource(1, &ground_select);
-		map3D(SEAMLESS_NONE, terrain, final_out, SMappingRanges());
-		return terrain;
+		CImplicitCombiner final_out(AVG); final_out.setSource(0, &cave_select); final_out.setSource(1, &ground_select);
+		std::vector<triLerpCube> cube_vec;
+		int w = x_range; int h = y_range; int l = z_range;
+		for (unsigned int i = 0; i < cube.cube_verts.size(); i++) {
+			float dz = z_max - z_min; float dx = x_max - x_min; float dy = y_max - y_min;
+			float x, y, z; 
+			x = cube.cube_verts[i].x / w; z = (cube.cube_verts[i].z / l);
+			y = cube.cube_verts[i].y / h; float nz = z_min + z*dz;
+			float nx = x_min + x*dx; float ny = y_min + y*dy;
+			cube.cube_verts[i].w = final_out.get(nx, ny, nz);
+			std::cerr << " " << nx << " " << ny << " " << nz << " " << std::endl;
+			std::cerr << ground_select.get(nx, ny, nz) << std::endl;
+			std::cerr << cave_select.get(nx,ny,nz) << std::endl;
+			std::cerr << cube.cube_verts[i].w << std::endl;
+		}
+		//z_max = 1; z_min = 0; SMappingRanges(x_min, x_max, y_min, y_max, z_min, z_max);
+		t5 = clock();
+		CArray3Dd img(x_range, y_range, z_range);
+		map3D(SEAMLESS_NONE, img, final_out, SMappingRanges(x_min, x_max, y_min, y_max, z_min, z_max));
+		t5 = clock() - t5;
+		std::cerr << static_cast<float>(t5) / CLOCKS_PER_SEC;
+		return img;
+		
 	}
-	// Writes an image to "filename", centered at "range". I recommend keeping y_range half of x_range, otherwise things get warped.
-	/*CArray2Dd Terrain_Img(int x_range = 1024, int y_range = 512, SMappingRanges range = SMappingRanges(-2,2,-1,1), string filename = "img.png") {
-		CArray2Dd img(x_range, y_range);
-		map2DNoZ(SEAMLESS_NONE, img, , range);
-		saveDoubleArray(filename, &img);
-	}*/
-
 
 	/// Terrain Generation parameters and class attributes follow
 
@@ -119,11 +196,11 @@ public:
 	double MountainScale = 0.450;
 
 	// This effectively controls the complexity of the primary noise output used to make this terrain type.
-	int LowlandOctaves = 2;
+	int LowlandOctaves = 3;
 	int HighlandOctaves = 3;
-	int MountainOctaves = 3;
-	int TunnelOctaves = 1; // Octaves for the simple noise used to generate tunnels. Values > 1 may cause strange tunnel behavior.
-	int CaveGrainOctaves = 3; // Octaves for the noise used to add grain and detail to the tunnels - makes them more than wormy cylinders.
+	int MountainOctaves = 5;
+	int TunnelOctaves = 2; // Octaves for the simple noise used to generate tunnels. Values > 1 may cause strange tunnel behavior.
+	int CaveGrainOctaves = 5; // Octaves for the noise used to add grain and detail to the tunnels - makes them more than wormy cylinders.
 
 	// This could best be seen as adjusting the density of terrain features: higher frequency means more of the same noise gets packed into the same area as a lower setting.
 	// Scale makes all features "bigger", this just makes "more" of everything.

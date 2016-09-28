@@ -12,7 +12,7 @@
 
 
 static GLuint WIDTH = 1440, HEIGHT = 720;
-clock_t t;
+
 
 // Function declarations
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -30,6 +30,8 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main(){
+	Terrain_Generator gen;
+	gen.generator(32,64,32);
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
@@ -60,12 +62,10 @@ int main(){
 	//glEnable(GL_POLYGON_SMOOTH);
 	//glCullFace(GL_FRONT_AND_BACK);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
-	t = clock();
 	Chunk chunk0;
 	glm::vec3 lightPos(15, 10, 15);
 	chunk0.buildRender();
-	t = clock() - t;
-	std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
+	//std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
 

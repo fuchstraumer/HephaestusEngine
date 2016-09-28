@@ -7,13 +7,7 @@
 #pragma warning(disable:4244)
 static const float BLOCK_RENDER_SIZE = 1.0001f;
 static const bool simple_culling = true;
-/*vector<glm::vec3> verts2 ={ 
-glm::vec3(0.5 + x,0.5 + y,0.5 + z),glm::vec3(-0.5 + x,0.5 + y,0.5 + z),glm::vec3(-0.5 + x,-0.5 + y,0.5 + z),glm::vec3(0.5 + x,-0.5 + y,0.5 + z),   // v0,v0.5,v2,v3 (front)
-glm::vec3(0.5 + x,0.5 + y,0.5 + z),glm::vec3(0.5 + x,-0.5 + y, 0.5 + z),glm::vec3(0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(0.5 + x,0.5 + y,-0.5 + z),   // v0,v3,v4,v5 (right)
-glm::vec3(0.5 + x,0.5 + y,0.5 + z),glm::vec3(0.5 + x,0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,0.5 + y,0.5 + z),   // v0,v5,v6,v0.5 (top)
-glm::vec3(-0.5 + x,0.5 + y,0.5 + z),glm::vec3(-0.5 + x,0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,-0.5 + y,0.5 + z),   // v0.5,v6,v7,v2 (left)
-glm::vec3(-0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(0.5 + x,-0.5 + y,0.5 + z),glm::vec3(-0.5 + x,-0.5 + y,0.5 + z),   // v7,v4,v3,v2 (bottom)
-glm::vec3(0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,-0.5 + y,-0.5 + z),glm::vec3(-0.5 + x,0.5 + y,-0.5 + z),glm::vec3(0.5 + x,0.5 + y,-0.5 + z) }; // v4,v7,v6,v5 (back)*/
+
 static vector<glm::highp_vec3> normals = { 
   glm::highp_vec3( 0, 0, 1),   // (front)
   glm::highp_vec3( 1, 0, 0),   // (right)
@@ -30,33 +24,23 @@ static vector<index_t> indices =
  16,17,18,  18,19,16,      // bottom
  20,21,22,  22,23,20 };    // back
 
-static float lerp(float x, float x1, float x2, float q00, float q01) {
-	return ((x2 - x) / (x2 - x1)) * q00 + ((x - x1) / (x2 - x1)) * q01;
-}
-
-static float biLerp(float x, float y, float q11, float q12, float q21, float q22, float x1, float x2, float y1, float y2) {
-	float r1 = lerp(x, x1, x2, q11, q21);
-	float r2 = lerp(x, x1, x2, q12, q22);
-
-	return lerp(y, y1, y2, r1, r2);
-}
-
-static float triLerp(float x, float y, float z, float q000, float q001, float q010, float q011, float q100, float q101, float q110, float q111, float x1, float x2, float y1, float y2, float z1, float z2) {
-	float x00 = lerp(x, x1, x2, q000, q100);
-	float x10 = lerp(x, x1, x2, q010, q110);
-	float x01 = lerp(x, x1, x2, q001, q101);
-	float x11 = lerp(x, x1, x2, q011, q111);
-	float r0 = lerp(y, y1, y2, x00, x01);
-	float r1 = lerp(y, y1, y2, x10, x11);
-
-	return lerp(z, z1, z2, r0, r1);
+float triLerp_UseCube(float x, float y, float z, triLerpCube cube) {
+	float s1 = (cube.cube_verts[0].w) * (1 - x) * (1 - y) * (1 - z);
+	float s2 = (cube.cube_verts[1].w) * x * (1 - y) * (1 - z);
+	float s3 = (cube.cube_verts[2].w) * (1 - x) * y * (1 - z);
+	float s4 = (cube.cube_verts[3].w) * (1 - x) * (1 - y) * z;
+	float s5 = (cube.cube_verts[4].w) * x * (1 - y) * z;
+	float s6 = (cube.cube_verts[5].w) * (1 - x) * y * z;
+	float s7 = (cube.cube_verts[6].w) * x * y * (1 - z);
+	float s8 = (cube.cube_verts[7].w) * x * y * z;
+	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
 }
 
 // Create block instances
 Chunk::Chunk(){
 	Terrain_Generator gen; 
-	this->terrain = CArray3Dd(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
-	this->terrain = gen.generator(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
+	//this->terrain_cube = gen.generator(CHUNK_SIZE,CHUNK_SIZE_Y,CHUNK_SIZE,this->chunkPos);
+	//this->terrain = gen.generator(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
 	this->chunkBlocks = new Block**[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i) {
 		this->chunkBlocks[i] = new Block*[CHUNK_SIZE_Y];
@@ -69,10 +53,12 @@ Chunk::Chunk(){
 	for (int i = 0; i < CHUNK_SIZE; i++) {
 		for (int j = 0; j < CHUNK_SIZE_Y; j++) {
 			for (int k = 0; k < CHUNK_SIZE; k++) {
-				if (this->terrain.get(i, j, k) == 1) {
+				float val = triLerp_UseCube(i, j, k, this->terrain_cube);
+				if (val > 20) {
+					//std::cerr << "value passed at " << i << " " << j << " " << k << "  as val - " << val << std::endl;
 					this->activecount++;
 					this->chunkBlocks[i][j][k].setActive(true);
-					//this->chunkBlocks[i][j][k].setPos(i, j, k);
+					this->chunkBlocks[i][j][k].setPos(i, j, k);
 					//test_positions.push_back(this->chunkBlocks[i][j][k].blockPos);
 				}	
 			}
@@ -105,63 +91,63 @@ void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rig
 		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 7
 	};
 	if (frontFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 0, 1, 2, 3 and Normal 0
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 0, 1, 2, 3 and Normal 0
 		vert0.position = vertices[0]; vert1.position = vertices[1];
-		vert2.position = vertices[2]; vert3.position = vertices[3];
+		vert4.position = vertices[2]; vert3.position = vertices[3];
 		vert0.normal = normals[0];  vert1.normal = normals[0];
-		vert2.normal = normals[0];  vert3.normal = normals[0];
+		vert4.normal = normals[0];  vert3.normal = normals[0];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 	if (rightFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 1, 4, 7, 2 and Normal 1
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 1, 4, 7, 2 and Normal 1
 		vert0.position = vertices[1]; vert1.position = vertices[4];
-		vert2.position = vertices[7]; vert3.position = vertices[2];
+		vert4.position = vertices[7]; vert3.position = vertices[2];
 		vert0.normal = normals[1];  vert1.normal = normals[1];
-		vert2.normal = normals[1];  vert3.normal = normals[1];
+		vert4.normal = normals[1];  vert3.normal = normals[1];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 	if (topFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 3, 2, 7, 6 and Normal 2
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 3, 2, 7, 6 and Normal 2
 		vert0.position = vertices[3]; vert1.position = vertices[2];
-		vert2.position = vertices[7]; vert3.position = vertices[6];
+		vert4.position = vertices[7]; vert3.position = vertices[6];
 		vert0.normal = normals[2];  vert1.normal = normals[2];
-		vert2.normal = normals[2];  vert3.normal = normals[2];
+		vert4.normal = normals[2];  vert3.normal = normals[2];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 	if (leftFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 0, 3, 6 and Normal 3
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 5, 0, 3, 6 and Normal 3
 		vert0.position = vertices[5]; vert1.position = vertices[0];
-		vert2.position = vertices[3]; vert3.position = vertices[6];
+		vert4.position = vertices[3]; vert3.position = vertices[6];
 		vert0.normal = normals[3];  vert1.normal = normals[3];
-		vert2.normal = normals[3];  vert3.normal = normals[3];
+		vert4.normal = normals[3];  vert3.normal = normals[3];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 	if (bottomFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 4, 1, 0 and Normal 4
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 5, 4, 1, 0 and Normal 4
 		vert0.position = vertices[5]; vert1.position = vertices[4];
-		vert2.position = vertices[1]; vert3.position = vertices[0];
+		vert4.position = vertices[1]; vert3.position = vertices[0];
 		vert0.normal = normals[4];  vert1.normal = normals[4];
-		vert2.normal = normals[4];  vert3.normal = normals[4];
+		vert4.normal = normals[4];  vert3.normal = normals[4];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 	if (backFace == true) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 4, 5, 6, 7 and Normal 5
+		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 4, 5, 6, 7 and Normal 5
 		vert0.position = vertices[4]; vert1.position = vertices[5];
-		vert2.position = vertices[6]; vert3.position = vertices[7];
+		vert4.position = vertices[6]; vert3.position = vertices[7];
 		vert0.normal = normals[5];  vert1.normal = normals[5];
-		vert2.normal = normals[5];  vert3.normal = normals[5];
+		vert4.normal = normals[5];  vert3.normal = normals[5];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
-		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
+		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
 }

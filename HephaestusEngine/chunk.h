@@ -33,7 +33,7 @@ class Chunk {
 public:
 	Chunk();
 	~Chunk();
-	glm::vec3 chunkPos;
+	glm::vec2 chunkPos = glm::vec2(0,0);
 	void createCube(GLfloat x, GLfloat y, GLfloat z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
 		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();
@@ -41,7 +41,7 @@ public:
 	void chunkRender(Shader shader);
 	void exportMesh();
 	Mesh mesh;
-	CArray3Dd terrain;
+	triLerpCube terrain_cube;
 	int activecount;
 	// chunk size constants
 	static const int CHUNK_SIZE = 32;
