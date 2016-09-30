@@ -37,10 +37,10 @@ float triLerp_UseCube(float x, float y, float z, triLerpCube cube) {
 
 // Create block instances
 Chunk::Chunk(glm::vec2 chunkPos){
-	CArray3Dd terrain(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
+	double*** terrain;
 	this->chunkPos = chunkPos;
 	Terrain_Generator gen; 
-	terrain = gen.generator(CHUNK_SIZE,CHUNK_SIZE_Y,CHUNK_SIZE,this->chunkPos);
+	terrain = gen.Generate();
 	
 	this->chunkBlocks = new Block**[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i) {
@@ -55,16 +55,16 @@ Chunk::Chunk(glm::vec2 chunkPos){
 	for (int i = 0; i < CHUNK_SIZE; i++) {
 		for (int j = 0; j < CHUNK_SIZE_Y; j++) {
 			for (int k = 0; k < CHUNK_SIZE; k++) {
-				if (terrain.get(i,j,k) > 0.0) {
+				if (terrain[i,j,k] > 0.0) {
 					this->activecount++;
 					this->chunkBlocks[i][j][k].setActive(true);
 					//this->chunkBlocks[i][j][k].setPos(i, j, k);
 					//test_positions.push_back(this->chunkBlocks[i][j][k].blockPos);
 				}
-				else if (terrain.get(i, j, k) <= 0.1) {
-					this->chunkBlocks[i][j][k].setActive(false);
-					this->inactivecount++;
-				}
+				//else if (terrain.get(i, j, k) <= 0.1) {
+					//this->chunkBlocks[i][j][k].setActive(false);
+					//this->inactivecount++;
+				//}
 			}
 		}
 	}

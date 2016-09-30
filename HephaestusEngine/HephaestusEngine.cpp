@@ -9,7 +9,7 @@
 #include "chunk.h"
 #include "camera.h"
 
-
+#include "Terrain_Gen.h"
 
 static GLuint WIDTH = 1440, HEIGHT = 720;
 
@@ -30,7 +30,8 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main(){
-	
+	Terrain_Generator gen;
+	gen.Generate();
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
@@ -61,7 +62,7 @@ int main(){
 	//glEnable(GL_POLYGON_SMOOTH);
 	//glCullFace(GL_FRONT_AND_BACK);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
-	Chunk chunk0;
+	Chunk chunk0(glm::vec2(0,0));
 	glm::vec3 lightPos(12.0f, 100.0f, -12.0f);
 	chunk0.buildRender();
 	//std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
