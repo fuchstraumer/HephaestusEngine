@@ -58,8 +58,8 @@ Chunk::Chunk(glm::vec2 chunkPos){
 				if (terrain.get(i,j,k) > 0.0) {
 					this->activecount++;
 					this->chunkBlocks[i][j][k].setActive(true);
-					//this->chunkBlocks[i][j][k].setPos(i, j, k);
-					//test_positions.push_back(this->chunkBlocks[i][j][k].blockPos);
+					if (k == 0)
+						this->chunkBlocks[i][j][k].setType(Bedrock);
 				}
 				else if (terrain.get(i, j, k) <= 0.1) {
 					this->chunkBlocks[i][j][k].setActive(false);

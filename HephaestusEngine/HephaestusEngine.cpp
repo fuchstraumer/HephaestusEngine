@@ -61,7 +61,7 @@ int main(){
 	//glEnable(GL_POLYGON_SMOOTH);
 	//glCullFace(GL_FRONT_AND_BACK);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
-	Chunk chunk0;
+	Chunk chunk0(glm::vec2(0,0));
 	glm::vec3 lightPos(12.0f, 100.0f, -12.0f);
 	chunk0.buildRender();
 	//std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
@@ -98,7 +98,7 @@ int main(){
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 100.0f);
+		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 2.0f, 300.0f);
 		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
@@ -108,7 +108,7 @@ int main(){
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		glm::mat4 trans;
-		trans = glm::translate(trans, glm::vec3(0.0f, 70.0f, 0.0f));
+		trans = glm::translate(trans, glm::vec3(0.0f, 30.0f, 0.0f));
 		trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
 		chunk0.chunkRender(ourShader);

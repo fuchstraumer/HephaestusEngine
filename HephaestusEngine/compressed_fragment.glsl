@@ -6,12 +6,20 @@ in vec4 worldPosition;
 in vec3 worldNormal;
 in vec3 fragPos;
 
+// Material struct
+struct Material {
+    vec3 ambient;
+    vec3 diffuse;
+    vec3 specular;
+    float shininess;
+}; 
+  
 // color uniforms
 uniform vec3 lightPos; 
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform vec3 objectColor;
-
+uniform Material material;
 
 // color that gets written to the display
 out vec4 outColor;
@@ -23,7 +31,7 @@ void main(){
 	vec3 ambient = ambientStrength*lightColor;
 
 	// Diffuse
-	float diffuseStrength = 0.8f;
+	float diffuseStrength = 0.5f;
 	vec3 lightDir = normalize(lightPos - fragPos);
 	vec3 norm = worldNormal;
 	float diff = max(dot(norm,lightDir),0.0);

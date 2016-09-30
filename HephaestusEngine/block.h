@@ -37,6 +37,7 @@ enum blockType {
 	Log,
 	Fire,
 	Lava,
+	Bedrock,
 };
 // The block class itself. Note that the default constructor assumes the block is NOT active and has generic textureless blockType blockType_Default. 
 // This is generally wise due to how chunks are populated with noise functions. Easier to only set a few blocks active instead of go through and set 
