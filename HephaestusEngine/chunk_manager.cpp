@@ -2,27 +2,12 @@
 #include "chunk_manager.h"
 
 
-void chunkManager::UpdateAsyncChunkManager(){
-}
-
 void chunkManager::UpdateLoadList() {
 
 }
 
 void chunkManager::UpdateRebuildList() {
 
-}
-
-void chunkManager::UpdateSetupList(){
-}
-
-void chunkManager::UpdateVisibilityList(glm::vec3 camerapos){
-}
-
-void chunkManager::UpdateFrustrumList(glm::mat4 cameraview){
-}
-
-void chunkManager::UpdateRenderList(){
 }
 
 void chunkManager::update(float dt, glm::vec3 camerapos, glm::mat4 cameraview) {

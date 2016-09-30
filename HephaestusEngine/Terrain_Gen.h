@@ -105,9 +105,9 @@ public:
 		};
 
 		// Setup ranges
-		ANLFloatType x_min = (chunk_pos.x - 2); ANLFloatType x_max = (chunk_pos.x + 2);
-		ANLFloatType z_min = (chunk_pos.y - 2); ANLFloatType z_max = (chunk_pos.y + 2);
-		ANLFloatType y_min = -1; ANLFloatType y_max = 3;
+		ANLFloatType x_min = (chunk_pos.x - 0.5); ANLFloatType x_max = (chunk_pos.x + 0.5);
+		ANLFloatType z_min = (chunk_pos.y - 0.5); ANLFloatType z_max = (chunk_pos.y + 0.5);
+		ANLFloatType y_min = -1; ANLFloatType y_max = 1;
 	
 		
 		// Base gradient defining range of terrain
@@ -149,14 +149,14 @@ public:
 		ground_select.setThreshold(0.5);
 		
 		// Cave generation system
-		CImplicitClamp highland_lowland_clamp; highland_lowland_clamp.setSource(&highland_lowland_cache);
+		CImplicitClamp highland_lowland_clamp; highland_lowland_clamp.setRange(0.0, 1.2); highland_lowland_clamp.setSource(&highland_lowland_cache);
 		CImplicitMath cave_attenuate_bias(BIAS, &highland_lowland_clamp, 0.35); // This is set well. This changes how sharply the caves widen under the first layer of terrain
-		CImplicitFractal cave_shape_1(RIDGEDMULTI, SIMPLEX, QUINTIC, 1, 3, false); CImplicitFractal cave_shape_2(RIDGEDMULTI, SIMPLEX, QUINTIC, 1, 3, false);
+		CImplicitFractal cave_shape_1(RIDGEDMULTI, GRADIENT, QUINTIC, 1, 4, false); CImplicitFractal cave_shape_2(RIDGEDMULTI, GRADIENT, QUINTIC, 1, 4, false);
 		CImplicitCombiner cave_shape_attenuate(MULT); cave_shape_attenuate.setSource(0, &cave_shape_1);
 		cave_shape_attenuate.setSource(1, &cave_attenuate_bias); cave_shape_attenuate.setSource(2, &cave_shape_2);
 		CImplicitTranslateDomain cave_shift; cave_shift.setSource(&cave_shape_attenuate); cave_shift.setYAxisSource(-0.03);
-		CImplicitFractal cave_perturb_fractal(FBM, GRADIENT, QUINTIC, 4, 2, false); CImplicitScaleOffset cave_perturb_scale;
-		cave_perturb_scale.setScale(0.3); cave_perturb_scale.setSource(&cave_perturb_fractal); 
+		CImplicitFractal cave_perturb_fractal(FBM, GRADIENT, QUINTIC, 6, 3, false); CImplicitScaleOffset cave_perturb_scale;
+		cave_perturb_scale.setScale(0.6); cave_perturb_scale.setSource(&cave_perturb_fractal); 
 		CImplicitTranslateDomain cave_perturb; cave_perturb.setXAxisSource(&cave_perturb_scale); cave_perturb.setSource(&cave_shift);
 		CImplicitSelect cave_select; cave_select.setControlSource(&cave_perturb); cave_select.setLowSource(1.0); cave_select.setHighSource(0.0); cave_select.setThreshold(0.48);
 		CImplicitCombiner final_out(MULT); final_out.setSource(0, &cave_select); final_out.setSource(1, &ground_select);
