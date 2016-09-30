@@ -31,10 +31,10 @@
 
 class Chunk {
 public:
-	Chunk();
+	Chunk(glm::vec2 chunkPos);
 	~Chunk();
 	glm::vec2 chunkPos = glm::vec2(0,0);
-	void createCube(GLfloat x, GLfloat y, GLfloat z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
+	void createCube(int x, int y, int z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
 		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();
 	//void chunkUpdate(float dt);
@@ -43,9 +43,9 @@ public:
 	Mesh mesh;
 	triLerpCube terrain_cube;
 	int activecount;
-	// chunk size constants
-	static const int CHUNK_SIZE = 32;
-	static const int CHUNK_SIZE_Y = 64;
+	int inactivecount;
+	bool chunkBuilt;
+	bool chunkRendered = false;
 	GLuint VAO, VBO, EBO;
 private:
 	Block*** chunkBlocks;

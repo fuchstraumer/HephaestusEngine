@@ -24,4 +24,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#pragma warning(disable:4244)
+static const float BLOCK_RENDER_SIZE = 1.0001f;
+static const int CHUNK_SIZE = 16;
+static const int CHUNK_SIZE_Y = 128;
+
 // TODO: reference additional headers your program requires here

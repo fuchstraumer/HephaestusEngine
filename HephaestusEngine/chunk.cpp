@@ -4,8 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#pragma warning(disable:4244)
-static const float BLOCK_RENDER_SIZE = 1.0001f;
+
 static const bool simple_culling = true;
 
 static vector<glm::highp_vec3> normals = { 
@@ -37,10 +36,12 @@ float triLerp_UseCube(float x, float y, float z, triLerpCube cube) {
 }
 
 // Create block instances
-Chunk::Chunk(){
+Chunk::Chunk(glm::vec2 chunkPos){
+	CArray3Dd terrain(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
+	this->chunkPos = chunkPos;
 	Terrain_Generator gen; 
-	//this->terrain_cube = gen.generator(CHUNK_SIZE,CHUNK_SIZE_Y,CHUNK_SIZE,this->chunkPos);
-	//this->terrain = gen.generator(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
+	terrain = gen.generator(CHUNK_SIZE,CHUNK_SIZE_Y,CHUNK_SIZE,this->chunkPos);
+	
 	this->chunkBlocks = new Block**[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i) {
 		this->chunkBlocks[i] = new Block*[CHUNK_SIZE_Y];
@@ -50,17 +51,20 @@ Chunk::Chunk(){
 		}
 	}
 	this->activecount = 0;
+	this->inactivecount = 0;
 	for (int i = 0; i < CHUNK_SIZE; i++) {
 		for (int j = 0; j < CHUNK_SIZE_Y; j++) {
 			for (int k = 0; k < CHUNK_SIZE; k++) {
-				float val = triLerp_UseCube(i, j, k, this->terrain_cube);
-				if (val > 20) {
-					//std::cerr << "value passed at " << i << " " << j << " " << k << "  as val - " << val << std::endl;
+				if (terrain.get(i,j,k) > 0.0) {
 					this->activecount++;
 					this->chunkBlocks[i][j][k].setActive(true);
-					this->chunkBlocks[i][j][k].setPos(i, j, k);
+					//this->chunkBlocks[i][j][k].setPos(i, j, k);
 					//test_positions.push_back(this->chunkBlocks[i][j][k].blockPos);
-				}	
+				}
+				else if (terrain.get(i, j, k) <= 0.1) {
+					this->chunkBlocks[i][j][k].setActive(false);
+					this->inactivecount++;
+				}
 			}
 		}
 	}
@@ -79,7 +83,7 @@ Chunk::~Chunk(){
 	delete[] this->chunkBlocks;
 }
 
-void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace) {
+void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace) {
 	vector<glm::highp_vec3> vertices = {
 		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0
 		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1
@@ -90,7 +94,7 @@ void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rig
 		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6
 		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 7
 	};
-	if (frontFace == true) {
+	if (backFace == true) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 0, 1, 2, 3 and Normal 0
 		vert0.position = vertices[0]; vert1.position = vertices[1];
 		vert4.position = vertices[2]; vert3.position = vertices[3];
@@ -100,7 +104,7 @@ void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rig
 		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
-	if (rightFace == true) {
+	if (leftFace == true) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 1, 4, 7, 2 and Normal 1
 		vert0.position = vertices[1]; vert1.position = vertices[4];
 		vert4.position = vertices[7]; vert3.position = vertices[2];
@@ -120,7 +124,7 @@ void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rig
 		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
-	if (leftFace == true) {
+	if (rightFace == true) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 5, 0, 3, 6 and Normal 3
 		vert0.position = vertices[5]; vert1.position = vertices[0];
 		vert4.position = vertices[3]; vert3.position = vertices[6];
@@ -140,7 +144,7 @@ void Chunk::createCube(GLfloat x, GLfloat y, GLfloat z, bool frontFace, bool rig
 		i2 = this->mesh.addVert(vert4); i3 = this->mesh.addVert(vert3);
 		this->mesh.addTriangle(i0, i1, i2); this->mesh.addTriangle(i0, i2, i3);
 	}
-	if (backFace == true) {
+	if (frontFace == true) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert4, vert3; // Using Points 4, 5, 6, 7 and Normal 5
 		vert0.position = vertices[4]; vert1.position = vertices[5];
 		vert4.position = vertices[6]; vert3.position = vertices[7];
@@ -163,23 +167,23 @@ void Chunk::buildRender() {
 					else{
 						bool xNeg = def; // left
 						if (i > 0)
-							xNeg = (this->chunkBlocks[i - 1][j][k].isActive());
+							xNeg = (this->chunkBlocks[i - 1][j][k].Active);
 						bool xPos = def; // right
 						if (i < CHUNK_SIZE - 1)
-							xPos = (this->chunkBlocks[i + 1][j][k].isActive());
+							xPos = (this->chunkBlocks[i + 1][j][k].Active);
 						bool yPos = def; // bottom
 						if (j > 0)
-							yPos = (this->chunkBlocks[i][j - 1][k].isActive());
+							yPos = (this->chunkBlocks[i][j - 1][k].Active);
 						bool yNeg = def; // top
 						if (j < CHUNK_SIZE_Y - 1)
-							yNeg = (this->chunkBlocks[i][j + 1][k].isActive());
+							yNeg = (this->chunkBlocks[i][j + 1][k].Active);
 						bool zNeg = def; // back
-						if (k > 0)
-							zNeg = (this->chunkBlocks[i][j][k - 1].isActive());
-						bool zPos = def; // front
 						if (k < CHUNK_SIZE - 1)
-							zPos = (this->chunkBlocks[i][j][k + 1].isActive());
-						this->createCube((GLfloat)i,(GLfloat)j,(GLfloat)k, true, true, true, true, true, true);
+							zNeg = (this->chunkBlocks[i][j][k - 1].Active);
+						bool zPos = def; // front
+						if (k > 0)
+							zPos = (this->chunkBlocks[i][j][k + 1].Active);
+						this->createCube(i,j,k, zPos, xPos, yPos, xNeg, yNeg, zNeg);
 						
 					}
 				}

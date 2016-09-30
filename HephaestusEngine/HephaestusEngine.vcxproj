@@ -149,6 +149,7 @@
     <ClInclude Include="block.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="chunk_manager.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stdafx.h" />
@@ -158,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="block.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="chunk_manager.cpp" />
     <ClCompile Include="HephaestusEngine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
