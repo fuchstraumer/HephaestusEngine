@@ -8,7 +8,7 @@
 #include "shader.h"
 #include "chunk.h"
 #include "camera.h"
-
+#include <math.h>
 #include "Terrain_Gen.h"
 
 static GLuint WIDTH = 1440, HEIGHT = 720;
@@ -31,7 +31,7 @@ GLfloat lastFrame = 0.0f;
 
 int main(){
 	Terrain_Generator gen;
-	gen.Generate();
+	std::vector<float> vals; 
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
@@ -59,11 +59,12 @@ int main(){
 	glEnable(GL_DEPTH_TEST);
 	//glDepthRange(0.1, 1);
 	glDepthFunc(GL_LEQUAL);
-	//glEnable(GL_POLYGON_SMOOTH);
-	//glCullFace(GL_FRONT_AND_BACK);
+	glEnable(GL_POLYGON_SMOOTH);
+	//glCullFace(GL_BACK);
+	//glFrontFace(GL_CCW);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draw in wireframe mode for now
 	Chunk chunk0(glm::vec2(0,0));
-	glm::vec3 lightPos(12.0f, 100.0f, -12.0f);
+	glm::vec3 lightPos(12.0f, 60.0f, -12.0f);
 	chunk0.buildRender();
 	//std::cerr << "Time to build terrain was " << static_cast<float>(t) / CLOCKS_PER_SEC << " seconds. " << std::endl;
 	// GLFW main loop
@@ -99,7 +100,7 @@ int main(){
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 100.0f);
+		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.5f, 300.0f);
 		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
@@ -109,8 +110,8 @@ int main(){
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		glm::mat4 trans;
-		trans = glm::translate(trans, glm::vec3(0.0f, 70.0f, 0.0f));
-		trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		trans = glm::translate(trans, glm::vec3(12.0f, -40.0f, -12.0f));
+		//trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
 		chunk0.chunkRender(ourShader);
 		glBindVertexArray(0);
@@ -149,6 +150,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		else if (action == GLFW_RELEASE)
 			keys[key] = false;
 	}
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
+		camera.MovementSpeed += 5;
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
+		camera.MovementSpeed -= 5;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

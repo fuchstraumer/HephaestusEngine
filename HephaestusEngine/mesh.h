@@ -33,7 +33,7 @@ struct vertex {
 // general, but additional benefit comes from aligning the data in 4-byte chunks (or multiples thereof)
 struct compressed_vertex {
 	// Each position component is stored using fixed-point encoding (8.8). The vector has a size of 12bytes
-	glm::mediump_ivec3 position;
+	glm::highp_ivec3 position;
 	// 4 byte padding data, enable or disable as needed
 	//uint8_t _pad[4];
 	// The normal is encoded as a 16 bit unsigned int using oct16 encoding found here http://jcgt.org/published/0003/02/01/
@@ -147,13 +147,13 @@ inline bool Mesh::clear(void) {
 // https://bitbucket.org/volumesoffun/polyvox/src/9a71004b1e72d6cf92c41da8995e21b652e6b836/include/PolyVox/MarchingCubesSurfaceExtractor.inl
 inline glm::vec3 Mesh::decodePosition(const glm::mediump_ivec3& encodedPos) {
 	glm::vec3 result(encodedPos.x, encodedPos.y, encodedPos.z);
-	result *= (1.0f / 256.0f); 
+	result *= (1.0f / 2560.0f); 
 	return result; // decoded vertex
 }
 
 inline glm::mediump_ivec3 Mesh::encodePosition(const glm::vec3& pos) {
 	glm::vec3 temp = pos;
-	temp *= (256.0f);
+	temp *= (2560.0f);
 	glm::mediump_vec3 result(temp.x, temp.y, temp.z);
 	return result;
 }

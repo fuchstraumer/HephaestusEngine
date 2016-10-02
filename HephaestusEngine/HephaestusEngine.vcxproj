@@ -87,14 +87,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\MSVC\OpenGL\include;C:\MSVC\FastNoise-SIMD\include;C:\MSVC\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\MSVC\OpenGL\include;C:\MSVC\FastNoise\include;C:\MSVC\Assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise-SIMD\lib;C:\MSVC\accidental_noise\lib;C:\MSVC\Assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:/MSVC/OpenGL/lib/glfw3.lib";"C:\MSVC\FastNoise-SIMD\lib\FastNoise-SIMD.lib";"opengl32.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise\lib;C:\MSVC\accidental_noise\lib;C:\MSVC\Assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:/MSVC/OpenGL/lib/glfw3dll.lib";"C:\MSVC\FastNoise\lib\FastNoiseSIMD.lib";"opengl32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -150,6 +150,7 @@
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_manager.h" />
+    <ClInclude Include="FastNoise.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stdafx.h" />
@@ -160,6 +161,9 @@
     <ClCompile Include="block.cpp" />
     <ClCompile Include="chunk.cpp" />
     <ClCompile Include="chunk_manager.cpp" />
+    <ClCompile Include="FastNoise.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="HephaestusEngine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

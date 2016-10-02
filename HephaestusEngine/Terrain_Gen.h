@@ -5,7 +5,9 @@
 #define GLM_SWIZZLE
 #include "glm/glm.hpp"
 #include <math.h>
-#include <FastNoiseSIMD.h>
+#include <random>
+
+#include "FastNoise.h"
 
 using namespace std;
 /*
@@ -35,127 +37,71 @@ static float triLerp(float x, float y, float z, float V000, float V100, float V0
 	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
 }
 
-struct triLerpCube {
-	std::vector<glm::vec4> cube_verts;
-};
+typedef std::vector<glm::vec4> triLerpCube;
+static float perlinPsuedoDeriv(glm::vec2 p, float seed) {
+	p.x = floor(p.x); p.y = floor(p.y);
+}
+static float iq_Noise(float x, float y, float z, int octaves = 8, float frequency = 0.5f, float gain = 1.0f) {
+	float sum = 0.5; float freq = frequency; float amplitude = gain; glm::vec2 dsum(0.0f, 0.0f);
+	FastNoise iqNoise; iqNoise.SetNoiseType(FastNoise::SimplexFractal); iqNoise.SetFractalType(FastNoise::FBM);
+	iqNoise.SetFractalOctaves(octaves);
+	for (int i = 0; i < octaves; ++i) {
+		glm::vec3 n;
+	}
+}
+
 
 class Terrain_Generator {
 public:
-	triLerpCube triLerpCube0;
-	double*** Generate() {
-		FastNoiseSIMD* myNoise = FastNoiseSIMD::NewFastNoiseSIMD();
-		float* noiseSet = FastNoiseSIMD::GetEmptySet(CHUNK_SIZE, CHUNK_SIZE_Y, CHUNK_SIZE);
-		myNoise->SetFractalOctaves(5);
-		myNoise->SetFractalType(FastNoiseSIMD::Billow);
-		//myNoise->SetAxisScales(1.0, 0.0, 1.0);
-		myNoise->FillSimplexFractalSet(noiseSet,0,0,0,CHUNK_SIZE,CHUNK_SIZE_Y,CHUNK_SIZE);
-		triLerpCube0.cube_verts = {
-			glm::vec4(0,0,0,0), // V000
-			glm::vec4(16,0,0,0), // V100
-			glm::vec4(0,32,0,0), // V010
-			glm::vec4(0,0,16,0), // V001
-			glm::vec4(16,0,16,0), // V101
-			glm::vec4(0,32,16,0), // V011
-			glm::vec4(16,32,0,0), // V110
-			glm::vec4(16,32,16,0), // V111
-		};
-
-		triLerpCube triLerpCube1;
-		triLerpCube1.cube_verts = std::vector<glm::vec4>{
-			glm::vec4(16,0,16,0), // V000
-			glm::vec4(32,0,16,0), // V100
-			glm::vec4(16,32,16,0), // V010
-			glm::vec4(16,0,32,0), // V001
-			glm::vec4(32,0,32,0), // V101
-			glm::vec4(16,32,32,0), // V011
-			glm::vec4(32,32,16,0), // V110
-			glm::vec4(32,32,32,0), // V111
-		};
-
-		triLerpCube triLerpCube2;
-		triLerpCube2.cube_verts = std::vector<glm::vec4>{
-			glm::vec4(0,32,0,0), // V000
-			glm::vec4(16,32,0,0), // V100
-			glm::vec4(0,64,0,0), // V010
-			glm::vec4(0,32,16,0), // V001
-			glm::vec4(16,32,16,0), // V101
-			glm::vec4(0,64,16,0), // V011
-			glm::vec4(16,64,0,0), // V110
-			glm::vec4(16,64,16,0), // V111
-		};
-
-		triLerpCube triLerpCube3;
-		triLerpCube3.cube_verts = std::vector<glm::vec4>{
-			glm::vec4(16,32,16,0), // V000
-			glm::vec4(32,32,16,0), // V100
-			glm::vec4(16,64,16,0), // V010
-			glm::vec4(16,32,32,0), // V001
-			glm::vec4(32,32,32,0), // V101
-			glm::vec4(16,64,32,0), // V011
-			glm::vec4(32,64,16,0), // V110
-			glm::vec4(32,64,32,0), // V111
-		};
-		int index = 0;
-		double*** terrain;
-		terrain = new double**[CHUNK_SIZE];
-		for (int i = 0; i < CHUNK_SIZE; ++i) {
-			terrain[i] = new double*[CHUNK_SIZE_Y];
-			for (int j = 0; j < CHUNK_SIZE_Y; ++j) {
-				terrain[i][j] = new double[CHUNK_SIZE];
-				for (int k = 0; k < CHUNK_SIZE; ++k) {
-					std::cerr << noiseSet[index];
-					terrain[i][j][k] = double(noiseSet[index++]);
-					
-				}
-			}
-		}
-		return terrain;
+	FastNoise myNoise;
+	float genTerrain(int x, int y){
+		myNoise.SetNoiseType(FastNoise::ValueFractal);
+		myNoise.SetFractalType(FastNoise::Billow);
+		myNoise.SetFractalOctaves(3.0f); myNoise.SetFrequency(0.02f);
+		myNoise.SetFractalLacunarity(0.3f); myNoise.SetFractalGain(1.5f);
+		myNoise.SetPositionWarpAmp(5.0f);
+		float temp = myNoise.GetNoise(x, y);
+		temp = 64 * sqrt(temp*temp);
+		if (temp > 64)
+			temp = 64;
+		if (temp < 0)
+			temp = 1;
+		return temp;
 	}
-			
+
+	triLerpCube getNoiseCube(int x_center, int y_center,int z_center) {
+		FastNoise cNoise; cNoise.SetNoiseType(FastNoise::SimplexFractal);
+		cNoise.SetFractalType(FastNoise::FBM); cNoise.SetFractalOctaves(4); cNoise.SetFractalLacunarity(0.3f);
+		cNoise.SetFractalGain(0.1f); x_center *= CHUNK_SIZE; y_center *= CHUNK_SIZE; z_center *= CHUNK_SIZE_Z;
+		triLerpCube noiseCube = {
+			glm::vec4(0+x_center,0+y_center,0+z_center,0), // V000
+			glm::vec4(1+x_center,0+y_center,0+z_center,0), // V100
+			glm::vec4(0+x_center,1+y_center,0+z_center,0), // V010
+			glm::vec4(0+x_center,0+y_center,1+z_center,0), // V001
+			glm::vec4(1+x_center,0+y_center,1+z_center,0), // V101
+			glm::vec4(0+x_center,1+y_center,1+z_center,0), // V011
+			glm::vec4(1+x_center,1+y_center,0+z_center,0), // V110
+			glm::vec4(1+x_center,1+y_center,1+z_center,0), // V111
+		};
+		for (int i = 0; i < noiseCube.size(); ++i) {
+			glm::vec4 vec; vec.x = noiseCube[i].x;
+			vec.y = noiseCube[i].y; vec.z = noiseCube[i].z;
+			noiseCube[i].w = cNoise.GetNoise(vec.x, vec.y, vec.z);
+		}
+
+		return noiseCube;
+	}
+
+	float genTerrain3D(int x, int y, int z) {
+		FastNoise volNoise;
+		volNoise.SetFractalType(FastNoise::Billow); 
+		volNoise.SetNoiseType(FastNoise::SimplexFractal);
+
+	}
+	
+	
+
 };
-/*
-terraintree3d=
-{
-{name="ground_gradient",               type="gradient",         x1=0, x2=0, y1=0, y2=1},
 
-{name="lowland_shape_fractal",         type="fractal",          fractaltype=anl.BILLOW, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=2, frequency=0.25},
-{name="lowland_autocorrect",           type="autocorrect",      source="lowland_shape_fractal", low=0, high=1},
-{name="lowland_scale",                 type="scaleoffset",      source="lowland_autocorrect", scale=0.125, offset=-0.45},
-{name="lowland_y_scale",               type="scaledomain",      source="lowland_scale", scaley=0},
-{name="lowland_terrain",               type="translatedomain",  source="ground_gradient", ty="lowland_y_scale"},
-
-{name="highland_shape_fractal",        type="fractal",          fractaltype=anl.FBM, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=4, frequency=2},
-{name="highland_autocorrect",          type="autocorrect",      source="highland_shape_fractal", low=-1, high=1},
-{name="highland_scale",                type="scaleoffset",      source="highland_autocorrect", scale=0.25, offset=0},
-{name="highland_y_scale",              type="scaledomain",      source="highland_scale", scaley=0},
-{name="highland_terrain",              type="translatedomain",  source="ground_gradient", ty="highland_y_scale"},
-
-{name="mountain_shape_fractal",        type="fractal",          fractaltype=anl.RIDGEDMULTI, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=8, frequency=1},
-{name="mountain_autocorrect",          type="autocorrect",      source="mountain_shape_fractal", low=-1, high=1},
-{name="mountain_scale",                type="scaleoffset",      source="mountain_autocorrect", scale=0.45, offset=0.15},
-{name="mountain_y_scale",              type="scaledomain",      source="mountain_scale", scaley=0.25},
-{name="mountain_terrain",              type="translatedomain",  source="ground_gradient", ty="mountain_y_scale"},
-
-{name="terrain_type_fractal",          type="fractal",          fractaltype=anl.FBM, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=3, frequency=0.125},
-{name="terrain_autocorrect",           type="autocorrect",      source="terrain_type_fractal", low=0, high=1},
-{name="terrain_type_y_scale",          type="scaledomain",      source="terrain_autocorrect", scaley=0},
-{name="terrain_type_cache",            type="cache",            source="terrain_type_y_scale"},
-{name="highland_mountain_select",      type="select",           low="highland_terrain", high="mountain_terrain", control="terrain_type_cache", threshold=0.55, falloff=0.2},
-{name="highland_lowland_select",       type="select",           low="lowland_terrain", high="highland_mountain_select", control="terrain_type_cache", threshold=0.25, falloff=0.15},
-{name="highland_lowland_select_cache", type="cache",            source="highland_lowland_select"},
-{name="ground_select",                 type="select",           low=0, high=1, threshold=0.5, control="highland_lowland_select_cache"},
-
-{name="cave_attenuate_bias",           type="bias",              source="highland_lowland_select_cache", bias=0.45},
-{name="cave_shape1",                   type="fractal",           fractaltype=anl.RIDGEDMULTI, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=1, frequency=4},
-{name="cave_shape2",                   type="fractal",           fractaltype=anl.RIDGEDMULTI, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=1, frequency=4},
-{name="cave_shape_attenuate",         type="combiner",           operation=anl.MULT, source_0="cave_shape1", source_1="cave_attenuate_bias", source_2="cave_shape2"},
-{name="cave_perturb_fractal",          type="fractal",           fractaltype=anl.FBM, basistype=anl.GRADIENT, interptype=anl.QUINTIC, octaves=6, frequency=3},
-{name="cave_perturb_scale",            type="scaleoffset",       source="cave_perturb_fractal", scale=0.5, offset=0},
-{name="cave_perturb",                  type="translatedomain",   source="cave_shape_attenuate", tx="cave_perturb_scale"},
-{name="cave_select",                   type="select",            low=1, high=0, control="cave_perturb", threshold=0.48, falloff=0},
-
-{name="ground_cave_multiply",          type="combiner",          operation=anl.MULT, source_0="cave_select", source_1="ground_select"}
-}
-*/
 
 #endif

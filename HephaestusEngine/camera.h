@@ -85,6 +85,7 @@ public:
 			this->Position -= this->Right * velocity;
 		if (direction == RIGHT)
 			this->Position += this->Right * velocity;
+
 		std::cerr << "(" << this->Position.x<< ", "<< this->Position.y << ", " << this->Position.z<< ")" << endl;
 	}
 

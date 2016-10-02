@@ -52,6 +52,9 @@
     <ClInclude Include="chunk_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FastNoise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -67,6 +70,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="chunk_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
