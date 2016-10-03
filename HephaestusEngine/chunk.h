@@ -31,9 +31,10 @@
 
 class Chunk {
 public:
-	Chunk(glm::vec2 chunkPos);
+	Chunk(glm::ivec3 gridpos);
 	~Chunk();
-	glm::vec2 chunkPos = glm::vec2(0,0);
+	glm::vec3 chunkPos;
+	glm::ivec3 gridPos;
 	void createCube(int x, int y, int z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
 		bool backFace = true, bool bottomFace = true, bool topFace = true);
 	void buildRender();

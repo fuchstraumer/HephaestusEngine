@@ -22,12 +22,13 @@
 	bugs or general changes far easier than it would otherwise be.
 */
 
-// Simple template for a vertex. datatype exists to allow us to add data as needed later (texture, color, AO maths, etc)
 
+// Simple template for a vertex. datatype exists to allow us to add data as needed later (texture, color, AO maths, etc)
 struct vertex {
 	glm::highp_vec3 position;
 	glm::highp_vec3 normal;
 };
+
 // This more complex template is a highly compressed vertex format. A decoder is implemented in this class,
 // but it would be wiser to decode on the GPU. Smaller mesh data helps program and rendering speed in
 // general, but additional benefit comes from aligning the data in 4-byte chunks (or multiples thereof)
@@ -38,7 +39,6 @@ struct compressed_vertex {
 	//uint8_t _pad[4];
 	// The normal is encoded as a 16 bit unsigned int using oct16 encoding found here http://jcgt.org/published/0003/02/01/
 	uint16_t normal;
-	// extra data as needed. If so, consider alignment still!
 };
 
 // Define index type here, and change it here too

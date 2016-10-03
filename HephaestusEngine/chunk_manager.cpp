@@ -60,11 +60,6 @@ void chunkManager::createChunk(int grid_x, int grid_y, int grid_z) {
 	Chunk *newChunk = new Chunk(glm::vec2(grid_x, grid_z));
 	newChunk->buildRender();
 	newChunk->chunkBuilt = true;
-	//float x_pos, y_pos, z_pos;
-	//x_pos = normPos.x * (CHUNK_SIZE * BLOCK_RENDER_SIZE * 2.0f);
-	//y_pos = normPos.y * (CHUNK_SIZE_Z * BLOCK_RENDER_SIZE * 2.0f);
-	//z_pos = normPos.z * (CHUNK_SIZE * BLOCK_RENDER_SIZE * 2.0f);
-	//newChunk->chunkPos = glm::vec2(x_pos, y_pos);
 	this->chunkList.push_back(*newChunk);
 }
 

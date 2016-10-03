@@ -38,6 +38,19 @@ static float triLerp(float x, float y, float z, float V000, float V100, float V0
 }
 
 typedef std::vector<glm::vec4> triLerpCube;
+
+float triLerp_UseCube(float x, float y, float z, triLerpCube cube) {
+	float s1 = (cube[0].w) * (1 - x) * (1 - y) * (1 - z);
+	float s2 = (cube[1].w) * x * (1 - y) * (1 - z);
+	float s3 = (cube[2].w) * (1 - x) * y * (1 - z);
+	float s4 = (cube[3].w) * (1 - x) * (1 - y) * z;
+	float s5 = (cube[4].w) * x * (1 - y) * z;
+	float s6 = (cube[5].w) * (1 - x) * y * z;
+	float s7 = (cube[6].w) * x * y * (1 - z);
+	float s8 = (cube[7].w) * x * y * z;
+	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
+}
+
 static float perlinPsuedoDeriv(glm::vec2 p, float seed) {
 	p.x = floor(p.x); p.y = floor(p.y);
 }

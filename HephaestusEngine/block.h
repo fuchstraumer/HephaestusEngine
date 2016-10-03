@@ -163,20 +163,17 @@ public:
 	bool isActive();
 	// Sets bool this->Active
 	void setActive(bool act);
+	// Sets position. Deprecated.
 	void setPos(glm::vec3 pos);
 	void setPos(float x, float y, float z);
+	// Gets position. Deprecated.
 	glm::vec3 getPos();
 	// returns enum blockType this->Type
 	blockType getType();
 	// sets this->Type as blockType type
 	void setType(blockType type);
-	// builds the blockVerts and blockFaces structure. textures not accounted for. 
-	// lighting stuff is TBD
-	// Writes data to the pointers given to this function
-	// In order to insure that the core attributes aren't modified 
-	// out-of-scope, blockType and Active are left private.
-	// The vertices and faces are commonly accessed and copied from
-	// so lets leave those public
+
+	// Attributes
 	blockType Type;
 	bool Active;
 	glm::vec3 blockPos;
