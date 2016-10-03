@@ -94,7 +94,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise\lib;C:\MSVC\accidental_noise\lib;C:\MSVC\Assimp\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:/MSVC/OpenGL/lib/glfw3dll.lib";"C:\MSVC\FastNoise\lib\FastNoiseSIMD.lib";"opengl32.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"C:/MSVC/OpenGL/lib/glew32s.lib";"C:/MSVC/OpenGL/lib/glfw3dll.lib";"opengl32.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -145,12 +145,12 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="array3.h" />
     <ClInclude Include="block.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_manager.h" />
     <ClInclude Include="FastNoise.h" />
+    <ClInclude Include="lodepng.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stdafx.h" />
@@ -165,6 +165,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HephaestusEngine.cpp" />
+    <ClCompile Include="lodepng.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -175,6 +179,13 @@
   <ItemGroup>
     <None Include="compressed_fragment.glsl" />
     <None Include="compressed_vertex.glsl" />
+    <None Include="sky_frag.glsl" />
+    <None Include="sky_vert.glsl" />
+    <None Include="vertex.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sky.png" />
+    <Image Include="texture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

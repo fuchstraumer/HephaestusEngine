@@ -56,7 +56,7 @@ public:
 	FastNoise myNoise;
 	float genTerrain(int x, int y){
 		myNoise.SetNoiseType(FastNoise::ValueFractal);
-		myNoise.SetFractalType(FastNoise::Billow);
+		myNoise.SetFractalType(FastNoise::FBM);
 		myNoise.SetFractalOctaves(3.0f); myNoise.SetFrequency(0.02f);
 		myNoise.SetFractalLacunarity(0.3f); myNoise.SetFractalGain(1.5f);
 		myNoise.SetPositionWarpAmp(5.0f);
@@ -83,7 +83,7 @@ public:
 			glm::vec4(1+x_center,1+y_center,0+z_center,0), // V110
 			glm::vec4(1+x_center,1+y_center,1+z_center,0), // V111
 		};
-		for (int i = 0; i < noiseCube.size(); ++i) {
+		for (unsigned int i = 0; i < noiseCube.size(); ++i) {
 			glm::vec4 vec; vec.x = noiseCube[i].x;
 			vec.y = noiseCube[i].y; vec.z = noiseCube[i].z;
 			noiseCube[i].w = cNoise.GetNoise(vec.x, vec.y, vec.z);

@@ -41,8 +41,8 @@ Chunk::Chunk(glm::vec2 chunkPos){
 	Terrain_Generator gen; 
 	this->chunkBlocks = new Block**[CHUNK_SIZE];
 	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		this->chunkBlocks[i] = new Block*[CHUNK_SIZE];
-		for (int j = 0; j < CHUNK_SIZE; ++j) {
+		this->chunkBlocks[i] = new Block*[CHUNK_SIZE_Z];
+		for (int j = 0; j < CHUNK_SIZE_Z; ++j) {
 			this->chunkBlocks[i][j] = new Block[CHUNK_SIZE];
 		}
 	}
@@ -60,15 +60,7 @@ Chunk::Chunk(glm::vec2 chunkPos){
 }
 // Delete blocks
 Chunk::~Chunk(){
-	glDeleteBuffers(1, &this->VBO); glDeleteBuffers(1, &this->EBO);
-	glDeleteVertexArrays(1, &this->VAO);
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		for (int j = 0; j < CHUNK_SIZE; ++j) {
-			delete[] this->chunkBlocks[i][j];
-		}
-		delete[] this->chunkBlocks[i];
-	}
-	delete[] this->chunkBlocks;
+
 }
 
 void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace) {
@@ -147,7 +139,7 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 void Chunk::buildRender() {
 	bool def = true; 
 		for (int i = 0; i < CHUNK_SIZE; i++) {
-			for (int j = 0; j < CHUNK_SIZE; j++) {
+			for (int j = 0; j < CHUNK_SIZE_Z; j++) {
 				for (int k = 0; k < CHUNK_SIZE; k++) {
 					if (this->chunkBlocks[i][j][k].isActive() == false) {
 						continue;
@@ -194,8 +186,8 @@ void Chunk::buildRender() {
 
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType,normal));
-	std::cerr << "Size of indices: " << (this->mesh.meshIndices.size() * sizeof(index_t)) << std::endl;
-	std::cerr << " Size of vertices: " << (this->mesh.meshVerts.size() * sizeof(vertType)) << std::endl;
+	//std::cerr << "Size of indices: " << (this->mesh.meshIndices.size() * sizeof(index_t)) << std::endl;
+	//std::cerr << " Size of vertices: " << (this->mesh.meshVerts.size() * sizeof(vertType)) << std::endl;
 	glBindVertexArray(0);
 }
 
@@ -203,4 +195,5 @@ void Chunk::buildRender() {
 void Chunk::chunkRender(Shader shader) {
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES,this->mesh.getNumIndices(),GL_UNSIGNED_INT,0);
+	glBindVertexArray(0);
 }

@@ -26,7 +26,9 @@
 
 #pragma warning(disable:4244)
 static const float BLOCK_RENDER_SIZE = 1.0f;
-static const int CHUNK_SIZE = 128;
+static const int CHUNK_SIZE = 32;
 static const int CHUNK_SIZE_Z = 64;
+
+typedef unsigned int uint;
 
 // TODO: reference additional headers your program requires here

@@ -86,7 +86,7 @@ public:
 		if (direction == RIGHT)
 			this->Position += this->Right * velocity;
 
-		std::cerr << "(" << this->Position.x<< ", "<< this->Position.y << ", " << this->Position.z<< ")" << endl;
+		std::cerr << "(" << this->Position.x<< ", "<< this->Position.y << ", " << this->Position.z<< ")" << std::endl;
 	}
 
 	// Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

@@ -46,10 +46,10 @@ public:
 	int inactivecount;
 	bool chunkBuilt;
 	bool chunkRendered = false;
-	GLuint VAO, VBO, EBO;
+	
 private:
 	Block*** chunkBlocks;
-
+	GLuint VAO, VBO, EBO;
 };
 
 #endif // !CHUNK_H

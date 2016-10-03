@@ -17,6 +17,9 @@
       <UniqueIdentifier>{9710fd3d-1b3b-4025-a0b9-e8be0b73b32f}</UniqueIdentifier>
       <Extensions>glsl;hlsl;</Extensions>
     </Filter>
+    <Filter Include="Dependencies">
+      <UniqueIdentifier>{8ce2ffe0-dced-47fd-9d1c-6f11b8f5b8d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -40,9 +43,6 @@
     <ClInclude Include="camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="array3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Terrain_Gen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -53,7 +53,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FastNoise.h">
-      <Filter>Header Files</Filter>
+      <Filter>Dependencies</Filter>
+    </ClInclude>
+    <ClInclude Include="lodepng.h">
+      <Filter>Dependencies</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -73,7 +76,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FastNoise.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Dependencies</Filter>
+    </ClCompile>
+    <ClCompile Include="lodepng.c">
+      <Filter>Dependencies</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,5 +89,22 @@
     <None Include="compressed_fragment.glsl">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="vertex.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="sky_vert.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="sky_frag.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="sky.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="texture.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
