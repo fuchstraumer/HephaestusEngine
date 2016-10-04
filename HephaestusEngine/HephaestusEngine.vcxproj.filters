@@ -56,7 +56,7 @@
       <Filter>Dependencies</Filter>
     </ClInclude>
     <ClInclude Include="lodepng.h">
-      <Filter>Dependencies</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -78,8 +78,8 @@
     <ClCompile Include="FastNoise.cpp">
       <Filter>Dependencies</Filter>
     </ClCompile>
-    <ClCompile Include="lodepng.c">
-      <Filter>Dependencies</Filter>
+    <ClCompile Include="lodepng.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -87,9 +87,6 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="compressed_fragment.glsl">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="vertex.glsl">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="sky_vert.glsl">
@@ -104,6 +101,24 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="texture.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\clouds.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\moon.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\moon_phases.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\sun.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\terrain.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="tex\texture.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

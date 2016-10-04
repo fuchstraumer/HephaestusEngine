@@ -33,19 +33,17 @@ class Chunk {
 public:
 	Chunk(glm::ivec3 gridpos);
 	~Chunk();
+	void buildTerrain();
+	void BuildTerrainCubeVer();
 	glm::vec3 chunkPos;
 	glm::ivec3 gridPos;
 	void createCube(int x, int y, int z,bool leftFace = true, bool rightFace = true, bool frontFace = true,
-		bool backFace = true, bool bottomFace = true, bool topFace = true);
+		bool backFace = true, bool bottomFace = true, bool topFace = true, blockType type = blockType::blockType_Default);
 	void buildRender();
-	//void chunkUpdate(float dt);
 	void chunkRender(Shader shader);
 	void exportMesh();
 	Mesh mesh;
-	triLerpCube terrain_cube;
-	int activecount;
-	int inactivecount;
-	bool chunkBuilt;
+	bool chunkBuilt = false;
 	bool chunkRendered = false;
 	
 private:

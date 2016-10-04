@@ -165,10 +165,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HephaestusEngine.cpp" />
-    <ClCompile Include="lodepng.c">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-    </ClCompile>
+    <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -181,11 +178,16 @@
     <None Include="compressed_vertex.glsl" />
     <None Include="sky_frag.glsl" />
     <None Include="sky_vert.glsl" />
-    <None Include="vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="sky.png" />
     <Image Include="texture.png" />
+    <Image Include="tex\clouds.png" />
+    <Image Include="tex\moon.png" />
+    <Image Include="tex\moon_phases.png" />
+    <Image Include="tex\sun.png" />
+    <Image Include="tex\terrain.png" />
+    <Image Include="tex\texture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

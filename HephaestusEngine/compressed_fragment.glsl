@@ -5,19 +5,20 @@
 in vec4 worldPosition;
 in vec3 worldNormal;
 in vec3 fragPos;
+in vec2 frag_uv;
 
 // color uniforms
 uniform vec3 lightPos; 
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform vec3 objectColor;
-
+uniform sampler2D texSampler;
 
 // color that gets written to the display
 out vec4 outColor;
 
 void main(){
-
+	vec4 initColor = texture(texSampler,frag_uv);
 	// Ambient lighting
 	float ambientStrength = 0.3f;
 	vec3 ambient = ambientStrength*lightColor;

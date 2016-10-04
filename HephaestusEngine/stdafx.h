@@ -25,10 +25,15 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #pragma warning(disable:4244)
+
+// Chunk vars
 static const float BLOCK_RENDER_SIZE = 1.0f;
 static const int CHUNK_SIZE = 32;
 static const int CHUNK_SIZE_Z = 64;
-
+static const bool SIMPLE_CULLING_GLOBAL = true;
+static const bool WIREFRAME_MODE = false;
 typedef unsigned int uint;
 
+// Texture const
+static const int TEXTURE_TILE_SIZE = 16;
 // TODO: reference additional headers your program requires here

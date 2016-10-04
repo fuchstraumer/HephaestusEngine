@@ -27,6 +27,7 @@
 struct vertex {
 	glm::highp_vec3 position;
 	glm::highp_vec3 normal;
+	glm::highp_vec2 uv;
 };
 
 // This more complex template is a highly compressed vertex format. A decoder is implemented in this class,
@@ -63,6 +64,7 @@ public:
 
 	index_t addVert(const vertType& vertex); // add a vertex and return its index
 	void addTriangle(index_t index0, index_t index1, index_t index2); // add the three indices needed to define a triangle
+	void addUV(int t, int s);
 
 	bool clear(void); // delete the mesh
 	bool isEmpty(void) const; // return true if meshVerts or meshIndices is empty

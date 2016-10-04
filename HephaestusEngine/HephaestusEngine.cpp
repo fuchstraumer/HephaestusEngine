@@ -5,12 +5,27 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <time.h>
+#include <math.h>
+#define LODEPNG_COMPILE_CPP
+#include "lodepng.h"
 #include "shader.h"
 #include "camera.h"
-#include <math.h>
 #include "chunk_manager.h"
-
+using namespace lodepng;
 static GLuint WIDTH = 1440, HEIGHT = 720;
+
+void load_png_texture(const char *file_name) {
+	unsigned int error;
+	unsigned char *data;
+	unsigned int width, height;
+	error = lodepng_decode32_file(&data, &width, &height, file_name);
+	if (error) {
+		fprintf(stderr, "error %u: %s\n", error, lodepng_error_text(error));
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+		GL_UNSIGNED_BYTE, data);
+	free(data);
+}
 
 
 // Function declarations
@@ -56,15 +71,31 @@ int main(){
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 
+
+	// Load block textures
+
+	GLuint texture;
+	glGenTextures(1, &texture);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	load_png_texture("tex/terrain.png");
+
 	// Create chunk manager
-	chunkManager chunk_manager;
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			chunk_manager.createChunk(i, 0, j);
+	std::vector<Chunk> chunkList;
+	for (int i = 0; i < 8; ++i) {
+		for (int j = 0; j < 8; ++j) {
+			glm::ivec3 grid = glm::ivec3(i, 0, j);
+			Chunk* newChunk = new Chunk(grid);
+			newChunk->buildTerrain();
+			newChunk->buildRender();
+			chunkList.push_back(*newChunk);
+
 		}
 	}
 
-	glm::vec3 lightPos(130.0f, 100.0f, 130.0f);
+	glm::vec3 lightPos(160.0f, 100.0f, 160.0f);
 
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
@@ -89,6 +120,9 @@ int main(){
 		GLint lightColorLoc = glGetUniformLocation(ourShader.Program, "lightColor");
 		GLint lightPosLoc = glGetUniformLocation(ourShader.Program, "lightPos");
 		GLint viewPosLoc = glGetUniformLocation(ourShader.Program, "viewPos");
+		GLint textureLoc = glGetUniformLocation(ourShader.Program, "texSampler");
+
+		
 
 		glUniform3f(objectColorLoc, 0.4f, 1.0f, 0.4f);
 		glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
@@ -99,7 +133,7 @@ int main(){
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 300.0f);
+		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 400.0f);
 		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
@@ -108,11 +142,11 @@ int main(){
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-		glm::mat4 trans;
-		trans = glm::translate(trans, glm::vec3(0.0f, -30.0f, 0.0f));
-		//trans = glm::rotate(trans, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(trans));
-		chunk_manager.renderChunks(ourShader);
+		for (unsigned int i = 0; i < chunkList.size(); ++i) {
+			glm::mat4 model; model = glm::translate(model, chunkList[i].chunkPos);
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			chunkList[i].chunkRender(ourShader);
+		}
 		glfwSwapBuffers(window);
 	} 
 	//chunk0.~Chunk();

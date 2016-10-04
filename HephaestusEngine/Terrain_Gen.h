@@ -39,17 +39,6 @@ static float triLerp(float x, float y, float z, float V000, float V100, float V0
 
 typedef std::vector<glm::vec4> triLerpCube;
 
-float triLerp_UseCube(float x, float y, float z, triLerpCube cube) {
-	float s1 = (cube[0].w) * (1 - x) * (1 - y) * (1 - z);
-	float s2 = (cube[1].w) * x * (1 - y) * (1 - z);
-	float s3 = (cube[2].w) * (1 - x) * y * (1 - z);
-	float s4 = (cube[3].w) * (1 - x) * (1 - y) * z;
-	float s5 = (cube[4].w) * x * (1 - y) * z;
-	float s6 = (cube[5].w) * (1 - x) * y * z;
-	float s7 = (cube[6].w) * x * y * (1 - z);
-	float s8 = (cube[7].w) * x * y * z;
-	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
-}
 
 static float perlinPsuedoDeriv(glm::vec2 p, float seed) {
 	p.x = floor(p.x); p.y = floor(p.y);
@@ -83,9 +72,11 @@ public:
 	}
 
 	triLerpCube getNoiseCube(int x_center, int y_center,int z_center) {
-		FastNoise cNoise; cNoise.SetNoiseType(FastNoise::SimplexFractal);
-		cNoise.SetFractalType(FastNoise::FBM); cNoise.SetFractalOctaves(4); cNoise.SetFractalLacunarity(0.3f);
-		cNoise.SetFractalGain(0.1f); x_center *= CHUNK_SIZE; y_center *= CHUNK_SIZE; z_center *= CHUNK_SIZE_Z;
+		FastNoise cNoise; cNoise.SetNoiseType(FastNoise::ValueFractal);
+		cNoise.SetFractalType(FastNoise::FBM); cNoise.SetFractalOctaves(3.0f); cNoise.SetFractalLacunarity(0.3f);
+		cNoise.SetFrequency(0.08f);
+		cNoise.SetFractalGain(4.0f); cNoise.SetPositionWarpAmp(5.0f); 
+		x_center *= CHUNK_SIZE; y_center *= CHUNK_SIZE; z_center *= CHUNK_SIZE_Z;
 		triLerpCube noiseCube = {
 			glm::vec4(0+x_center,0+y_center,0+z_center,0), // V000
 			glm::vec4(1+x_center,0+y_center,0+z_center,0), // V100
@@ -99,9 +90,13 @@ public:
 		for (unsigned int i = 0; i < noiseCube.size(); ++i) {
 			glm::vec4 vec; vec.x = noiseCube[i].x;
 			vec.y = noiseCube[i].y; vec.z = noiseCube[i].z;
-			noiseCube[i].w = cNoise.GetNoise(vec.x, vec.y, vec.z);
+			float temp = cNoise.GetNoise(vec.x, vec.y, vec.z);
+			if (temp > 64)
+				temp = 64;
+			if (temp <= 0)
+				temp = 0;
+			noiseCube[i].w = temp;
 		}
-
 		return noiseCube;
 	}
 

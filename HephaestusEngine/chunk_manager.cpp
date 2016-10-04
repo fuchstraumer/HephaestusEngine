@@ -57,7 +57,8 @@ void chunkManager::InitChunkBuild(Camera camera) {
 
 void chunkManager::createChunk(int grid_x, int grid_y, int grid_z) {
 	normChunkPos normPos; normPos.x = grid_x; normPos.y = grid_y; normPos.z = grid_z;
-	Chunk *newChunk = new Chunk(glm::vec2(grid_x, grid_z));
+	Chunk *newChunk = new Chunk(glm::ivec3(grid_x, grid_y, grid_z));
+	newChunk->buildTerrain();
 	newChunk->buildRender();
 	newChunk->chunkBuilt = true;
 	this->chunkList.push_back(*newChunk);

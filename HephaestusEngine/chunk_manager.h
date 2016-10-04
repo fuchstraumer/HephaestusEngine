@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include "camera.h"
 
+
 // This keeps the coordinates of a chunk as whole numbers. The actual world-space position
 // of a chunk is calculated when generated, but keeping this position as whole numbers makes
 // for easy indexing during update operations!
