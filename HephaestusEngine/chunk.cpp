@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "chunk.h"
-#include "Terrain_Gen.h"
+#include "util/Terrain_Gen.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

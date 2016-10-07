@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "chunk_manager.h"
-#include "shader.h"
+#include "util/shader.h"
 
 chunkManager::chunkManager(bool wireframeRender, bool primitiveCulling){
 	this->wireframeRender = wireframeRender;

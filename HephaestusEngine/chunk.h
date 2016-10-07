@@ -4,9 +4,9 @@
 
 #include "stdafx.h"
 #include "block.h"
-#include "mesh.h"
-#include "Terrain_Gen.h"
-#include "shader.h"
+#include "util/mesh.h"
+#include "util/Terrain_Gen.h"
+#include "util/shader.h"
 /*
 	Type: Class Object: Chunk -> holds subclass Block
 	Data: Blocks[x][y][z] (pointer array), bool Active

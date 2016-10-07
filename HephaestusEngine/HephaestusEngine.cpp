@@ -7,9 +7,9 @@
 #include <time.h>
 #include <math.h>
 #define LODEPNG_COMPILE_CPP
-#include "lodepng.h"
-#include "shader.h"
-#include "camera.h"
+#include "util/lodepng.h"
+#include "util/shader.h"
+#include "util/camera.h"
 #include "chunk_manager.h"
 using namespace lodepng;
 static GLuint WIDTH = 1440, HEIGHT = 720;
@@ -88,22 +88,23 @@ int main(){
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, 8);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, 5, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_top);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_side);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 2, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, dirt);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 3, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, sand);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 4, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, stone);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// Set texture wrapping to GL_REPEAT
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	GLenum error = glGetError();
 	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone);
 	// Create chunk manager
 	std::vector<Chunk> chunkList;
-	for (int i = 0; i < 2; ++i) {
-		for (int j = 0; j < 2; ++j) {
+	for (int i = 0; i < 8; ++i) {
+		for (int j = 0; j < 8; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			Chunk* newChunk = new Chunk(grid);
 			newChunk->buildTerrain();

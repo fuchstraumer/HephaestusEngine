@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #include "chunk.h"
 #include <glm/glm.hpp>
-#include "camera.h"
+#include "util/camera.h"
 
 
 // This keeps the coordinates of a chunk as whole numbers. The actual world-space position

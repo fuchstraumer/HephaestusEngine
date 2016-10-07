@@ -146,16 +146,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="block.h" />
-    <ClInclude Include="camera.h" />
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_manager.h" />
     <ClInclude Include="FastNoise.h" />
-    <ClInclude Include="lodepng.h" />
-    <ClInclude Include="mesh.h" />
-    <ClInclude Include="shader.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Terrain_Gen.h" />
+    <ClInclude Include="util\camera.h" />
+    <ClInclude Include="util\lodepng.h" />
+    <ClInclude Include="util\mesh.h" />
+    <ClInclude Include="util\shader.h" />
+    <ClInclude Include="util\Terrain_Gen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="block.cpp" />
@@ -165,22 +165,19 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HephaestusEngine.cpp" />
-    <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="util\lodepng.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="compressed_fragment.glsl" />
     <None Include="compressed_vertex.glsl" />
-    <None Include="sky_frag.glsl" />
-    <None Include="sky_vert.glsl" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="sky.png" />
     <Image Include="textures\blocks\brick.png" />
     <Image Include="textures\blocks\coal_ore.png" />
     <Image Include="textures\blocks\coarse_dirt.png" />
