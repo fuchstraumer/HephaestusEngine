@@ -25,15 +25,13 @@
 // Enum specifying the sort of blocks we can have in our world
 enum blockType {
 	blockType_Default = 0,
-	BEDROCK,
-	AIR,
 	GRASS,
 	SAND,
+	DIRT,
 	STONE,
 	BRICK,
 	WOOD,
 	CEMENT,
-	DIRT,
 	PLANK,
 	SNOW,
 	GLASS,
@@ -80,7 +78,9 @@ enum blockType {
 	COLOR_28,
 	COLOR_29,
 	COLOR_30,
-	COLOR_31
+	COLOR_31,
+	AIR,
+	BEDROCK,
 };
 // Array holding indices into the texture atlas of texture.png
 

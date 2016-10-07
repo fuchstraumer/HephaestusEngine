@@ -4,27 +4,33 @@
 // later in this shader
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
-layout(location = 2) in vec2 uv;
+layout(location = 2) in vec3 uv;
 
 uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 lightPos;
+uniform float tileCount;
 
-out vec4 worldPosition;
 out vec3 worldNormal;
+out vec3 worldPosition;
 out vec3 fragPos;
-out vec2 frag_uv;
+out vec3 frag_uv;
+out vec2 texCoord;
 
 void main(){
-	// This conversion is exactly how we do it in our other code as well
-	vec4 decodedPosition = vec4(position,1.0f);
-	//decodedPosition.xyz = decodedPosition.xyz * (1.0 / 256);
-	frag_uv = uv;
+	worldPosition = position;
+	vec4 Position = vec4(position,1.0f);
 	worldNormal = mat3(transpose(inverse(model))) * normal;
 
+	// Get tex coords
+	texCoord = vec2(dot(position, vec3(normal.y-normal.z, 0, normal.x)),
+                  dot(position, vec3(0, -abs(normal.x+normal.z), normal.y)));
+
+	// Get tile coords
+	frag_uv = uv;
+
 	// And now for our good ol' standard OpenGL transformations
-	worldPosition = decodedPosition;
-	fragPos = vec3(model * decodedPosition);
-	gl_Position = projection * view * model * decodedPosition;
+	fragPos = vec3(model * Position);
+	gl_Position = projection * view * model * Position;
 }

@@ -15,15 +15,18 @@ static vector<glm::vec3> normals = {
   glm::vec3( 0, 0,-1),   // (back)
 };
 const float atlas_size = 256.0f;
-const float blocks[256][4][2] = {
-	// Order is (pictured as texture coords) - {0,0}, {0,1}, {1,0}, {1,1}
-	{{0.0f, 16.0f / 256.0f}, {0.0f, 0.0f}, {16.0f / 256.0f, 16.0f / 256.0f}, {16.0f / 256.0f, 0.0f}}, // Grass top tex coords
-	{{16.0f / atlas_size, 16.0f / atlas_size}, {16.0f / atlas_size, 0.0f}, {32.0f / atlas_size, 16.0f / atlas_size}, {32.0f / atlas_size, 0.0f}}, // Stone coords
-	{{32.0f / atlas_size, 16.0f / atlas_size}, {32.0f / atlas_size, 0.0f}, {48.0f / atlas_size, 16.0f /  atlas_size}, {48.0f / atlas_size, 0.0f}}, // Dirt coords
-	{{48.0f / atlas_size, 16.0f / atlas_size}, {48.0f / atlas_size, 0.0f}, {64.0f / atlas_size, 16.0f / atlas_size}, {64.0f / atlas_size, 0.0f}}, // Grass sides
-	{{64.0f / atlas_size, 128.0f / atlas_size},{64.0f / atlas_size, 112.0f / atlas_size}, {80.0f / atlas_size, 128.0f / atlas_size}, {80.0f / atlas_size, 112.0f / atlas_size}}, // Bedrock
+const float blocks[256][6] = {
+	// Order is (pictured as texture coords) - {0,0}, {1,0}, {0,1}, {1,1} Tri1 needs {0,0}{1,0}{0,1} Tri2 needs {1,0}{0,1}{1,1}
+	// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
+	{1,1,0,1,2,1}, // Grass block
 };
 
+inline int vertAO(bool side1,bool side2,bool corner) {
+	if (!side1 && !side2) {
+		return 0;
+	}
+	return 3 - (side1 + side2 + corner);
+};
 
 // Create block instances
 Chunk::Chunk(glm::ivec3 gridpos){
@@ -76,12 +79,11 @@ void Chunk::BuildTerrainCubeVer() {
 }
 
 void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, blockType uv_type) {
-	float ao[6][4];
 	vector<glm::highp_vec3> vertices = {
-		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front
-		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1, right lower front
-		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 2, right upper front
-		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 3, left upper front
+		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front UV{0,0}
+		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1, right lower front UV{1,0}
+		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 2, right upper front UV{1,1}
+		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 3, left upper front UV{0,1}
 		glm::highp_vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 4, right lower rear
 		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 5, left lower rear
 		glm::highp_vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
@@ -90,29 +92,31 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 
 	if (frontFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 0, 1, 2, 3 and Normal 0
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][0]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][0]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][0]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][0]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[0]; vert1.position = vertices[1];
-		vert2.position = vertices[2]; vert3.position = vertices[3];
+		vert0.position.xyz = vertices[0]; vert1.position.xyz = vertices[1];
+		vert2.position.xyz = vertices[2]; vert3.position.xyz = vertices[3];
 		vert0.normal = normals[0];  vert1.normal = normals[0];
 		vert2.normal = normals[0];  vert3.normal = normals[0];
+		float a00, a01, a10, a11; 
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
 		i2 = this->mesh.addVert(vert2); i3 = this->mesh.addVert(vert3);
-		this->mesh.addTriangle(i2, i1, i0); this->mesh.addTriangle(i3, i2, i0);
+		this->mesh.addTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
+		this->mesh.addTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
 	}
 
 	if (rightFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 1, 4, 7, 2 and Normal 1
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][1]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][1]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][1]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][1]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[1]; vert1.position = vertices[4];
-		vert2.position = vertices[7]; vert3.position = vertices[2];
+		vert0.position.xyz = vertices[1]; vert1.position.xyz = vertices[4];
+		vert2.position.xyz = vertices[7]; vert3.position.xyz = vertices[2];
 		vert0.normal = normals[1];  vert1.normal = normals[1];
 		vert2.normal = normals[1];  vert3.normal = normals[1];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
@@ -122,13 +126,13 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 
 	if (topFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 3, 2, 7, 6 and Normal 2
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][2]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][2]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][2]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][2]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[3]; vert1.position = vertices[2];
-		vert2.position = vertices[7]; vert3.position = vertices[6];
+		vert0.position.xyz = vertices[3]; vert1.position.xyz = vertices[2];
+		vert2.position.xyz = vertices[7]; vert3.position.xyz = vertices[6];
 		vert0.normal = normals[2];  vert1.normal = normals[2];
 		vert2.normal = normals[2];  vert3.normal = normals[2];
 		
@@ -139,13 +143,13 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 
 	if (leftFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 0, 3, 6 and Normal 3
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][3]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][3]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][3]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][3]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[5]; vert1.position = vertices[0];
-		vert2.position = vertices[3]; vert3.position = vertices[6];
+		vert0.position.xyz = vertices[5]; vert1.position.xyz = vertices[0];
+		vert2.position.xyz = vertices[3]; vert3.position.xyz = vertices[6];
 		vert0.normal = normals[3];  vert1.normal = normals[3];
 		vert2.normal = normals[3];  vert3.normal = normals[3];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
@@ -155,13 +159,13 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 
 	if (bottomFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 4, 1, 0 and Normal 4
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][4]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][4]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][4]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][4]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[5]; vert1.position = vertices[4];
-		vert2.position = vertices[1]; vert3.position = vertices[0];
+		vert0.position.xyz = vertices[5]; vert1.position.xyz = vertices[4];
+		vert2.position.xyz = vertices[1]; vert3.position.xyz = vertices[0];
 		vert0.normal = normals[4];  vert1.normal = normals[4];
 		vert2.normal = normals[4];  vert3.normal = normals[4];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
@@ -171,13 +175,13 @@ void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool
 
 	if (backFace == false) {
 		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 4, 5, 6, 7 and Normal 5
-		glm::highp_vec2 uv0 = glm::vec2(blocks[2][0][0], blocks[2][0][1]);
-		glm::highp_vec2 uv1 = glm::vec2(blocks[2][1][0], blocks[2][1][1]);
-		glm::highp_vec2 uv2 = glm::vec2(blocks[2][2][0], blocks[2][2][1]);
-		glm::highp_vec2 uv3 = glm::vec2(blocks[2][3][0], blocks[2][3][1]);
+		glm::vec3 uv0 = glm::vec3(0, 0, blocks[0][5]);
+		glm::vec3 uv1 = glm::vec3(1, 0, blocks[0][5]);
+		glm::vec3 uv3 = glm::vec3(0, 1, blocks[0][5]);
+		glm::vec3 uv2 = glm::vec3(1, 1, blocks[0][5]);
 		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position = vertices[4]; vert1.position = vertices[5];
-		vert2.position = vertices[6]; vert3.position = vertices[7];
+		vert0.position.xyz = vertices[4]; vert1.position.xyz = vertices[5];
+		vert2.position.xyz = vertices[6]; vert3.position.xyz = vertices[7];
 		vert0.normal = normals[5];  vert1.normal = normals[5];
 		vert2.normal = normals[5];  vert3.normal = normals[5];
 		i0 = this->mesh.addVert(vert0); i1 = this->mesh.addVert(vert1);
@@ -254,7 +258,7 @@ void Chunk::buildRender() {
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType,normal));
 
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType, uv));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType, uv));
 
 	glBindVertexArray(0);
 

@@ -72,20 +72,38 @@ int main(){
 	glDepthFunc(GL_LEQUAL);
 
 
-	// Load block textures
 
+
+	// Load block textures
+	unsigned char *grass_top, *grass_side, *dirt, *sand, *stone;
+	unsigned int width, height;
+	lodepng_decode32_file(&grass_top,&width,&height,"textures/blocks/grass_top.png");
+	lodepng_decode32_file(&grass_side, &width, &height, "textures/blocks/grass_side.png");
+	lodepng_decode32_file(&dirt, &width, &height, "textures/blocks/dirt.png");
+	lodepng_decode32_file(&sand, &width, &height, "textures/blocks/sand.png");
+	lodepng_decode32_file(&stone, &width, &height, "textures/blocks/stone.png");
+
+	// Create texture array
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	load_png_texture("tex/terrain.png");
+	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+	glTexStorage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, 8);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_top);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_side);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 2, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, dirt);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 3, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, sand);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 4, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, stone);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// Set texture wrapping to GL_REPEAT
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone);
 	// Create chunk manager
 	std::vector<Chunk> chunkList;
-	for (int i = 0; i < 8; ++i) {
-		for (int j = 0; j < 8; ++j) {
+	for (int i = 0; i < 2; ++i) {
+		for (int j = 0; j < 2; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			Chunk* newChunk = new Chunk(grid);
 			newChunk->buildTerrain();
@@ -115,16 +133,21 @@ int main(){
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Textures 
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+		glUniform1i(glGetUniformLocation(ourShader.Program, "texSampler"), 0);
+
 		// Do lighting stuff
-		GLint objectColorLoc = glGetUniformLocation(ourShader.Program, "objectColor");
 		GLint lightColorLoc = glGetUniformLocation(ourShader.Program, "lightColor");
 		GLint lightPosLoc = glGetUniformLocation(ourShader.Program, "lightPos");
 		GLint viewPosLoc = glGetUniformLocation(ourShader.Program, "viewPos");
 		GLint textureLoc = glGetUniformLocation(ourShader.Program, "texSampler");
-
-		
-
-		glUniform3f(objectColorLoc, 0.4f, 1.0f, 0.4f);
+		GLint tileLoc = glGetUniformLocation(ourShader.Program, "tileCount");
+		GLint sizeLoc = glGetUniformLocation(ourShader.Program, "tileSize");
+		glUniform1f(sizeLoc, TEXTURE_TILE_SIZE);
+		glUniform1f(tileLoc, TEXTURE_TILE_COUNT);
 		glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
 		glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
 		glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
@@ -133,7 +156,7 @@ int main(){
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 400.0f);
+		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 0.5f, 200.0f);
 		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");

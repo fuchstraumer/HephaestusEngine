@@ -65,7 +65,7 @@ void chunkManager::createChunk(int grid_x, int grid_y, int grid_z) {
 }
 
 void chunkManager::renderChunks(Shader shader) {
-	for (int i = 0; i < this->chunkList.size(); ++i) {
+	for (unsigned int i = 0; i < this->chunkList.size(); ++i) {
 		this->chunkList[i].chunkRender(shader);
 		this->chunkList[i].chunkRendered = true;
 	}

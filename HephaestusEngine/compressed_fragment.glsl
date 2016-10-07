@@ -2,23 +2,28 @@
 
 // This part of the shader requires much less work.
 // simple passed input from vertex shader
-in vec4 worldPosition;
+in vec3 worldPosition;
 in vec3 worldNormal;
+in vec3 frag_uv;
+in vec2 texCoord;
 in vec3 fragPos;
-in vec2 frag_uv;
 
 // color uniforms
 uniform vec3 lightPos; 
 uniform vec3 viewPos;
 uniform vec3 lightColor;
-uniform vec3 objectColor;
-uniform sampler2D texSampler;
+uniform sampler2DArray texSampler;
+uniform float tileSize;
+uniform float tileCount;
 
 // color that gets written to the display
 out vec4 outColor;
 
 void main(){
-	vec4 initColor = texture(texSampler,frag_uv);
+	// Get texture coordinates and use fractional component to get correct wrapping
+	vec4 color = texture(texSampler, frag_uv);
+	
+
 	// Ambient lighting
 	float ambientStrength = 0.3f;
 	vec3 ambient = ambientStrength*lightColor;
@@ -38,6 +43,6 @@ void main(){
 	vec3 specular = specularStrength * spec * lightColor;
 
 	// Resultant lighting
-	vec3 result = (ambient + diffuse + specular) * objectColor;
-	outColor = vec4(result,1.0f);
+	vec4 lightResult = vec4(ambient+diffuse+specular,1.0f);
+	outColor = lightResult * color;
 }

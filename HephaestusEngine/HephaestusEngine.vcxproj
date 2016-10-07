@@ -181,13 +181,55 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="sky.png" />
-    <Image Include="texture.png" />
+    <Image Include="textures\blocks\brick.png" />
+    <Image Include="textures\blocks\coal_ore.png" />
+    <Image Include="textures\blocks\coarse_dirt.png" />
+    <Image Include="textures\blocks\cobblestone.png" />
+    <Image Include="textures\blocks\diamond_ore.png" />
+    <Image Include="textures\blocks\dirt.png" />
+    <Image Include="textures\blocks\emerald_ore.png" />
+    <Image Include="textures\blocks\grass_side.png" />
+    <Image Include="textures\blocks\grass_top.png" />
+    <Image Include="textures\blocks\leaves_big_oak.png" />
+    <Image Include="textures\blocks\leaves_big_oak_opaque.png" />
+    <Image Include="textures\blocks\log_big_oak.png" />
+    <Image Include="textures\blocks\log_big_oak_top.png" />
+    <Image Include="textures\blocks\planks_oak.png" />
+    <Image Include="textures\blocks\sand.png" />
+    <Image Include="textures\blocks\stone.png" />
+    <Image Include="textures\blocks\stonebrick.png" />
+    <Image Include="textures\blocks\stone_slab_side.png" />
+    <Image Include="textures\blocks\stone_slab_top.png" />
+    <Image Include="textures\blocks\wool_colored_black.png" />
+    <Image Include="textures\blocks\wool_colored_blue.png" />
+    <Image Include="textures\blocks\wool_colored_brown.png" />
+    <Image Include="textures\blocks\wool_colored_cyan.png" />
+    <Image Include="textures\blocks\wool_colored_gray.png" />
+    <Image Include="textures\blocks\wool_colored_green.png" />
+    <Image Include="textures\blocks\wool_colored_light_blue.png" />
+    <Image Include="textures\blocks\wool_colored_lime.png" />
+    <Image Include="textures\blocks\wool_colored_magenta.png" />
+    <Image Include="textures\blocks\wool_colored_orange.png" />
+    <Image Include="textures\blocks\wool_colored_pink.png" />
+    <Image Include="textures\blocks\wool_colored_purple.png" />
+    <Image Include="textures\blocks\wool_colored_red.png" />
+    <Image Include="textures\blocks\wool_colored_silver.png" />
+    <Image Include="textures\blocks\wool_colored_white.png" />
+    <Image Include="textures\blocks\wool_colored_yellow.png" />
     <Image Include="tex\clouds.png" />
     <Image Include="tex\moon.png" />
     <Image Include="tex\moon_phases.png" />
     <Image Include="tex\sun.png" />
-    <Image Include="tex\terrain.png" />
-    <Image Include="tex\texture.png" />
+    <ResourceCompile Include="tex\terrain.dds">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/generatemips %(AdditionalOptions)</AdditionalOptions>
+    </ResourceCompile>
+    <Image Include="tex\terrain.png">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent>false</DeploymentContent>
+    </Image>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

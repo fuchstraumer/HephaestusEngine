@@ -20,6 +20,7 @@
 #include <GL/glew.h>
 
 // GLM
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -35,5 +36,6 @@ static const bool WIREFRAME_MODE = false;
 typedef unsigned int uint;
 
 // Texture const
-static const int TEXTURE_TILE_SIZE = 16;
+static const float TEXTURE_TILE_SIZE = 16.0f;
+static const float TEXTURE_TILE_COUNT = 16.0f;
 // TODO: reference additional headers your program requires here
