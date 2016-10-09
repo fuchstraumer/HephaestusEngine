@@ -5,7 +5,6 @@
 in vec3 worldPosition;
 in vec3 worldNormal;
 in vec3 frag_uv;
-in vec2 texCoord;
 in vec3 fragPos;
 
 // color uniforms
@@ -13,30 +12,27 @@ uniform vec3 lightPos;
 uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform sampler2DArray texSampler;
-uniform float tileSize;
-uniform float tileCount;
 
 // color that gets written to the display
 out vec4 outColor;
 
 void main(){
-	// Get texture coordinates and use fractional component to get correct wrapping
 	vec4 color = texture(texSampler, frag_uv);
 	
 
 	// Ambient lighting
-	float ambientStrength = 0.4f;
+	float ambientStrength = 0.3f;
 	vec3 ambient = ambientStrength*lightColor;
 
 	// Diffuse
-	float diffuseStrength = 0.7f;
+	float diffuseStrength = 0.75f;
 	vec3 lightDir = normalize(lightPos - fragPos);
 	vec3 norm = worldNormal;
 	float diff = max(dot(norm,lightDir),0.0);
 	vec3 diffuse = diffuseStrength * diff * lightColor;
 
 	// Specular
-	float specularStrength = 0.2f;
+	float specularStrength = 0.15f;
 	vec3 viewDir = normalize(viewPos - fragPos);
 	vec3 reflectDir = reflect(-lightDir, norm);
 	float spec = pow(max(dot(viewDir,reflectDir),0.0),32);
@@ -44,5 +40,7 @@ void main(){
 
 	// Resultant lighting
 	vec4 lightResult = vec4(ambient+diffuse+specular,1.0f);
+	if(color.a < 0.1)
+		discard;
 	outColor = lightResult * color;
 }

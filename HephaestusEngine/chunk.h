@@ -34,17 +34,22 @@ public:
 	Chunk(glm::ivec3 gridpos);
 	~Chunk();
 	void buildTerrain();
+	void buildCaves();
 	void BuildTerrainCubeVer();
 	glm::vec3 chunkPos;
 	glm::ivec3 gridPos;
 	void createCube(int x, int y, int z, bool leftFace = true, bool rightFace = true, bool frontFace = true,
-		bool backFace = true, bool bottomFace = true, bool topFace = true, blockType type = blockType::blockType_Default);
+		bool backFace = true, bool bottomFace = true, bool topFace = true, blockType type = blockType::AIR);
+	void createGrass(int x, int y, int z, blockType type = blockType::TALL_GRASS);
 	void buildRender();
+	void buildData();
+	void buildLighting();
 	void chunkRender(Shader shader);
-	void exportMesh();
 	Mesh mesh;
 	bool chunkBuilt = false;
 	bool chunkRendered = false;
+	int activeCount;
+	
 	
 private:
 	Block*** chunkBlocks;

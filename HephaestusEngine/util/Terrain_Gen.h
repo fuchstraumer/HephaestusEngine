@@ -1,7 +1,6 @@
 #ifndef TERRAIN_GEN_H
 #define TERRAIN_GEN_H
 
-#include "stdafx.h"
 #define GLM_SWIZZLE
 #include "glm/glm.hpp"
 #include <math.h>
@@ -37,11 +36,22 @@ static float triLerp(float x, float y, float z, float V000, float V100, float V0
 	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
 }
 
-typedef std::vector<glm::vec4> triLerpCube;
 
 
-static float perlinPsuedoDeriv(glm::vec2 p, float seed) {
-	p.x = floor(p.x); p.y = floor(p.y);
+
+static float perlinPsuedoDeriv(glm::vec2 p, float seed, FastNoise noise) {
+	glm::vec2 i(floor(p.x),floor(p.y));
+	glm::vec2 f = p - i;
+	// Get weights
+	glm::vec2 w;
+	w.x = f.x * f.x * f.x * (f.x * (f.x * 15 - 6) + 10);
+	w.y = f.y * f.y * f.y * (f.y * (f.y * 15 - 6) + 10);
+	// Get psuedo-deriv weights
+	glm::vec2 dw;
+	dw.x = f.x * f.x * (f.x * (30 * f.x - 60) + 30);
+	dw.y = f.y * f.y * (f.y * (30 * f.y - 60) + 30);
+	// Get noise values
+	
 }
 static float iq_Noise(float x, float y, float z, int octaves = 8, float frequency = 0.5f, float gain = 1.0f) {
 	float sum = 0.5; float freq = frequency; float amplitude = gain; glm::vec2 dsum(0.0f, 0.0f);
@@ -55,19 +65,40 @@ static float iq_Noise(float x, float y, float z, int octaves = 8, float frequenc
 
 class Terrain_Generator {
 public:
+	Terrain_Generator(int seed) {
+		this->seed = seed;
+	}
 	FastNoise myNoise;
-	float genTerrain(int x, int y){
-		myNoise.SetNoiseType(FastNoise::ValueFractal);
-		myNoise.SetFractalType(FastNoise::FBM);
-		myNoise.SetFractalOctaves(3.0f); myNoise.SetFrequency(0.02f);
-		myNoise.SetFractalLacunarity(0.3f); myNoise.SetFractalGain(1.5f);
-		myNoise.SetPositionWarpAmp(5.0f);
-		float temp = myNoise.GetNoise(x, y);
-		temp = 64 * sqrt(temp*temp);
-		if (temp > 64)
-			temp = 64;
+	typedef std::vector<glm::vec4> triLerpCube;
+	int seed;
+
+	void setSeed(int seed) {
+		this->myNoise.SetSeed(seed);
+	}
+
+	float genTerrain(int x, int y) {
+		this->myNoise.SetSeed(this->seed);
+		this->myNoise.SetNoiseType(FastNoise::ValueFractal);
+		this->myNoise.SetFractalType(FastNoise::FBM);
+		this->myNoise.SetFractalOctaves(4.0f); myNoise.SetFrequency(0.02f);
+		this->myNoise.SetFractalLacunarity(0.5f); myNoise.SetFractalGain(1.65f);
+		this->myNoise.SetPositionWarpAmp(5.0f);
+		float temp = this->myNoise.GetNoise(x, y) + 0.2;
+		temp = 128 * sqrt(temp*temp);
+		if (temp > 128)
+			temp = 128;
 		if (temp < 0)
 			temp = 1;
+		return temp;
+	}
+
+	float genCave(int x, int y, int z) {
+		this->myNoise.SetNoiseType(FastNoise::SimplexFractal); this->myNoise.SetFractalType(FastNoise::RigidMulti);
+		this->myNoise.SetFrequency(0.007f); myNoise.SetFractalGain(2.0f); this->myNoise.SetFractalLacunarity(0.9f);
+		this->myNoise.SetPositionWarpAmp(10.0f); myNoise.SetFractalOctaves(1.0f);
+		float temp = this->myNoise.GetNoise(x, y, z);
+		float y_falloff = std::exp(-1.10f * std::pow(y / 50, 2));
+		temp = temp * y_falloff;
 		return temp;
 	}
 
@@ -106,6 +137,7 @@ public:
 		volNoise.SetNoiseType(FastNoise::SimplexFractal);
 
 	}
+
 	
 	
 

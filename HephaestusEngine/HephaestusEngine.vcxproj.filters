@@ -43,9 +43,6 @@
     <ClInclude Include="chunk_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FastNoise.h">
-      <Filter>Dependencies</Filter>
-    </ClInclude>
     <ClInclude Include="util\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -60,6 +57,9 @@
     </ClInclude>
     <ClInclude Include="util\Terrain_Gen.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\FastNoise.h">
+      <Filter>Dependencies</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -78,11 +78,11 @@
     <ClCompile Include="chunk_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FastNoise.cpp">
-      <Filter>Dependencies</Filter>
-    </ClCompile>
     <ClCompile Include="util\lodepng.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\FastNoise.cpp">
+      <Filter>Dependencies</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -214,10 +214,8 @@
     <Image Include="textures\blocks\wool_colored_red.png">
       <Filter>Resource Files\subtextures</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="tex\terrain.dds">
+    <Image Include="textures\blocks\tallgrass.png">
       <Filter>Resource Files</Filter>
-    </ResourceCompile>
+    </Image>
   </ItemGroup>
 </Project>

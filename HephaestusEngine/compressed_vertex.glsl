@@ -10,7 +10,6 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 lightPos;
-uniform float tileCount;
 
 out vec3 worldNormal;
 out vec3 worldPosition;
@@ -23,14 +22,10 @@ void main(){
 	vec4 Position = vec4(position,1.0f);
 	worldNormal = mat3(transpose(inverse(model))) * normal;
 
-	// Get tex coords
-	texCoord = vec2(dot(position, vec3(normal.y-normal.z, 0, normal.x)),
-                  dot(position, vec3(0, -abs(normal.x+normal.z), normal.y)));
-
 	// Get tile coords
 	frag_uv = uv;
 
 	// And now for our good ol' standard OpenGL transformations
-	fragPos = vec3(model * Position);
+	fragPos = vec3(Position * model);
 	gl_Position = projection * view * model * Position;
 }

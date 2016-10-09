@@ -22,66 +22,7 @@
 
 #include "stdafx.h"
 
-// Enum specifying the sort of blocks we can have in our world
-enum blockType {
-	blockType_Default = 0,
-	GRASS,
-	SAND,
-	DIRT,
-	STONE,
-	BRICK,
-	WOOD,
-	CEMENT,
-	PLANK,
-	SNOW,
-	GLASS,
-	COBBLE,
-	LIGHT_STONE,
-	DARK_STONE,
-	CHEST,
-	LEAVES,
-	TALL_GRASS,
-	YELLOW_FLOWER,
-	RED_FLOWER,
-	PURPLE_FLOWER,
-	SUN_FLOWER,
-	WHITE_FLOWER,
-	BLUE_FLOWER,
-	COLOR_00,
-	COLOR_01,
-	COLOR_02,
-	COLOR_03,
-	COLOR_04,
-	COLOR_05,
-	COLOR_06,
-	COLOR_07,
-	COLOR_08,
-	COLOR_09,
-	COLOR_10,
-	COLOR_11,
-	COLOR_12,
-	COLOR_13,
-	COLOR_14,
-	COLOR_15,
-	COLOR_16,
-	COLOR_17,
-	COLOR_18,
-	COLOR_19,
-	COLOR_20,
-	COLOR_21,
-	COLOR_22,
-	COLOR_23,
-	COLOR_24,
-	COLOR_25,
-	COLOR_26,
-	COLOR_27,
-	COLOR_28,
-	COLOR_29,
-	COLOR_30,
-	COLOR_31,
-	AIR,
-	BEDROCK,
-};
+
 // Array holding indices into the texture atlas of texture.png
 
 // The block class itself. Note that the default constructor assumes the block is NOT active and has generic textureless blockType blockType_Default. 
@@ -92,28 +33,20 @@ class Block {
 public:
 	
 	// Constructor
-	Block(bool active = false,blockType type = blockType_Default) : Type(type), Active(active) { }
+	Block(bool active = false,blockType type = AIR) : Type(type), Active(active) { }
 	~Block();
 	// Methods
 	// Returns bool this->Active
 	bool isActive();
 	// Sets bool this->Active
 	void setActive(bool act);
-	// Sets position. Deprecated.
-	void setPos(glm::vec3 pos);
-	void setPos(float x, float y, float z);
-	// Gets position. Deprecated.
-	glm::vec3 getPos();
 	// returns enum blockType this->Type
 	blockType getType();
 	// sets this->Type as blockType type
 	void setType(blockType type);
-
 	// Attributes
 	blockType Type;
 	bool Active;
-	glm::vec3 blockPos;
-	float density;
 };
 
 #endif // !BLOCK_H

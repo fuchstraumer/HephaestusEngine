@@ -25,9 +25,9 @@
 
 // Simple template for a vertex. datatype exists to allow us to add data as needed later (texture, color, AO maths, etc)
 struct vertex {
-	glm::highp_vec4 position; // position.w is AO value
-	glm::highp_vec3 normal;
-	glm::highp_vec3 uv;
+	glm::vec4 position; // position.w is AO value
+	glm::vec3 normal;
+	glm::vec3 uv;
 };
 
 // This more complex template is a highly compressed vertex format. A decoder is implemented in this class,
@@ -43,7 +43,7 @@ struct compressed_vertex {
 };
 
 // Define index type here, and change it here too
-typedef uint32_t index_t;
+typedef GLuint index_t;
 typedef vertex vertType;
 
 class Mesh {
@@ -131,7 +131,7 @@ inline void Mesh::setOffset(const glm::mediump_vec3 & offset){
 
 inline index_t Mesh::addVert(const vertType & vertex){
 	meshVerts.push_back(vertex);
-	return meshVerts.size() - 1;
+	return (GLsizei)meshVerts.size() - 1;
 }
 
 
