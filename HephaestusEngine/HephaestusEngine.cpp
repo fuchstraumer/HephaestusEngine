@@ -46,7 +46,7 @@ GLfloat lastFrame = 0.0f;
 
 int main(){
 	
-
+	
 	int seed;
 	std::cout << "Enter an integer to use as the terrain gen seed value: " << std::endl;
 	std::cin >> TERRAIN_SEED;
@@ -55,7 +55,9 @@ int main(){
 	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
 	
-
+	
+	
+	
 
 	// Init GLFW
 	glfwInit();
@@ -78,8 +80,7 @@ int main(){
 	// Options
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glewExperimental = GL_TRUE; glewInit();
-	Shader ourShader("C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/compressed_vertex.glsl", 
-		"C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/compressed_fragment.glsl");
+	Shader ourShader("compressed_vertex.glsl", "compressed_fragment.glsl");
 
 	glViewport(0, 0, WIDTH, HEIGHT);
 	// Setup some OpenGL options
@@ -87,15 +88,18 @@ int main(){
 	glDepthFunc(GL_LEQUAL);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	// Load block textures
-	unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass;
+	unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass, *coal_ore, *iron_ore, *diamond_ore;
 	unsigned int width, height;
-	lodepng_decode32_file(&grass_top,&width,&height,"C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/grass_top.png");
-	lodepng_decode32_file(&grass_side, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/grass_side.png");
-	lodepng_decode32_file(&dirt, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/dirt.png");
-	lodepng_decode32_file(&sand, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/sand.png");
-	lodepng_decode32_file(&stone, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/stone.png");
-	lodepng_decode32_file(&bedrock, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/bedrock.png");
-	lodepng_decode32_file(&tallgrass, &width, &height, "C:/Users/Keegan/Documents/Visual Studio 2015/Projects/HephaestusEngine/HephaestusEngine/textures/blocks/tallgrass.png");
+	lodepng_decode32_file(&grass_top,&width,&height,"./textures/blocks/grass_top.png");
+	lodepng_decode32_file(&grass_side, &width, &height, "./textures/blocks/grass_side.png");
+	lodepng_decode32_file(&dirt, &width, &height, "./textures/blocks/dirt.png");
+	lodepng_decode32_file(&sand, &width, &height, "./textures/blocks/sand.png");
+	lodepng_decode32_file(&stone, &width, &height, "./textures/blocks/stone.png");
+	lodepng_decode32_file(&bedrock, &width, &height, "./textures/blocks/bedrock.png");
+	lodepng_decode32_file(&tallgrass, &width, &height, "./textures/blocks/tallgrass.png");
+	lodepng_decode32_file(&coal_ore, &width, &height, "./textures/blocks/coal_ore.png");
+	lodepng_decode32_file(&iron_ore, &width, &height, "./textures/blocks/iron_ore.png");
+	lodepng_decode32_file(&diamond_ore, &width, &height, "./textures/blocks/diamond_ore.png");
 
 	// Create texture array
 	GLuint texture;
@@ -110,23 +114,29 @@ int main(){
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 4, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, stone);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 5, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, bedrock);
 	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 6, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tallgrass);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 7, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, coal_ore);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 8, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, iron_ore);
+	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 9, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, diamond_ore);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// Set texture wrapping to GL_REPEAT
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	GLenum error = glGetError();
-	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone);
+	// Free texture data
+	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);
 	// Create chunk manager
-	
-	std::vector<Chunk> chunkList;
+	std::ofstream f; f.open("chunkData.txt"); 
+	std::vector<Chunk> chunkList; chunkList.reserve(chunks*chunks);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
-			glm::ivec3 grid = glm::ivec3(i, -1, j);
+			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			Chunk* newChunk = new Chunk(grid);
 			newChunk->buildTerrain();
 			newChunk->buildData();
 			newChunk->buildRender();
+			newChunk->compressChunk();
+			f.write(newChunk->encodedBlocks.c_str(), newChunk->encodedBlocks.length());
 			chunkList.push_back(*newChunk);
 			std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 			if (chunkList.size() == 128)
@@ -135,10 +145,17 @@ int main(){
 				std::cerr << "Fuck you for making me generate this many chunks. I consign all of your RAM to the void" << std::endl;
 			if (chunkList.size() == 1000)
 				std::cerr << "You've made a terrible mistake" << std::endl;
-				
+			f.write("\n", 2);
 		}
 	}
-
+	f.close();
+	
+	std::cerr << "Size of chunk data uncompressed: " << (sizeof(chunkList)) / 1000 << "kb" << std::endl;
+	std::cerr << "Size of compressed data : " << chunkList[0].encodedBlocks.capacity() / 1000 << "kb" << std::endl;
+	
+	
+	
+	
 	glm::vec3 lightPos(320.0f, 200.0f, 320.0f);
 
 	// GLFW main loop

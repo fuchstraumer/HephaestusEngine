@@ -69,9 +69,13 @@ public:
 		this->seed = seed;
 	}
 	FastNoise myNoise;
+	FastNoise caveNoise;
 	typedef std::vector<glm::vec4> triLerpCube;
 	int seed;
-
+	int noiseOctaves = 3.0; // Default 3.0
+	float noiseLacun = 0.5f; // Default 0.5
+	float terrainFreq = 0.04f; // Default 0.03
+	float terrainGain = 1.80f; // Default 1.7
 	void setSeed(int seed) {
 		this->myNoise.SetSeed(seed);
 	}
@@ -80,25 +84,28 @@ public:
 		this->myNoise.SetSeed(this->seed);
 		this->myNoise.SetNoiseType(FastNoise::ValueFractal);
 		this->myNoise.SetFractalType(FastNoise::FBM);
-		this->myNoise.SetFractalOctaves(4.0f); myNoise.SetFrequency(0.02f);
-		this->myNoise.SetFractalLacunarity(0.5f); myNoise.SetFractalGain(1.65f);
+		this->myNoise.SetFractalOctaves(this->noiseOctaves); myNoise.SetFrequency(this->terrainFreq);
+		this->myNoise.SetFractalLacunarity(this->noiseLacun); myNoise.SetFractalGain(this->terrainGain);
 		this->myNoise.SetPositionWarpAmp(5.0f);
-		float temp = this->myNoise.GetNoise(x, y) + 0.2;
-		temp = 128 * sqrt(temp*temp);
-		if (temp > 128)
-			temp = 128;
-		if (temp < 0)
+		float temp = this->myNoise.GetNoise(x, y);
+		temp = CHUNK_SIZE_Z * (sqrt(temp*temp));
+		if (temp >= CHUNK_SIZE_Z)
+			temp = CHUNK_SIZE_Z - 3;
+		if (temp <= 1)
 			temp = 1;
+		//std::cerr << temp << std::endl;
 		return temp;
 	}
 
 	float genCave(int x, int y, int z) {
-		this->myNoise.SetNoiseType(FastNoise::SimplexFractal); this->myNoise.SetFractalType(FastNoise::RigidMulti);
-		this->myNoise.SetFrequency(0.007f); myNoise.SetFractalGain(2.0f); this->myNoise.SetFractalLacunarity(0.9f);
-		this->myNoise.SetPositionWarpAmp(10.0f); myNoise.SetFractalOctaves(1.0f);
-		float temp = this->myNoise.GetNoise(x, y, z);
-		float y_falloff = std::exp(-1.10f * std::pow(y / 50, 2));
+		this->caveNoise.SetNoiseType(FastNoise::GradientFractal); this->caveNoise.SetFractalType(FastNoise::RigidMulti);
+		this->caveNoise.SetFrequency(0.03f); caveNoise.SetFractalGain(0.5f); this->caveNoise.SetFractalLacunarity(2.0f);
+		this->caveNoise.SetPositionWarpAmp(10.0f); this->caveNoise.SetFractalOctaves(2.0f);
+		float temp = this->caveNoise.GetNoise(x, y, z);
+		float y_falloff = std::exp(-1.10f * std::pow(y / 40, 2));
 		temp = temp * y_falloff;
+		temp = (temp) * 10;
+		//std::cerr << temp;
 		return temp;
 	}
 

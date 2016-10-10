@@ -26,6 +26,12 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="compressed_fragment.glsl">
+      <Filter>Shader Files</Filter>
+    </Text>
+    <Text Include="compressed_vertex.glsl">
+      <Filter>Shader Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -61,6 +67,9 @@
     <ClInclude Include="util\FastNoise.h">
       <Filter>Dependencies</Filter>
     </ClInclude>
+    <ClInclude Include="splay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -84,14 +93,6 @@
     <ClCompile Include="util\FastNoise.cpp">
       <Filter>Dependencies</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="compressed_vertex.glsl">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="compressed_fragment.glsl">
-      <Filter>Shader Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="tex\clouds.png">

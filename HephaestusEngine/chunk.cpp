@@ -5,7 +5,6 @@
 #include <glm/gtc/constants.hpp>
 #include <random>
 static Terrain_Generator gen(TERRAIN_SEED);
-typedef glm::vec3 offset;
 
 // Face normals
 static const vector<glm::vec3> normals = { 
@@ -26,10 +25,38 @@ static const float blocks[256][6] = {
 	{2,2,2,2,2,2}, // Dirt block
 	{4,4,4,4,4,4}, // Stone block
 	{5,5,5,5,5,5}, // Bedrock block
-	{6,6,6,6,6,6},
+	{6,6,6,6,6,6}, // tall grass
+	{7,7,7,7,7,7}, // Coal ore
+	{8,8,8,8,8,8}, // Iron ore
+	{9,9,9,9,9,9}, // Diamond Ore
 };
 
+// RLE func
+typedef unsigned char UCHAR;
+const static int MAX_CNT = 255;
+string encode(vector<string>& strs) {
+	string ret;
+	for (auto &s : strs)
+	{
+		int i = 0, len = s.length();
 
+		while (i < len)
+		{
+			UCHAR c = s[i];
+			UCHAR cnt = 1;
+			while (i < len - 1 && s[i + 1] == c && cnt < (MAX_CNT - 1))
+			{
+				i++; cnt++;
+			}
+			ret += UCHAR(cnt);
+			ret += UCHAR(c);
+
+			i++;
+		}
+		ret += UCHAR(MAX_CNT); // 0xFF: end
+	}
+	return ret;
+}
 // Returns N points that form an even distribution around a sphere
 inline std::vector<glm::vec3> pointsOnSphere(int N) {
 	float y, r, phi;
@@ -71,34 +98,48 @@ Chunk::~Chunk(){
 void Chunk::buildTerrain() {
 	for (int x = 0; x < CHUNK_SIZE; x++) {
 		for (int z = 0; z < CHUNK_SIZE; z++) {
-			for (int y = 0; y < 16; y++) {
+			this->chunkBlocks[x][0][z].Type = blockType::BEDROCK;
+			for (int y = 1; y < 32; y++) {
 				this->chunkBlocks[x][y][z].Active = true;
 				this->chunkBlocks[x][y][z].Type = blockType::STONE;
 			}
-			for (int y = 16; y < gen.genTerrain(chunkPos.x + x, chunkPos.z + z); ++y) {
+			for (int y = 32; y < gen.genTerrain(chunkPos.x + x, chunkPos.z + z); ++y) {
 				this->chunkBlocks[x][y][z].Active = true;
 				this->chunkBlocks[x][y][z].Type = blockType::STONE;
+				this->chunkBlocks[x][y + 3][z].Active = true; this->chunkBlocks[x][y + 3][z].Type = blockType::GRASS;
+				this->chunkBlocks[x][y + 2][z].Active = true; this->chunkBlocks[x][y + 1][z].Active = true;
+				this->chunkBlocks[x][y + 2][z].Type = blockType::DIRT; this->chunkBlocks[x][y + 1][z].Type = blockType::DIRT;
 			}
+			/*for (int j = 32; j < CHUNK_SIZE_Z - 1; ++j) {
+				if (j < CHUNK_SIZE_Z - 1 && this->chunkBlocks[x][j + 1][z].Type == AIR && j > 36) {
+					this->chunkBlocks[x][j][z].Type = blockType::GRASS;
+				}
+				else if (this->chunkBlocks[x][j + 1][z].Type == AIR || this->chunkBlocks[x][j+2][z].Type == AIR && j > 36) {
+					this->chunkBlocks[x][j][z].Type = blockType::DIRT;
+				}
+			}*/
 		}
 	}
 	this->buildCaves();
 }
 
 void Chunk::buildCaves() {
-	int cavecount = 0;
+	int cavecount = 0, coal_count = 0, iron_count = 0, diamond_count = 0;
 	for (int x = 0; x < CHUNK_SIZE; x++) {
 		for (int z = 0; z < CHUNK_SIZE; z++) {
-			for (int y = 0; y < CHUNK_SIZE_Z - 32; y++) {
-				if (this->chunkBlocks[x][y][z].Type == blockType::STONE && chunkBlocks[x][y][z].Active == true) {
+			for (int y = 1; y < CHUNK_SIZE_Z - 92; y++) {
+				if (this->chunkBlocks[x][y][z].Active == true) {
 					float density = gen.genCave(chunkPos.x + x,chunkPos.y + y,chunkPos.z + z);
-					if (density <= -4.6f) {
+					if (density <= 1.7f) {
 						this->chunkBlocks[x][y][z].Active = false;
-						cavecount++;
-					}
+						cavecount++;						
+					}				
 				}
 			}
 		}
 	}
+	std::cerr << "Blocks removed to make caves: " << cavecount << std::endl;
+	std::cerr << "Ore distribution: " << coal_count << " coal blocks, " << iron_count << " iron blocks, " << diamond_count << " diamond blocks. " << std::endl;
 }
 
 
@@ -227,21 +268,9 @@ void Chunk::buildData() {
 			for (int j = CHUNK_SIZE_Z - 1; j > 0; j--) {
 				for (int k = 0; k < CHUNK_SIZE; k++) {
 					if (this->chunkBlocks[i][j][k].isActive() == false) {
-						this->chunkBlocks[i][j][k].Type = blockType::AIR;
 						continue;
 					}
 					else {
-						if (j < CHUNK_SIZE_Z - 1 && this->chunkBlocks[i][j + 1][k].Type == AIR && j > 32) {
-							this->chunkBlocks[i][j][k].Type = blockType::GRASS;
-						}
-
-						else if (this->chunkBlocks[i][j + 1][k].Type == GRASS || this->chunkBlocks[i][j + 2][k].Type == GRASS || this->chunkBlocks[i][j + 3][k].Type == GRASS && j > 24) {
-							this->chunkBlocks[i][j][k].Type = blockType::DIRT;
-						}
-
-						if (j == 1) {
-							this->chunkBlocks[i][j][k].Type = blockType::BEDROCK;
-						}
 
 						blockType uv_type = this->chunkBlocks[i][j][k].Type;
 
@@ -269,7 +298,10 @@ void Chunk::buildData() {
 							bool zPos = def; // front
 							if (k > 0)
 								zPos = (this->chunkBlocks[i][j][k - 1].Active);
-							this->createCube(i, j, k, zNeg, xPos, yNeg, xNeg, yPos, zPos, uv_type);
+							if (this->chunkBlocks[i][j][k].Type == COAL_ORE || this->chunkBlocks[i][j][k].Type == IRON_ORE || this->chunkBlocks[i][j][k].Type == DIAMOND_ORE)
+								this->createCube(i, j, k, false, false, false, false, false, false, uv_type);
+							else
+								this->createCube(i, j, k, zNeg, xPos, yNeg, xNeg, yPos, zPos, uv_type);
 												
 						}
 						else if (SIMPLE_CULLING_GLOBAL == false) {
@@ -307,4 +339,32 @@ void Chunk::chunkRender(Shader shader) {
 	glBindVertexArray(this->VAO);
 	glDrawElements(GL_TRIANGLES,this->mesh.getNumIndices(),GL_UNSIGNED_INT,0);
 	glBindVertexArray(0);
+}
+
+void Chunk::compressChunk() {
+	this->encodedBlocks.reserve(CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z);
+	
+	for (int y = 0; y < CHUNK_SIZE_Z; ++y) {
+		for (int x = 0; x < CHUNK_SIZE; ++x) {
+			std::string buffer; buffer.reserve(CHUNK_SIZE);
+			for (int z = 0; z < CHUNK_SIZE; ++z) {
+				// encode runs from Y = 0 to Y = CHUNK_SIZE_Z
+				buffer.push_back(this->chunkBlocks[x][y][z].Type);
+			}
+			std::string::size_type found = 0, nextFound = 0;
+			std::ostringstream oss;
+			nextFound = buffer.find_first_not_of(buffer[found], found);
+			while (nextFound != std::string::npos) {
+				oss << nextFound - found;
+				oss << buffer[found];
+				found = nextFound;
+				nextFound = buffer.find_first_not_of(buffer[found], found);
+			}
+			std::string end(buffer.substr(found));
+			oss << end.length() << buffer[found];
+			this->encodedBlocks.append(oss.str());
+			buffer.clear(); oss.clear(); end.clear();
+		}
+	}
+	this->encodedBlocks.shrink_to_fit();
 }

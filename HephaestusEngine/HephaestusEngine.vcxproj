@@ -157,6 +157,7 @@
     <ClInclude Include="block.h" />
     <ClInclude Include="chunk.h" />
     <ClInclude Include="chunk_manager.h" />
+    <ClInclude Include="splay.h" />
     <ClInclude Include="util\FastNoise.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -190,46 +191,122 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="compressed_fragment.glsl" />
-    <None Include="compressed_vertex.glsl" />
+    <Text Include="compressed_fragment.glsl">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="compressed_vertex.glsl">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="textures\blocks\brick.png" />
-    <Image Include="textures\blocks\coal_ore.png" />
-    <Image Include="textures\blocks\coarse_dirt.png" />
-    <Image Include="textures\blocks\cobblestone.png" />
-    <Image Include="textures\blocks\diamond_ore.png" />
-    <Image Include="textures\blocks\dirt.png" />
-    <Image Include="textures\blocks\emerald_ore.png" />
-    <Image Include="textures\blocks\grass_side.png" />
-    <Image Include="textures\blocks\grass_top.png" />
-    <Image Include="textures\blocks\leaves_big_oak.png" />
-    <Image Include="textures\blocks\leaves_big_oak_opaque.png" />
-    <Image Include="textures\blocks\log_big_oak.png" />
-    <Image Include="textures\blocks\log_big_oak_top.png" />
-    <Image Include="textures\blocks\planks_oak.png" />
-    <Image Include="textures\blocks\sand.png" />
-    <Image Include="textures\blocks\stone.png" />
-    <Image Include="textures\blocks\stonebrick.png" />
-    <Image Include="textures\blocks\stone_slab_side.png" />
-    <Image Include="textures\blocks\stone_slab_top.png" />
+    <Image Include="textures\blocks\brick.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\coal_ore.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\coarse_dirt.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\cobblestone.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\diamond_ore.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\dirt.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\emerald_ore.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\grass_side.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\grass_top.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\leaves_big_oak.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\leaves_big_oak_opaque.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\log_big_oak.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\log_big_oak_top.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\planks_oak.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\sand.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\stone.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\stonebrick.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\stone_slab_side.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\stone_slab_top.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
     <Image Include="textures\blocks\tallgrass.png" />
-    <Image Include="textures\blocks\wool_colored_black.png" />
-    <Image Include="textures\blocks\wool_colored_blue.png" />
-    <Image Include="textures\blocks\wool_colored_brown.png" />
-    <Image Include="textures\blocks\wool_colored_cyan.png" />
-    <Image Include="textures\blocks\wool_colored_gray.png" />
-    <Image Include="textures\blocks\wool_colored_green.png" />
-    <Image Include="textures\blocks\wool_colored_light_blue.png" />
-    <Image Include="textures\blocks\wool_colored_lime.png" />
-    <Image Include="textures\blocks\wool_colored_magenta.png" />
-    <Image Include="textures\blocks\wool_colored_orange.png" />
-    <Image Include="textures\blocks\wool_colored_pink.png" />
-    <Image Include="textures\blocks\wool_colored_purple.png" />
-    <Image Include="textures\blocks\wool_colored_red.png" />
-    <Image Include="textures\blocks\wool_colored_silver.png" />
-    <Image Include="textures\blocks\wool_colored_white.png" />
-    <Image Include="textures\blocks\wool_colored_yellow.png" />
+    <Image Include="textures\blocks\wool_colored_black.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_blue.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_brown.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_cyan.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_gray.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_green.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_light_blue.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_lime.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_magenta.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_orange.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_pink.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_purple.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_red.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_silver.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_white.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
+    <Image Include="textures\blocks\wool_colored_yellow.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Image>
     <Image Include="tex\clouds.png" />
     <Image Include="tex\moon.png" />
     <Image Include="tex\moon_phases.png" />

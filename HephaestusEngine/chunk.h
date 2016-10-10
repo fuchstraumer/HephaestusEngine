@@ -36,6 +36,7 @@ public:
 	void buildTerrain();
 	void buildCaves();
 	void BuildTerrainCubeVer();
+	void compressChunk();
 	glm::vec3 chunkPos;
 	glm::ivec3 gridPos;
 	void createCube(int x, int y, int z, bool leftFace = true, bool rightFace = true, bool frontFace = true,
@@ -49,10 +50,11 @@ public:
 	bool chunkBuilt = false;
 	bool chunkRendered = false;
 	int activeCount;
+	string encodedBlocks;
 	
-	
-private:
 	Block*** chunkBlocks;
+private:
+	
 	GLuint VAO, VBO, EBO;
 };
 
