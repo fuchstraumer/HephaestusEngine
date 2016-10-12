@@ -50,7 +50,7 @@ int main(){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwWindowHint(GLFW_SAMPLES, 4);
+	//glfwWindowHint(GLFW_SAMPLES, 4);
 	
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
@@ -118,9 +118,7 @@ int main(){
 			newChunk->buildTerrain(gen);
 			newChunk->buildData();
 			newChunk->buildRender();
-			//newChunk->compressChunk();
 			chunkList.push_back(*newChunk);
-			newChunk->clearData();
 			if(chunkList.size() % 10 == 0)
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 			delete newChunk;
@@ -134,7 +132,7 @@ int main(){
 		ourShader.Use();
 		// Set frame time
 
-		GLfloat currentFrame = glfwGetTime();
+		GLfloat currentFrame = (GLfloat)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
@@ -230,16 +228,16 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (firstMouse)
 	{
-		lastX = xpos;
-		lastY = ypos;
+		lastX = (GLfloat)xpos;
+		lastY = (GLfloat)ypos;
 		firstMouse = false;
 	}
 
-	GLfloat xoffset = xpos - lastX;
-	GLfloat yoffset = lastY - ypos;  // Reversed since y-coordinates go from bottom to left
+	GLfloat xoffset = (GLfloat)xpos - lastX;
+	GLfloat yoffset = lastY - (GLfloat)ypos;  // Reversed since y-coordinates go from bottom to left
 
-	lastX = xpos;
-	lastY = ypos;
+	lastX = (GLfloat)xpos;
+	lastY = (GLfloat)ypos;
 
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
@@ -247,5 +245,5 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(yoffset);
+	camera.ProcessMouseScroll((GLfloat)yoffset);
 }

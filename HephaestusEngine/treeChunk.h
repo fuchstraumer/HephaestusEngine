@@ -32,7 +32,6 @@ public:
 	// Don't touch this.
 	void compressChunk();
 	// Really don't touch this.
-	void clearData();
 	std::vector<std::uint8_t> chunkBlocks;
 private:
 	// Called by buildData. Used to only make faces that need to be made.

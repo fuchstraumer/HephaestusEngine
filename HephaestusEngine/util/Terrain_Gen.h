@@ -68,7 +68,7 @@ static float triLerp(float x, float y, float z, float V000, float V100, float V0
 	return (s1 + s2 + s3 + s4 + s5 + s6 + s7 + s8);
 }
 // Basic linear interp
-static float lerp(double a, double b, double x) {
+static double lerp(double a, double b, double x) {
 	return a + x * (b - a);
 }
 
@@ -82,22 +82,22 @@ public:
 	int seed;
 
 	// Returns evaluation of base perlin function at x,y,z
-	float point(int x, int y, int z);
+	double point(int x, int y, int z);
 
 	// Fractal-Brownian-Motion perlin noise based terrain gen.
-	float FBM(int x, int y, int z, float frequency, int octaves, float lacunarity, float gain);
+	double FBM(int x, int y, int z, double frequency, int octaves, float lacunarity, float gain);
 
 	// Billowy perlin generator, takes the absolute value of the perlin gen and generally works at low gain and low freq
-	float Billow(int x, int y, int z, float frequency, int octaves, float lacunarity, float gain);
+	double Billow(int x, int y, int z, double frequency, int octaves, float lacunarity, float gain);
 
 	// Specialized instance of Billow gen with set parameters
-	float RollingHills(int x, int y, int z);
+	double RollingHills(int x, int y, int z);
 
 	// Generates ridges and other bizarre patterns. Currently broken.
-	float Ridged(int x, int y, int z, float freq, int octaves, float lac, float gain);
+	double Ridged(int x, int y, int z, double freq, int octaves, float lac, float gain);
 
 	// Basic example of octave summing with perlin noise in 3D. Deprecated.
-	float octPerlin(float x, float y, float z, int octaves, float lacun);
+	double octPerlin(float x, float y, float z, int octaves, float lacun);
 private:
 
 	// Hash table containing values to be used for gradient vectors
@@ -116,16 +116,16 @@ private:
 	}
 
 	// Main noise function: terrain is specialized usage of this.
-	float perlin(float x, float y, float z) {
-		glm::vec3 p(x, y, z);
+	double perlin(double x, double y, double z) {
+		glm::dvec3 p(x, y, z);
 		// Calculate integer coords and fractional component for weighting
 		// We have to normalize to be within the unit cube defined as part of the perlin function
-		glm::highp_ivec3 p0; p0.x = floorf(p.x);
-		p0.y = floorf(p.y); p0.z = floorf(p.z);
-		glm::highp_vec3 p1(p0.x + 1, p0.y + 1, p0.z + 1);
+		glm::ivec3 p0; p0.x = (int)floor(p.x);
+		p0.y = (int)floor(p.y); p0.z = (int)floor(p.z);
+		glm::dvec3 p1(p0.x + 1, p0.y + 1, p0.z + 1);
 
 		// Get ease curve values ease(u,v,w)
-		glm::highp_vec3 w;
+		glm::dvec3 w;
 		w.x = fade(p.x - p0.x);
 		w.y = fade(p.y - p0.y);
 		w.z = fade(p.z - p0.z);
@@ -141,7 +141,7 @@ private:
 		bab = hashTable[hashTable[hashTable[p0.x + 1] + p0.y] + p0.z + 1];
 		bbb = hashTable[hashTable[hashTable[p0.x + 1] + p0.y + 1] + p0.z + 1];
 		// Get gradient vectors
-		float x00, x10, x01, x11, y00, y01;
+		double x00, x10, x01, x11, y00, y01;
 		x00 = lerp(grad(aaa, p0.x, p0.y, p0.z), grad(baa, p1.x, p0.y, p0.z), w.x);
 		x10 = lerp(grad(aba, p0.x, p1.y, p0.z), grad(bba, p1.x, p1.y, p0.z), w.x);
 		x01 = lerp(grad(aab, p0.x, p0.y, p1.z), grad(bab, p1.x, p0.y, p1.z), w.x);
@@ -153,20 +153,21 @@ private:
 		return (lerp(y00, y01, w.z) + 1) / 2;
 	}
 	// Used to finely add detail to various noise functions, like simulating erosion or making dunes
-	float perlinDeriv(float x, float y, float z) {
-		glm::vec3 p(x, y, z);
-		// Calculate integer coords and fraction
-		glm::highp_ivec3 p0; p0.x = floorf(p.x);
-		p0.y = floorf(p.y); p0.z = floorf(p.z);
-		glm::highp_vec3 p1(p0.x + 1, p0.y + 1, p0.z + 1);
+	double perlinDeriv(double x, double y, double z) {
+		glm::dvec3 p(x, y, z);
+		// Calculate integer coords and fractional component for weighting
+		// We have to normalize to be within the unit cube defined as part of the perlin function
+		glm::ivec3 p0; p0.x = (int)floor(p.x);
+		p0.y = (int)floor(p.y); p0.z = (int)floor(p.z);
+		glm::dvec3 p1(p0.x + 1, p0.y + 1, p0.z + 1);
 
 		// Get ease curve values ease(u,v,w)
-		glm::highp_vec3 w;
+		glm::dvec3 w;
 		w.x = fade(p.x - p0.x);
 		w.y = fade(p.y - p0.y);
 		w.z = fade(p.z - p0.z);
 		// Get derivative ease curve values
-		glm::highp_vec3 dw;
+		glm::dvec3 dw;
 		dw.x = fadeDeriv(p.x - p0.x);
 		dw.y = fadeDeriv(p.y - p0.y);
 		dw.z = fadeDeriv(p.z - p0.z);
@@ -182,7 +183,7 @@ private:
 		bab = hashTable[hashTable[hashTable[p0.x + 1] + p0.y] + p0.z + 1];
 		bbb = hashTable[hashTable[hashTable[p0.x + 1] + p0.y + 1] + p0.z + 1];
 		// Get gradient vectors and interpolate using ease curve found earlier
-		float x00, x10, x01, x11, y00, y01;
+		double x00, x10, x01, x11, y00, y01;
 		x00 = lerp(grad(aaa, p0.x, p0.y, p0.z), grad(baa, p1.x, p0.y, p0.z), w.x);
 		x10 = lerp(grad(aba, p0.x, p1.y, p0.z), grad(bba, p1.x, p1.y, p0.z), w.x);
 		x01 = lerp(grad(aab, p0.x, p0.y, p1.z), grad(bab, p1.x, p0.y, p1.z), w.x);
@@ -202,8 +203,8 @@ private:
 };
 
 // This function is just an interface to the private perlin member function.
-inline float Terrain_Generator::point(int x, int y, int z) {
-	float temp = perlin(x, y, z);
+inline double Terrain_Generator::point(int x, int y, int z) {
+	double temp = perlin(x, y, z);
 	if (temp > CHUNK_SIZE_Z)
 		temp = CHUNK_SIZE_Z - 1;
 	if (temp <= 1)
@@ -218,16 +219,18 @@ inline float Terrain_Generator::point(int x, int y, int z) {
 // - Gain controls the overall gain of the function.
 // - Amplitude is set within the function body, in line with what generates the best terrain. The rest of the parameters are also set similarly.
 
-inline float Terrain_Generator::FBM(int x, int y, int z, float freq = 0.005, int octaves = 4, float lac = 2.0, float gain = 0.5) {
-	float sum = 0;
+inline double Terrain_Generator::FBM(int x, int y, int z, double freq = 0.005, int octaves = 4, float lac = 2.0, float gain = 0.5) {
+	double sum = 0;
 	float amplitude = 1.0;
+	glm::dvec3 f; f.x = x * freq;
+	f.y = y * freq; f.z = z * freq;
 	for (int i = 0; i < octaves; ++i) {
-		float n = perlin(x*freq, y*freq, z*freq);
+		double n = perlin(x*freq, y*freq, z*freq);
 		sum += n*amplitude;
 		freq *= lac;
 		amplitude *= gain;
 	}
-	float temp = (sum / amplitude) + 1;
+	double temp = (sum / amplitude) + 1;
 	//std::cerr << temp << std::endl;
 	temp = sqrt(temp*temp);
 	if (temp >= CHUNK_SIZE_Z - 4)
@@ -237,16 +240,16 @@ inline float Terrain_Generator::FBM(int x, int y, int z, float freq = 0.005, int
 	return temp;
 }
 
-inline float Terrain_Generator::Billow(int x, int y, int z, float freq = 0.01, int octaves = 3, float lac = 1.7, float gain = 0.6) {
-	float sum = 0;
+inline double Terrain_Generator::Billow(int x, int y, int z, double freq = 0.01, int octaves = 3, float lac = 1.7, float gain = 0.6) {
+	double sum = 0;
 	float amplitude = 1.0;
 	for (int i = 0; i < octaves; ++i) {
-		float n = abs(perlin(x*freq, y*freq, z*freq));
+		double n = abs(perlin(x*freq, y*freq, z*freq));
 		sum += n*amplitude;
 		freq *= lac;
 		amplitude *= gain;
 	}
-	float temp = (sum / amplitude) + 1;
+	double temp = (sum / amplitude) + 1;
 	if (temp >= CHUNK_SIZE_Z - 4)
 		temp = CHUNK_SIZE_Z - 4;
 	if (temp <= 1)
@@ -254,13 +257,13 @@ inline float Terrain_Generator::Billow(int x, int y, int z, float freq = 0.01, i
 	return temp;
 }
 
-inline float Terrain_Generator::RollingHills(int x, int y, int z) {
+inline double Terrain_Generator::RollingHills(int x, int y, int z) {
 	return Billow(x, y, z,0.009,3,1.6,0.6);
 }
 
-inline float Terrain_Generator::Ridged(int x, int y, int z, float freq = 0.02, int octaves = 3, float lac = 2.5, float gain = 0.8) {
-	float n = 1.0f - abs(perlin(x*freq, y*freq, z*freq));
-	float temp = n * 1.5;
+inline double Terrain_Generator::Ridged(int x, int y, int z, double freq = 0.02, int octaves = 3, float lac = 2.5, float gain = 0.8) {
+	double n = 1.0f - abs(perlin(x*freq, y*freq, z*freq));
+	double temp = n * 1.5;
 	if (temp >= CHUNK_SIZE_Z - 4)
 		temp = CHUNK_SIZE_Z - 4;
 	if (temp <= 1)
@@ -269,7 +272,7 @@ inline float Terrain_Generator::Ridged(int x, int y, int z, float freq = 0.02, i
 }
 
 // Deprecated
-inline float Terrain_Generator::octPerlin(float x, float y, float z, int octaves = 3, float lacun = 1.0) {
+inline double Terrain_Generator::octPerlin(float x, float y, float z, int octaves = 3, float lacun = 1.0) {
 	double total = 0;
 	double frequency = 1;
 	double amplitude = 1;
