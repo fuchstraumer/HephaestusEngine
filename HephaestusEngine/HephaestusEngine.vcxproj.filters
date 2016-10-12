@@ -37,12 +37,6 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="block.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -66,12 +60,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="block.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="util\lodepng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
