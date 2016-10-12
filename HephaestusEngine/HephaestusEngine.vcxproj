@@ -146,7 +146,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise-SIMD\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>"opengl32.lib";"C:\MSVC\OpenGL\lib\x64\glfw3dll.lib";"C:\MSVC\OpenGL\lib\x64\glew32s.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -155,10 +155,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="block.h" />
-    <ClInclude Include="chunk.h" />
-    <ClInclude Include="chunk_manager.h" />
+    <ClInclude Include="treeChunk.h" />
     <ClInclude Include="splay.h" />
-    <ClInclude Include="util\FastNoise.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="util\camera.h" />
@@ -169,15 +167,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="block.cpp" />
-    <ClCompile Include="chunk.cpp" />
-    <ClCompile Include="chunk_manager.cpp" />
-    <ClCompile Include="util\FastNoise.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    <ClCompile Include="HephaestusEngine.cpp" />
+    <ClCompile Include="treeChunk.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="HephaestusEngine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

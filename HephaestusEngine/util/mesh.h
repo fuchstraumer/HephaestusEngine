@@ -79,69 +79,67 @@ public:
 	glm::mediump_vec3 meshOffset;
 	
 };
-#endif // !MESH_H
 
-
-inline Mesh::Mesh(){
+inline Mesh::Mesh() {
 }
 
-inline Mesh::~Mesh(){
+inline Mesh::~Mesh() {
 }
 
 
-inline index_t Mesh::getNumVerts(void) const{
+inline index_t Mesh::getNumVerts(void) const {
 	return static_cast<index_t>(meshVerts.size());
 }
 
 
-inline const vertType& Mesh::getVertexData(index_t index){
+inline const vertType& Mesh::getVertexData(index_t index) {
 	return meshVerts[index];
 }
 
 
-inline const vertType* Mesh::getRawVertexData(void) const{
+inline const vertType* Mesh::getRawVertexData(void) const {
 	return meshVerts.data();
 }
 
 
-inline size_t Mesh::getNumIndices(void) const{
+inline size_t Mesh::getNumIndices(void) const {
 	return meshIndices.size();
 }
 
 
-inline index_t Mesh::getIndex(index_t index) const{
+inline index_t Mesh::getIndex(index_t index) const {
 	return meshIndices[index];
 }
 
 
-inline const index_t* Mesh::getRawIndexData(void) const{
+inline const index_t* Mesh::getRawIndexData(void) const {
 	return meshIndices.data();
 }
 
 
-inline const glm::mediump_vec3& Mesh::getoffset(void) const{
+inline const glm::mediump_vec3& Mesh::getoffset(void) const {
 	return meshOffset;
 }
 
 
-inline void Mesh::setOffset(const glm::mediump_vec3 & offset){
+inline void Mesh::setOffset(const glm::mediump_vec3 & offset) {
 	meshOffset = offset;
 }
 
 
-inline index_t Mesh::addVert(const vertType & vertex){
+inline index_t Mesh::addVert(const vertType & vertex) {
 	meshVerts.push_back(vertex);
 	return (GLsizei)meshVerts.size() - 1;
 }
 
 
-inline void Mesh::addTriangle(index_t index0, index_t index1, index_t index2){
+inline void Mesh::addTriangle(index_t index0, index_t index1, index_t index2) {
 	meshIndices.push_back(index0); meshIndices.push_back(index1); meshIndices.push_back(index2);
 }
 
 
 inline bool Mesh::clear(void) {
-	return((getNumVerts() == 0 ) || (getNumIndices() == 0));
+	return((getNumVerts() == 0) || (getNumIndices() == 0));
 }
 
 
@@ -149,7 +147,7 @@ inline bool Mesh::clear(void) {
 // https://bitbucket.org/volumesoffun/polyvox/src/9a71004b1e72d6cf92c41da8995e21b652e6b836/include/PolyVox/MarchingCubesSurfaceExtractor.inl
 inline glm::vec3 Mesh::decodePosition(const glm::mediump_ivec3& encodedPos) {
 	glm::vec3 result(encodedPos.x, encodedPos.y, encodedPos.z);
-	result *= (1.0f / 2560.0f); 
+	result *= (1.0f / 2560.0f);
 	return result; // decoded vertex
 }
 
@@ -223,9 +221,13 @@ inline glm::vec3 Mesh::decodeNormal(const uint16_t encodedNormal) {
 	// Normalise and return the result.
 	glm::vec3 v(vx, vy, vz);
 	v = glm::normalize(v); // normalization can always help compress - we can encode as byte 
-	// and specify to GL that things are as such
+						   // and specify to GL that things are as such
 	return v;
 }
+#endif // !MESH_H
+
+
+
 
 
 

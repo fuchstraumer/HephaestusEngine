@@ -13,7 +13,6 @@
 #include <iostream>
 #include <cmath>
 #include <string>
-#define _SECURE_SCL 0
 #define GLFW_DLL
 
 // Import glew for OpenGl pointers and handlers
@@ -25,6 +24,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/constants.hpp>
 
 #pragma warning(disable:4244)
 
@@ -36,20 +36,19 @@ static const bool SIMPLE_CULLING_GLOBAL = true;
 static const bool WIREFRAME_MODE = false;
 typedef unsigned int uint;
 
-// Texture const
-static const float TEXTURE_TILE_SIZE = 16.0f;
-static const float TEXTURE_TILE_COUNT = 16.0f;
+// Constant function to convert from spatial coordinates to interval tree vals
+#define treeXYZ(x,y,z) ((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z))
+#define treeXZ(x,z) ((x * CHUNK_SIZE) + z)
 
 // Terrain seed
 #include "util/Terrain_Gen.h"
-static int TERRAIN_SEED = 2495;
+
 
 // Platform issues
 
 // Block enums
-
 // Enum specifying the sort of blocks we can have in our world
-const enum blockType {
+static enum blockType {
 	AIR = -1,
 	GRASS,
 	SAND,

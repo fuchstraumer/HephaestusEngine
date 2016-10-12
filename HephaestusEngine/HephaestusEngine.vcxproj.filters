@@ -43,12 +43,6 @@
     <ClInclude Include="block.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="chunk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="chunk_manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -64,10 +58,10 @@
     <ClInclude Include="util\Terrain_Gen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util\FastNoise.h">
-      <Filter>Dependencies</Filter>
-    </ClInclude>
     <ClInclude Include="splay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="treeChunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -75,23 +69,17 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HephaestusEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="chunk.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="block.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="chunk_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="util\lodepng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="util\FastNoise.cpp">
-      <Filter>Dependencies</Filter>
+    <ClCompile Include="treeChunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HephaestusEngine.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

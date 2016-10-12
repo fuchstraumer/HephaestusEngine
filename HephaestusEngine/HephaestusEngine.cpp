@@ -4,28 +4,16 @@
 #include "stdafx.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <time.h>
 #include <math.h>
+
 #define LODEPNG_COMPILE_CPP
 #include "util/lodepng.h"
 #include "util/shader.h"
 #include "util/camera.h"
-#include "chunk_manager.h"
-using namespace lodepng;
-static GLuint WIDTH = 1880, HEIGHT = 1100;
+#include "treeChunk.h"
+#include <ctime>
 
-void load_png_texture(const char *file_name) {
-	unsigned int error;
-	unsigned char *data;
-	unsigned int width, height;
-	error = lodepng_decode32_file(&data, &width, &height, file_name);
-	if (error) {
-		fprintf(stderr, "error %u: %s\n", error, lodepng_error_text(error));
-	}
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-		GL_UNSIGNED_BYTE, data);
-	free(data);
-}
+static GLuint WIDTH = 1440, HEIGHT = 900;
 
 // Function declarations
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -45,20 +33,16 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main(){
-	
-	
-	int seed;
+	int t_seed;
 	std::cout << "Enter an integer to use as the terrain gen seed value: " << std::endl;
-	std::cin >> TERRAIN_SEED;
+	std::cin >> t_seed;
 	int chunks;
 	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
 	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
-	
-	
-	
-	
-
+	Terrain_Generator gen(t_seed);
+	if (chunks > 64)
+		chunks = 64;
 	// Init GLFW
 	glfwInit();
 	// Set all the required options for GLFW
@@ -69,7 +53,7 @@ int main(){
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	
 	// Create a GLFWwindow object that we can use for GLFW's functions
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "LearnOpenGL", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Set the required callback functions
@@ -126,37 +110,23 @@ int main(){
 	// Free texture data
 	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);
 	// Create chunk manager
-	std::ofstream f; f.open("chunkData.txt"); 
-	std::vector<Chunk> chunkList; chunkList.reserve(chunks*chunks);
+	std::vector<treeChunk> chunkList; chunkList.reserve(chunks*chunks);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
-			Chunk* newChunk = new Chunk(grid);
-			newChunk->buildTerrain();
+			treeChunk* newChunk = new treeChunk(grid);
+			newChunk->buildTerrain(gen);
 			newChunk->buildData();
 			newChunk->buildRender();
-			newChunk->compressChunk();
-			f.write(newChunk->encodedBlocks.c_str(), newChunk->encodedBlocks.length());
+			//newChunk->compressChunk();
 			chunkList.push_back(*newChunk);
-			std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
-			if (chunkList.size() == 128)
-				std::cerr << "Oh my god this is so slow" << std::endl;
-			if (chunkList.size()  == 512)
-				std::cerr << "Fuck you for making me generate this many chunks. I consign all of your RAM to the void" << std::endl;
-			if (chunkList.size() == 1000)
-				std::cerr << "You've made a terrible mistake" << std::endl;
-			f.write("\n", 2);
+			newChunk->clearData();
+			if(chunkList.size() % 10 == 0)
+				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
+			delete newChunk;
 		}
 	}
-	f.close();
-	
-	std::cerr << "Size of chunk data uncompressed: " << (sizeof(chunkList)) / 1000 << "kb" << std::endl;
-	std::cerr << "Size of compressed data : " << chunkList[0].encodedBlocks.capacity() / 1000 << "kb" << std::endl;
-	
-	
-	
-	
-	glm::vec3 lightPos(320.0f, 200.0f, 320.0f);
+	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
 
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
@@ -195,7 +165,7 @@ int main(){
 		glm::mat4 view;
 		glm::mat4 projection;
 		view = camera.GetViewMatrix();
-		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 700.0f);
+		projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 1000.0f);
 		GLint modelLoc = glGetUniformLocation(ourShader.Program, "model");
 		GLint viewLoc = glGetUniformLocation(ourShader.Program, "view");
 		GLint projLoc = glGetUniformLocation(ourShader.Program, "projection");
@@ -214,6 +184,10 @@ int main(){
 
 	} 
 	//chunk0.~Chunk();
+	for (auto chunk : chunkList) {
+		chunk.~treeChunk();
+	}
+	chunkList.clear();
 	glfwTerminate();
     return 0;
 }
@@ -247,9 +221,9 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			keys[key] = false;
 	}
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
-		camera.MovementSpeed += 15;
+		camera.MovementSpeed += 20;
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
-		camera.MovementSpeed -= 15;
+		camera.MovementSpeed -= 20;
 }
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)

@@ -5,8 +5,8 @@
 #include "stdafx.h"
 #include "block.h"
 #include "util/mesh.h"
-#include "util/Terrain_Gen.h"
 #include "util/shader.h"
+
 /*
 	Type: Class Object: Chunk -> holds subclass Block
 	Data: Blocks[x][y][z] (pointer array), bool Active
@@ -33,9 +33,8 @@ class Chunk {
 public:
 	Chunk(glm::ivec3 gridpos);
 	~Chunk();
-	void buildTerrain();
-	void buildCaves();
-	void BuildTerrainCubeVer();
+	void buildTerrain(Terrain_Generator& gen);
+	void buildCaves(Terrain_Generator& gen);
 	void compressChunk();
 	glm::vec3 chunkPos;
 	glm::ivec3 gridPos;
@@ -44,14 +43,12 @@ public:
 	void createGrass(int x, int y, int z, blockType type = blockType::TALL_GRASS);
 	void buildRender();
 	void buildData();
-	void buildLighting();
 	void chunkRender(Shader shader);
 	Mesh mesh;
 	bool chunkBuilt = false;
 	bool chunkRendered = false;
 	int activeCount;
-	string encodedBlocks;
-	
+	std::vector<std::string> encodedBlocks;
 	Block*** chunkBlocks;
 private:
 	
