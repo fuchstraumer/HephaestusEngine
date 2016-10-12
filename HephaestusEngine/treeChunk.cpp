@@ -34,11 +34,6 @@ treeChunk::treeChunk(glm::ivec3 gridpos){
 	this->chunkBlocks.assign(this->chunkBlocks.capacity(),blockType::AIR);
 }
 
-treeChunk::~treeChunk(){
-	this->chunkBlocks.clear();
-	glDeleteBuffers(1, &this->VBO); glDeleteBuffers(1, &this->EBO);
-	glDeleteVertexArrays(1, &this->VAO);
-}
 
 void treeChunk::buildTerrain(Terrain_Generator& gen) {
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
@@ -288,16 +283,10 @@ void treeChunk::compressChunk(){
 				encodedBlocks.push_back(chr);
 			}
 			encodedBlocks.shrink_to_fit();
-			buffer.clear(); oss.clear(); end.clear();
 		}
 	}
 	this->chunkBlocks.clear();
 	this->chunkBlocks.resize(encodedBlocks.size());
 	this->chunkBlocks.push_back(*encodedBlocks.data());
-	encodedBlocks.clear();
 }
 
-void treeChunk::clearData() {
-	// The render is complete, clear the data for now.
-	this->chunkBlocks.clear();
-}

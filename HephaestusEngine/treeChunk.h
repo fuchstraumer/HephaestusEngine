@@ -18,7 +18,6 @@ public:
 	// This initializer takes in the normalized integer chunk-space world coords and
 	// calculates the actual world coords, then builds the initial list of blocks
 	treeChunk(glm::ivec3 gridpos);
-	~treeChunk();
 	// Takes pointer to global Terrain_generator, and builds the terrain
 	void buildTerrain(Terrain_Generator& gen);
 	// Chunkpos is the worldspace coords, gridPos is the chunk-space coords
