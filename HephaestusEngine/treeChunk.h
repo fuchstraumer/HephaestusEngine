@@ -5,6 +5,7 @@
 #include "stdafx.h"
 #include "util/shader.h"
 #include "util/mesh.h"
+#include <stdint.h>
 /*
 	Type: Class Object: Chunk -> holds subclass Block
 	Data: Blocks, meshData, position values
@@ -32,7 +33,7 @@ public:
 	void compressChunk();
 	// Really don't touch this.
 	void clearData();
-	std::vector<char> chunkBlocks;
+	std::vector<std::uint8_t> chunkBlocks;
 private:
 	// Called by buildData. Used to only make faces that need to be made.
 	void createCube(int x, int y, int z, bool leftFace, bool rightFace, bool frontFace,
