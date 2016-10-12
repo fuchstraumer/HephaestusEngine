@@ -37,8 +37,13 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #if defined(_MSC_VER) && (_MSC_VER >= 1310) /*Visual Studio: A few warning types are not desired here.*/
 #pragma warning( disable : 4244 ) /*implicit conversions: not warned by gcc -Wall -Wextra and requires too much casts*/
 #pragma warning( disable : 4996 ) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
+
 #endif /*_MSC_VER */
 
+#ifdef _WIN64
+#pragma warning( disable : 4334 ) // 64 bit shifts are implicitly converted and intended in x64 build, disable warning
+#pragma warning( disable : 4267 ) // unsigned int is not explicitly defined as a size_t, x64 causes flag issues. Harmless. 
+#endif
 const char* LODEPNG_VERSION_STRING = "20160501";
 
 /*
@@ -1453,6 +1458,7 @@ static unsigned countZeros(const unsigned char* data, size_t size, size_t pos)
 }
 
 /*wpos = pos & (windowsize - 1)*/
+
 static void updateHashChain(Hash* hash, size_t wpos, unsigned hashval, unsigned short numzeros)
 {
 	hash->val[wpos] = (int)hashval;
@@ -6219,6 +6225,11 @@ namespace lodepng
 		if (lodepng_get_raw_size_lct(w, h, colortype, bitdepth) > in.size()) return 84;
 		return encode(filename, in.empty() ? 0 : &in[0], w, h, colortype, bitdepth);
 	}
+
+#ifdef _WIN64 // re-enable warnings caused by x64 compile
+#pragma warning ( 1 : 4267)
+#pragma warning ( 1 : 4334)
+#endif // _WIN64
 #endif /* LODEPNG_COMPILE_DISK */
 #endif /* LODEPNG_COMPILE_ENCODER */
 #endif /* LODEPNG_COMPILE_PNG */

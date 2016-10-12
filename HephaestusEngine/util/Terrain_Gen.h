@@ -20,6 +20,9 @@ using namespace std;
 	https://github.com/Auburns/FastNoise/blob/master/FastNoise.cpp 
 */
 
+// Perlin normaliziation value
+static double PERLIN_NORM = 0.75;
+
 // Finds the dot product of x,y,z and the gradient vector "hash". 
 // Source: http://riven8192.blogspot.com/2010/08/calculate-perlinnoise-twice-as-fast.html //
 static double grad(int hash, double x, double y, double z)
@@ -99,7 +102,8 @@ public:
 	// Basic example of octave summing with perlin noise in 3D. Deprecated.
 	double octPerlin(float x, float y, float z, int octaves, float lacun);
 private:
-
+	// Value to use for normalization (1 / sqrt(norm). Approxiamately 0.75 for 3D perlin
+	
 	// Hash table containing values to be used for gradient vectors
 	unsigned char hashTable[512];
 
@@ -150,7 +154,7 @@ private:
 		y00 = lerp(x00, x10, w.y);
 		y01 = lerp(x01, x11, w.y);
 		// Final step, trilinear interpolation (narrowing subrectangles)
-		return (lerp(y00, y01, w.z) + 1) / 2;
+		return (lerp(y00, y01, w.z) + 1) * (1/sqrt(PERLIN_NORM));
 	}
 	// Used to finely add detail to various noise functions, like simulating erosion or making dunes
 	double perlinDeriv(double x, double y, double z) {
@@ -258,7 +262,7 @@ inline double Terrain_Generator::Billow(int x, int y, int z, double freq = 0.01,
 }
 
 inline double Terrain_Generator::RollingHills(int x, int y, int z) {
-	return Billow(x, y, z,0.009,3,1.6,0.6);
+	return Billow(x, y, z,0.009,3,1.6f,0.6f);
 }
 
 inline double Terrain_Generator::Ridged(int x, int y, int z, double freq = 0.02, int octaves = 3, float lac = 2.5, float gain = 0.8) {

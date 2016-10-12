@@ -3,8 +3,8 @@
 
 
 // Enum specifying the sort of blocks we can have in our world
-static enum blockType : std::uint8_t{
-	AIR = -1,
+enum blockType : std::uint8_t{
+	AIR = 0,
 	GRASS,
 	SAND,
 	DIRT,
