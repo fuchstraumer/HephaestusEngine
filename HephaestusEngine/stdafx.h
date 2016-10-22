@@ -28,7 +28,7 @@ static const bool WIREFRAME_MODE = false;
 typedef unsigned int uint;
 
 // Client settings
-static const int MULTISAMPLE_AMOUNT = 4;
+static const int MULTISAMPLE_AMOUNT = 8;
 static const int VIEW_DISTANCE = 24;
 static const bool DAY_NIGHT_CYCLE = true;
 

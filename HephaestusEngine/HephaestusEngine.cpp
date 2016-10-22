@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <math.h>
-
+#include <sstream>
 #define LODEPNG_COMPILE_CPP
 #include "util/lodepng.h"
 #include "util/shader.h"
@@ -34,7 +34,6 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main(){
-	time_t clock;
 	std::string stringSeed;
 	std::cout << "Enter a string of characters to use as the terrain gen seed value: " << std::endl;
 	std::cin >> stringSeed;
@@ -42,7 +41,16 @@ int main(){
 	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
 	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
-	int intSeed = std::stoi(stringSeed);
+	std::cout << "What terrain generator would you like to use?" << std::endl;
+	std::cout << "Options: 0 = FBM, 1 = Billow, 2 = RidgedMulti, 3 = SwissNoise" << std::endl;
+	int terrainType; std::cin >> terrainType;
+	if (terrainType < 0 || terrainType > 3) {
+		std::cout << "Erronenous terrain generator value chosen. Defaulting to FBM..." << std::endl;
+		terrainType = 0;
+	}
+	
+	int intSeed;
+	std::stringstream(stringSeed) >> intSeed;
 	// Build and seed our terrain generator
 	TerrainGenerator gen(intSeed);
 	if (chunks > 64)
@@ -129,7 +137,7 @@ int main(){
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			TreeChunk* NewChunk = new TreeChunk(grid);
-			NewChunk->BuildTerrain(gen);
+			NewChunk->BuildTerrain(gen, terrainType);
 			NewChunk->BuildData();
 			NewChunk->BuildRender();
 			NewChunk->encodeChunk();
@@ -146,8 +154,6 @@ int main(){
 
 	// Set the global light position
 	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
-	clock = std::clock() - clock;
-	std::cerr << "Time needed to build chunks: " << clock / CLOCKS_PER_SEC << " seconds." << std::endl;
 
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {

@@ -17,6 +17,7 @@
 	http://www.iquilezles.org/www/articles/morenoise/morenoise.htm
 	http://stackoverflow.com/questions/4297024/3d-perlin-noise-analytical-derivative
 	https://github.com/Auburns/FastNoise/blob/master/FastNoise.cpp 
+	http://webstaff.itn.liu.se/~stegu/simplexnoise/DSOnoises.html
 */
 
 // Perlin normaliziation value
@@ -78,6 +79,9 @@ public:
 	inline double PerlinRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
 	inline double SimplexRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
 	inline double SimplexRidged(int x, int y, double freq, int octaves, float lac, float gain);
+	
+	// "Swiss" noise using derivatives to simulate erosion and create better mountains
+	inline double SimplexSwiss(int x, int y, double freq, int octaves, float lac, float gain);
 
 	// ridged optimized for nice caves
 	double SimplexCaves(int x, int y);
@@ -232,11 +236,13 @@ private:
 	}
 
 	// Simplex noise gens
-	inline double simplex(double x, double y) {
+	// return the derivatives at x,y if non-null pointers dx,dy are supplied
+	inline double simplex(double x, double y, double* dx, double* dy) {
 		#define F2 0.366025403 // F2 = 0.5*(sqrt(3.0)-1.0)
 		#define G2 0.211324865 // G2 = (3.0-Math.sqrt(3.0))/6.0
 
 		double n0, n1, n2; // Noise contributions from the three corners
+		double temp0, temp1, temp2;
 
 						   // Skew the input space to determine which simplex cell we're in
 		double s = (x + y)*F2; // Hairy factor for 2D
@@ -292,9 +298,39 @@ private:
 			n2 = t2 * t2 * sGrad(hashTable[ii + 1 + hashTable[jj + 1]], x2, y2);
 		}
 
+		if ((nullptr != dx) && (nullptr != dy))
+		{
+			/*  A straight, unoptimised calculation would be like:
+			*    *dnoise_dx = -8.0f * t0 * t0 * x0 * ( gx0 * x0 + gy0 * y0 ) + t0^4 * gx0;
+			*    *dnoise_dy = -8.0f * t0 * t0 * y0 * ( gx0 * x0 + gy0 * y0 ) + t0^4 * gy0;
+			*    *dnoise_dx += -8.0f * t1 * t1 * x1 * ( gx1 * x1 + gy1 * y1 ) + t1^4 * gx1;
+			*    *dnoise_dy += -8.0f * t1 * t1 * y1 * ( gx1 * x1 + gy1 * y1 ) + t1^4 * gy1;
+			*    *dnoise_dx += -8.0f * t2 * t2 * x2 * ( gx2 * x2 + gy2 * y2 ) + t2^4 * gx2;
+			*    *dnoise_dy += -8.0f * t2 * t2 * y2 * ( gx2 * x2 + gy2 * y2 ) + (t2^4) * gy2;
+			*/
+			double t40 = t0*t0;
+			double t41 = t1*t1;
+			double t42 = t2*t2;
+			temp0 = t0 * t0 * (x0* x0 + y0 * y0);
+			*dx = temp0 * x0;
+			*dy = temp0 * y0;
+			temp1 = t1 * t1 * (x1 * x1 + y1 * y1);
+			*dx += temp1 * x1;
+			*dy += temp1 * y1;
+			temp2 = t2 * t2 * (x2* x2 + y2 * y2);
+			*dx += temp2 * x2;
+			*dy += temp2 * y2;
+			*dx *= -8.0f;
+			*dy *= -8.0f;
+			*dx += t40 * x0 + t41 * x1 + t42 * x2;
+			*dy += t40 * y0 + t41 * y1 + t42 * y2;
+			*dx *= 40.0f; /* Scale derivative to match the noise scaling */
+			*dy *= 40.0f;
+		}
 		// Add contributions from each corner to get the final noise value.
 		// The result is scaled to return values in the interval [-1,1].
 		return 40.0 * (n0 + n1 + n2); // TODO: The scale factor is preliminary!
+
 	}
 	inline double simplex(double x, double y, double z) {
 
@@ -484,7 +520,7 @@ inline double TerrainGenerator::octPerlin(float x, float y, float z, int octaves
 
 // SIMPLEX NOISE FUNCTIONS FOLLOW
 // SOURCE FROM http://staffwww.itn.liu.se/~stegu/aqsis/aqsis-newnoise/
-static double FBM_FREQ = 0.0002; static int FBM_OCTAVES = 6;
+static double FBM_FREQ = 0.0002; static int FBM_OCTAVES = 5;
 static float FBM_LACUN = 2.0; static float FBM_GAIN = 1.5;
 
 inline double TerrainGenerator::SimplexFBM(int x, int y, int z, double freq = FBM_FREQ, int octaves = FBM_OCTAVES, float lac = FBM_LACUN, float gain = FBM_GAIN) {
@@ -514,7 +550,7 @@ inline double TerrainGenerator::SimplexFBM(int x, int y, double freq = FBM_FREQ,
 	glm::dvec2 f; f.x = x * freq;
 	f.y = y * freq;
 	for (int i = 0; i < octaves; ++i) {
-		double n = simplex(x*freq, y*freq);
+		double n = simplex(x*freq, y*freq, nullptr, nullptr);
 		sum += n*amplitude;
 		freq *= lac;
 		amplitude *= gain;
@@ -529,8 +565,8 @@ inline double TerrainGenerator::SimplexFBM(int x, int y, double freq = FBM_FREQ,
 	return temp;
 }
 
-static double BILLOW_FREQ = 0.0002; static int BILLOW_OCTAVES = 6;
-static float BILLOW_LACUN = 2.0; static float BILLOW_GAIN = 1.5;
+static double BILLOW_FREQ = 0.0018; static int BILLOW_OCTAVES = 4;
+static float BILLOW_LACUN = 2.50f; static float BILLOW_GAIN = 1.20f;
 
 inline double TerrainGenerator::SimplexBillow(int x, int y, int z, double freq = BILLOW_FREQ, int octaves = BILLOW_OCTAVES, float lac = BILLOW_LACUN, float gain = BILLOW_GAIN) {
 	double sum = 0;
@@ -555,12 +591,14 @@ inline double TerrainGenerator::SimplexBillow(int x, int y, double freq = BILLOW
 	glm::dvec2 f;
 	f.x = x * freq; f.y = y * freq;
 	for (int i = 0; i < octaves; ++i) {
-		double n = abs(simplex(f.x, f.y));
+		double n = abs(simplex(f.x, f.y, nullptr, nullptr));
 		sum += n*amplitude;
 		freq *= lac;
 		amplitude *= gain;
 	}
 	double temp = (sum / amplitude) + 1;
+	//std::cerr << temp << std::endl;
+	temp = 32 * temp;
 	if (temp >= CHUNK_SIZE_Z - 4)
 		temp = CHUNK_SIZE_Z - 4;
 	if (temp <= 1)
@@ -568,8 +606,8 @@ inline double TerrainGenerator::SimplexBillow(int x, int y, double freq = BILLOW
 	return temp;
 }
 
-static double RIDGED_FREQ = 0.0001; static int RIDGED_OCTAVES = 4;
-static float RIDGED_LACUN = 2.5; static float RIDGED_GAIN = 2.0;
+static double RIDGED_FREQ = 0.00008; static int RIDGED_OCTAVES = 6;
+static float RIDGED_LACUN = 2.50f; static float RIDGED_GAIN = 2.20f;
 
 inline double TerrainGenerator::SimplexRidged(int x, int y, int z, double freq = RIDGED_FREQ, int octaves = RIDGED_OCTAVES, 
 	float lac = RIDGED_LACUN, float gain = RIDGED_GAIN) {
@@ -595,11 +633,12 @@ inline double TerrainGenerator::SimplexRidged(int x, int y, int z, double freq =
 inline double TerrainGenerator::SimplexRidged(int x, int y, double freq = RIDGED_FREQ, int octaves = RIDGED_OCTAVES,
 	float lac = RIDGED_LACUN, float gain = RIDGED_GAIN) {
 	double sum = 0;
-	float amplitude = 1.0;
-	glm::dvec2 f; f.x = x * freq;
+	float amplitude = 1.0f;
+	glm::dvec2 f; 
+	f.x = x * freq;
 	f.y = y * freq;
 	for (int i = 0; i < octaves; ++i) {
-		double n = 1.0f - abs(simplex(x*freq, y*freq));
+		double n = 1.0f - abs(simplex(x*freq, y*freq, nullptr, nullptr));
 		sum += n*amplitude;
 		freq *= lac;
 		amplitude *= gain;
@@ -615,6 +654,38 @@ inline double TerrainGenerator::SimplexRidged(int x, int y, double freq = RIDGED
 
 inline double TerrainGenerator::SimplexCaves(int x, int y) {
 	return SimplexRidged(x,y, 0.0001,5,2.5,1);
+}
+
+// The following functions come from:
+// http://www.decarpentier.nl/scape-procedural-extensions
+static double SWISS_FREQ = 0.00008; static double SWISS_OCTAVES = 5; // This is a slow terrain function because of high octaves
+static float SWISS_LACUNARITY = 3.0f; static float SWISS_GAIN = 2.0f;
+
+inline double TerrainGenerator::SimplexSwiss(int x, int y, double freq = SWISS_FREQ, int octaves = SWISS_OCTAVES,
+	float lac = SWISS_LACUNARITY, float gain = SWISS_GAIN) {
+	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
+	double sum = 0; double amplitude = 1.0;
+	glm::dvec2 derivSum(0.0, 0.0);
+	double *dx = new double;
+	double *dy = new double;
+	double warp = 0.15;
+	for (int i = 0; i < octaves; ++i) {
+		double n = simplex(f.x + warp*derivSum.x, f.y + warp*derivSum.y, dx, dy);
+		sum += amplitude * (1 - abs(n));
+		derivSum += glm::dvec2(*dx*amplitude*(-n), *dy*amplitude*(-n));
+		freq *= lac;
+		amplitude *= gain;
+	}
+	double temp = (sum / amplitude);
+	temp = 32 * temp;
+	if (temp >= CHUNK_SIZE_Z - 4) {
+		temp = CHUNK_SIZE_Z - 4;
+	}
+	if (temp <= 1) {
+		temp = 1;
+	}
+	delete dx, dy;
+	return temp;
 }
 
 #endif

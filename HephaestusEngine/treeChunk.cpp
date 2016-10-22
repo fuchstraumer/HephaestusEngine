@@ -110,26 +110,59 @@ TreeChunk::~TreeChunk() {
 	glDeleteBuffers(1, &this->VBO); glDeleteBuffers(1, &this->EBO);
 	glDeleteVertexArrays(1, &this->VAO);
 }
+
+
 // Build this chunk's terrain. The reference to the terrain generator insures we only have one global instance 
 // of this class. The function used to randomize it's seed value is a CPU killer, so let's try to only do that once
 // We also get to access this TerrainGenerator's RNG, instead of having to build and seed a new one. yay!
-void TreeChunk::BuildTerrain(TerrainGenerator& gen) {
+void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 		for (int z = 0; z < CHUNK_SIZE; ++z) {
 			// Set all blocks at y = 0 to be bedrock and form the base layer of the world
 			this->ChunkBlocks[treeXYZ(x, 0, z)] = blockType::BEDROCK;
 			// The SimplexFBM function here is used like a heightmap. The value returned ranges within the bounds of the Y size
-			for (int y = 1; y < gen.SimplexFBM(this->ChunkPos.x + x,this->ChunkPos.z + z); ++y) {
-				// Since we start at y = 1 and iterate up the column progressively
-				// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-				// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-				this->ChunkBlocks[treeXYZ(x,y,z)] = blockType::STONE;
-				this->ChunkBlocks[treeXYZ(x,y+3,z)] = blockType::GRASS;
-				this->ChunkBlocks[treeXYZ(x,y+2,z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x,y+1,z)] = blockType::DIRT;
+			if (terrainType == 0) {
+				for (int y = 1; y < gen.SimplexFBM(this->ChunkPos.x + x, this->ChunkPos.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+				}
+			}
+			if (terrainType == 1) {
+				for (int y = 1; y < gen.SimplexBillow(this->ChunkPos.x + x, this->ChunkPos.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+				}
+			}
+			if (terrainType == 2) {
+				for (int y = 1; y < gen.SimplexRidged(this->ChunkPos.x + x, this->ChunkPos.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+				}
+			}
+			if (terrainType == 3) {
+				for (int y = 1; y < gen.SimplexSwiss(this->ChunkPos.x + x, this->ChunkPos.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+				}
 			}
 		}
 	}
-	//this->BuildCaves(gen);
 }
 
 inline void TreeChunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
@@ -367,17 +400,16 @@ void TreeChunk::encodeChunk(){
 	// Set c = -1 so that we won't ever have a block be equal to c (initially)
 	uint8_t c = -1; uint8_t num = 0;
 	std::vector<uint8_t> encodedBlocks;
-	for (std::vector<uint8_t>::iterator blocks = this->ChunkBlocks.begin(); 
-		blocks != this->ChunkBlocks.end(); ++blocks) {
+	for (auto block: this->ChunkBlocks) {
 		// If the current block is different than the last, we've reached the end of a run
-		if (*blocks != c) {
+		if (block != c) {
 			// No need to add the num if we only had one of the last type
 			if (num > 0) {
 				encodedBlocks.push_back(num);
 			}
 			// Reset c, push back the new blocktype
-			c = *blocks;
-			encodedBlocks.push_back(*blocks);
+			c = block;
+			encodedBlocks.push_back(block);
 		}
 		// If the current block is the same as the last, we have a run
 		else {
@@ -388,8 +420,8 @@ void TreeChunk::encodeChunk(){
 			// if num = 255, we effectively have reset like we found a new blocktype
 			else {
 				encodedBlocks.push_back(num);
-				encodedBlocks.push_back(*blocks);
-				c = *blocks;
+				encodedBlocks.push_back(block);
+				c = block;
 				num = 0;
 			}
 		}

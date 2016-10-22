@@ -21,7 +21,7 @@ public:
 	TreeChunk(glm::ivec3 gridpos);
 	~TreeChunk();
 	// Takes pointer to global Terrain_generator, and builds the terrain
-	void BuildTerrain(TerrainGenerator& gen);
+	void BuildTerrain(TerrainGenerator& gen, int terrainType);
 	// Chunkpos is the worldspace coords, gridPos is the chunk-space coords
 	glm::vec3 ChunkPos;
 	glm::ivec3 GridPos;
