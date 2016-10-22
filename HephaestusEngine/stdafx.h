@@ -27,11 +27,16 @@ static const bool SIMPLE_CULLING_GLOBAL = true;
 static const bool WIREFRAME_MODE = false;
 typedef unsigned int uint;
 
+// Client settings
+static const int MULTISAMPLE_AMOUNT = 4;
+static const int VIEW_DISTANCE = 24;
+static const bool DAY_NIGHT_CYCLE = true;
+
 // Constant function to convert from spatial coordinates to interval tree vals
 #define treeXYZ(x,y,z) ((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z))
 #define treeXZ(x,z) ((x * CHUNK_SIZE) + z)
 
 // Terrain gen
-#include "util/Terrain_Gen.h"
+#include "util/TerrainGen.h"
 
 // TODO: reference additional headers your program requires here

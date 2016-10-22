@@ -254,3 +254,5 @@ Fast_Terrain/Fast_Terrain.vcxproj.filters
 Fast_Terrain/ReadMe.txt
 Fast_Terrain/stdafx.cpp
 Fast_Terrain/stdafx.h
+HephaestusEngine/chunkdata.txt
+HephaestusEngine/deprecated/testrle.txt

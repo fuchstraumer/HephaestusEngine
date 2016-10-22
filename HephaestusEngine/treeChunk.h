@@ -14,34 +14,34 @@
 
 */
 
-class treeChunk {
+class TreeChunk {
 public:
 	// This initializer takes in the normalized integer chunk-space world coords and
 	// calculates the actual world coords, then builds the initial list of blocks
-	treeChunk(glm::ivec3 gridpos);
+	TreeChunk(glm::ivec3 gridpos);
+	~TreeChunk();
 	// Takes pointer to global Terrain_generator, and builds the terrain
-	void buildTerrain(Terrain_Generator& gen);
+	void BuildTerrain(TerrainGenerator& gen);
 	// Chunkpos is the worldspace coords, gridPos is the chunk-space coords
-	glm::vec3 chunkPos;
-	glm::ivec3 gridPos;
+	glm::vec3 ChunkPos;
+	glm::ivec3 GridPos;
 	// Builds the actual render objects, like the VAO+VBO+EBO
-	void buildRender();
+	void BuildRender();
 	// Builds the mesh
-	void buildData();
-	void chunkRender(Shader shader);
+	void BuildData();
+	void ChunkRender(Shader shader);
 	// Don't touch this.
-	void compressChunk();
+	void encodeChunk();
 	// Really don't touch this.
-	std::vector<std::uint8_t> chunkBlocks;
+	std::vector<unsigned char> ChunkBlocks;
+	bool ChunkBuilt = false;
+	bool ChunkRendered = false;
 private:
+	GLuint VAO, VBO, EBO;
+	Mesh chunkMesh;
 	// Called by buildData. Used to only make faces that need to be made.
 	void createCube(int x, int y, int z, bool leftFace, bool rightFace, bool frontFace,
 		bool backFace, bool bottomFace, bool topFace, int type);
-	// Called by terrain gen.
-	void buildCaves();
-	// Prototype of new block type.
-	GLuint VAO, VBO, EBO;
-	Mesh chunkMesh;
 };
 
 #endif // !TREECHUNK_H

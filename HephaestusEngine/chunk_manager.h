@@ -1,7 +1,7 @@
 #ifndef CHUNK_MANAGER_H
 #define CHUNK_MANAGER_H
 #include "stdafx.h"
-#include "chunk.h"
+#include "treeChunk.h"
 #include <glm/glm.hpp>
 #include "util/camera.h"
 
@@ -18,22 +18,19 @@ public:
 
 	void createChunk(int x, int y, int z );
 
-
 	glm::vec3 cameraPos;
-	glm::mat4 cameraView;
-	std::vector<Chunk> chunkList;
-	std::vector<Chunk> chunkBuildList;
-	std::vector<Chunk> chunkLoadList;
-	std::vector<Chunk> chunkUpdateList;
-	std::vector<Chunk> chunkRenderList;
-	std::vector<Chunk> chunkVisList;
+	std::vector<TreeChunk> chunkList;
+	std::vector<TreeChunk> chunkBuildList;
+	std::vector<TreeChunk> chunkLoadList;
+	std::vector<TreeChunk> chunkUpdateList;
+	std::vector<TreeChunk> chunkRenderList;
+	std::vector<TreeChunk> chunkVisList;
 
 	void UpdateAsyncChunkManager();
 	void UpdateLoadList();
 	void UpdateRebuildList();
 	void UpdateSetupList();
 	void UpdateVisibilityList(glm::vec3 camerapos);
-	void UpdateFrustrumList(glm::mat4 cameraview);
 	void UpdateRenderList();
 	void InitChunkBuild(Camera camera);
 	void renderChunks(Shader shader);

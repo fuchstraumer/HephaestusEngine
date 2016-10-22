@@ -33,6 +33,7 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main(){
+	time_t clock;
 	int t_seed;
 	std::cout << "Enter an integer to use as the terrain gen seed value: " << std::endl;
 	std::cin >> t_seed;
@@ -40,7 +41,7 @@ int main(){
 	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
 	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
-	Terrain_Generator gen(t_seed);
+	TerrainGenerator gen(t_seed);
 	if (chunks > 64)
 		chunks = 64;
 	// Init GLFW
@@ -50,7 +51,7 @@ int main(){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	//glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_SAMPLES, MULTISAMPLE_AMOUNT);
 	
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
@@ -110,22 +111,33 @@ int main(){
 	// Free texture data
 	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);
 	// Create chunk manager
-	std::vector<treeChunk> chunkList; chunkList.reserve(chunks*chunks);
+	clock = std::clock();
+	std::vector<TreeChunk*> chunkList; chunkList.reserve(chunks*chunks);
+	std::fstream file; file.open("chunkdata.txt", std::ios::out);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
-			treeChunk* newChunk = new treeChunk(grid);
-			newChunk->buildTerrain(gen);
-			newChunk->buildData();
-			newChunk->buildRender();
-			chunkList.push_back(*newChunk);
+			TreeChunk* NewChunk = new TreeChunk(grid);
+			NewChunk->BuildTerrain(gen);
+			NewChunk->BuildData();
+			NewChunk->BuildRender();
+			NewChunk->encodeChunk();
+			file << NewChunk->ChunkBlocks.data();
+			file << "\n";
+			chunkList.push_back(NewChunk);
 			if(chunkList.size() % 10 == 0)
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
-			delete newChunk;
 		}
 	}
+	file.close();
+	//std::cerr << "Compressing chunks before rendering, please wait..." << std::endl;
+	//for (auto chunk : chunkList) {
+	//	chunk->CompressChunk();
+	//}
+	chunkList.shrink_to_fit();
 	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
-
+	clock = std::clock() - clock;
+	std::cerr << "Time needed to build chunks: " << clock / CLOCKS_PER_SEC << " seconds." << std::endl;
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
 
@@ -174,16 +186,16 @@ int main(){
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
 			glm::mat4 model; 
-			model = glm::translate(model, chunkList[i].chunkPos);
+			model = glm::translate(model, chunkList[i]->ChunkPos);
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-			chunkList[i].chunkRender(ourShader);
+			chunkList[i]->ChunkRender(ourShader);
 		}
 		glfwSwapBuffers(window);
 
 	} 
 	//chunk0.~Chunk();
 	for (auto chunk : chunkList) {
-		chunk.~treeChunk();
+		chunk->~TreeChunk();
 	}
 	chunkList.clear();
 	glfwTerminate();
