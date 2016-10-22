@@ -20,6 +20,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void Do_Movement();
+void loadTextures(std::vector<std::string> texList);
 
 // RenderDoc Manager
 
@@ -34,17 +35,19 @@ GLfloat lastFrame = 0.0f;
 
 int main(){
 	time_t clock;
-	int t_seed;
-	std::cout << "Enter an integer to use as the terrain gen seed value: " << std::endl;
-	std::cin >> t_seed;
+	std::string stringSeed;
+	std::cout << "Enter a string of characters to use as the terrain gen seed value: " << std::endl;
+	std::cin >> stringSeed;
 	int chunks;
 	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
 	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
-	TerrainGenerator gen(t_seed);
+	int intSeed = std::stoi(stringSeed);
+	// Build and seed our terrain generator
+	TerrainGenerator gen(intSeed);
 	if (chunks > 64)
 		chunks = 64;
-	// Init GLFW
+	// Init GLFW to get OpenGL functions and pointers
 	glfwInit();
 	// Set all the required options for GLFW
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -64,14 +67,19 @@ int main(){
 	
 	// Options
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// Initialize glew and build our shader program
 	glewExperimental = GL_TRUE; glewInit();
 	Shader ourShader("compressed_vertex.glsl", "compressed_fragment.glsl");
-
 	glViewport(0, 0, WIDTH, HEIGHT);
+
 	// Setup some OpenGL options
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// Are we in wireframe mode?
+	if (WIREFRAME_MODE == true) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 	// Load block textures
 	unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass, *coal_ore, *iron_ore, *diamond_ore;
 	unsigned int width, height;
@@ -87,6 +95,7 @@ int main(){
 	lodepng_decode32_file(&diamond_ore, &width, &height, "./textures/blocks/diamond_ore.png");
 
 	// Create texture array
+
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
@@ -108,10 +117,12 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	GLenum error = glGetError();
+
 	// Free texture data
 	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);
-	// Create chunk manager
-	clock = std::clock();
+	
+	// Create chunk list
+
 	std::vector<TreeChunk*> chunkList; chunkList.reserve(chunks*chunks);
 	std::fstream file; file.open("chunkdata.txt", std::ios::out);
 	for (int i = 0; i < chunks; ++i) {
@@ -130,20 +141,19 @@ int main(){
 		}
 	}
 	file.close();
-	//std::cerr << "Compressing chunks before rendering, please wait..." << std::endl;
-	//for (auto chunk : chunkList) {
-	//	chunk->CompressChunk();
-	//}
 	chunkList.shrink_to_fit();
+
+
+	// Set the global light position
 	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
 	clock = std::clock() - clock;
 	std::cerr << "Time needed to build chunks: " << clock / CLOCKS_PER_SEC << " seconds." << std::endl;
+
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
 
 		ourShader.Use();
-		// Set frame time
-
+		// Set frame time to avoid slowdowns and speedups etc
 		GLfloat currentFrame = (GLfloat)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -152,7 +162,7 @@ int main(){
 		glfwPollEvents();
 		Do_Movement();
 
-		// Clear the buffers
+		// Clear the buffers, set clear color
 		glClearColor(160.0f / 255.0f, 239.0f / 255.0f, 255.0f / 255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -184,60 +194,66 @@ int main(){
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		// Note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+		// Each mesh needs to be transformed to be appear in the right spot.
+		// glm::translate builds the appropriate transformation matrix based on the chunk's position
+		// Once transformed, we can then render that chunk
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
 			glm::mat4 model; 
 			model = glm::translate(model, chunkList[i]->ChunkPos);
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 			chunkList[i]->ChunkRender(ourShader);
 		}
+		// Swap the buffers to avoid visible refresh
 		glfwSwapBuffers(window);
 
 	} 
-	//chunk0.~Chunk();
+	// Delete our chunks now
 	for (auto chunk : chunkList) {
 		chunk->~TreeChunk();
 	}
-	chunkList.clear();
 	glfwTerminate();
     return 0;
 }
 
 
 // Moves/alters the camera positions based on user input
-void Do_Movement()
-{
+void Do_Movement(){
 	// Camera controls
-	if (keys[GLFW_KEY_W])
+	if (keys[GLFW_KEY_W]) {
 		camera.ProcessKeyboard(FORWARD, deltaTime);
-	if (keys[GLFW_KEY_S])
+	}
+	if (keys[GLFW_KEY_S]) {
 		camera.ProcessKeyboard(BACKWARD, deltaTime);
-	if (keys[GLFW_KEY_A])
+	}
+	if (keys[GLFW_KEY_A]) {
 		camera.ProcessKeyboard(LEFT, deltaTime);
-	if (keys[GLFW_KEY_D])
+	}
+	if (keys[GLFW_KEY_D]) {
 		camera.ProcessKeyboard(RIGHT, deltaTime);
+	}
 }
 
 // Is called whenever a key is pressed/released via GLFW
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
 	//cout << key << endl;
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	if (key >= 0 && key < 1024)
-	{
+	}
+	if (key >= 0 && key < 1024){
 		if (action == GLFW_PRESS)
 			keys[key] = true;
 		else if (action == GLFW_RELEASE)
 			keys[key] = false;
 	}
-	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS)
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
 		camera.MovementSpeed += 20;
-	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE)
+	}
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
 		camera.MovementSpeed -= 20;
+	}
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
-{
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 	if (firstMouse)
 	{
 		lastX = (GLfloat)xpos;
@@ -255,7 +271,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 }
 
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
 	camera.ProcessMouseScroll((GLfloat)yoffset);
 }
