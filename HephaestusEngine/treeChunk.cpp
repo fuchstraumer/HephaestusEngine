@@ -1,69 +1,7 @@
 #include "treeChunk.h"
-#include <array>
-#include <iterator>
-// Enum specifying the sort of blocks we can have in our world
-enum blockType : std::uint8_t{
-	AIR = 0,
-	GRASS,
-	SAND,
-	DIRT,
-	STONE,
-	BEDROCK,
-	TALL_GRASS,
-	COAL_ORE,
-	IRON_ORE,
-	DIAMOND_ORE,
-	BRICK,
-	WOOD,
-	CEMENT,
-	PLANK,
-	SNOW,
-	GLASS,
-	COBBLE,
-	LIGHT_STONE,
-	DARK_STONE,
-	CHEST,
-	LEAVES,
-	YELLOW_FLOWER,
-	RED_FLOWER,
-	PURPLE_FLOWER,
-	SUN_FLOWER,
-	WHITE_FLOWER,
-	BLUE_FLOWER,
-	COLOR_00,
-	COLOR_01,
-	COLOR_02,
-	COLOR_03,
-	COLOR_04,
-	COLOR_05,
-	COLOR_06,
-	COLOR_07,
-	COLOR_08,
-	COLOR_09,
-	COLOR_10,
-	COLOR_11,
-	COLOR_12,
-	COLOR_13,
-	COLOR_14,
-	COLOR_15,
-	COLOR_16,
-	COLOR_17,
-	COLOR_18,
-	COLOR_19,
-	COLOR_20,
-	COLOR_21,
-	COLOR_22,
-	COLOR_23,
-	COLOR_24,
-	COLOR_25,
-	COLOR_26,
-	COLOR_27,
-	COLOR_28,
-	COLOR_29,
-	COLOR_30,
-	COLOR_31,
+#include "util\rle.h"
 
-};
+
 // Face normals
 static const std::vector<glm::vec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
@@ -102,7 +40,7 @@ TreeChunk::TreeChunk(glm::ivec3 gridpos){
 	// Pre-allocating, especially at this size, is more performance-friendly than dynamically expanding the vector
 	this->ChunkPos = glm::vec3(x_pos, y_pos, z_pos); this->ChunkBlocks.reserve(CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z);
 	// Fill our chunkBlocks vector with air blocks entirely
-	this->ChunkBlocks.assign(this->ChunkBlocks.capacity(),blockType::AIR);
+	this->ChunkBlocks.assign(this->ChunkBlocks.capacity(),blockTypes::AIR);
 }
 
 TreeChunk::~TreeChunk() {
@@ -119,16 +57,16 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 		for (int z = 0; z < CHUNK_SIZE; ++z) {
 			// Set all blocks at y = 0 to be bedrock and form the base layer of the world
-			this->ChunkBlocks[treeXYZ(x, 0, z)] = blockType::BEDROCK;
+			this->ChunkBlocks[treeXYZ(x, 0, z)] = blockTypes::BEDROCK;
 			// The SimplexFBM function here is used like a heightmap. The value returned ranges within the bounds of the Y size
 			if (terrainType == 0) {
 				for (int y = 1; y < gen.SimplexFBM(this->ChunkPos.x + x, this->ChunkPos.z + z); ++y) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
 				}
 			}
 			if (terrainType == 1) {
@@ -136,9 +74,9 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
 				}
 			}
 			if (terrainType == 2) {
@@ -146,9 +84,9 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
 				}
 			}
 			if (terrainType == 3) {
@@ -156,9 +94,9 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-					this->ChunkBlocks[treeXYZ(x, y, z)] = blockType::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockType::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockType::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockType::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
+					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
 				}
 			}
 		}
@@ -295,12 +233,14 @@ inline void TreeChunk::createCube(int x, int y, int z, bool frontFace, bool righ
 void TreeChunk::BuildData() {
 	// Default block adjacency value assumes true
 	bool def = true;
-	// Iterate over each block in the volume
+	// Iterate over each block in the volume via intervals
+	// If an interval has a value
 	for (int i = 0; i < CHUNK_SIZE; i++) {
 		for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
 			for (int k = 0; k < CHUNK_SIZE; k++) {
+				this->ChunkTree.findContained(treeXYZ(i, j, k), treeXYZ(i, j, k) + 1);
 				// If the block at i,j,k is air, we won't build a mesh for it
-				if (this->ChunkBlocks[treeXYZ(i,j,k)] == blockType::AIR) {
+				if (this->ChunkBlocks[treeXYZ(i,j,k)] == blockTypes::AIR) {
 					continue;
 				}
 				else {
@@ -313,38 +253,38 @@ void TreeChunk::BuildData() {
 						// If a face is visible, set that face's value to be false
 						bool xNeg = def; // left
 						if (i > 0) {
-							if (this->ChunkBlocks[treeXYZ(i - 1, j, k)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i - 1, j, k)] == blockTypes::AIR) {
 								xNeg = false;
 							}
 						}
 						bool xPos = def; // right
 						if (i < CHUNK_SIZE - 1) {
-							if (this->ChunkBlocks[treeXYZ(i + 1, j, k)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i + 1, j, k)] == blockTypes::AIR) {
 								xPos = false;
 							}
 						}
 						bool yPos = def; // bottom
 						if (j > 0) {
-							if (this->ChunkBlocks[treeXYZ(i, j - 1, k)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i, j - 1, k)] == blockTypes::AIR) {
 								yPos = false;
 							}
 						}
 						bool yNeg = def; // top
 						if (j < CHUNK_SIZE_Z - 1) {
 							//std::cerr << treeXYZ(i, j - 1, k);
-							if (this->ChunkBlocks[treeXYZ(i, j + 1, k)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i, j + 1, k)] == blockTypes::AIR) {
 								yNeg = false;
 							}
 						}
 						bool zNeg = def; // back
 						if (k < CHUNK_SIZE - 1) {
-							if (this->ChunkBlocks[treeXYZ(i, j, k + 1)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i, j, k + 1)] == blockTypes::AIR) {
 								zNeg = false;
 							}
 						}
 						bool zPos = def; // front
 						if (k > 0) {
-							if (this->ChunkBlocks[treeXYZ(i, j, k - 1)] == blockType::AIR) {
+							if (this->ChunkBlocks[treeXYZ(i, j, k - 1)] == blockTypes::AIR) {
 								zPos = false;
 							}
 						}
@@ -396,42 +336,37 @@ void TreeChunk::ChunkRender(Shader shader) {
 	glBindVertexArray(0);
 }
 
-void TreeChunk::encodeChunk(){
-	// Set c = -1 so that we won't ever have a block be equal to c (initially)
-	uint8_t c = -1; uint8_t num = 0;
-	std::vector<uint8_t> encodedBlocks;
-	for (auto block: this->ChunkBlocks) {
-		// If the current block is different than the last, we've reached the end of a run
-		if (block != c) {
-			// No need to add the num if we only had one of the last type
-			if (num > 0) {
-				encodedBlocks.push_back(num);
-			}
-			// Reset c, push back the new blocktype
-			c = block;
-			encodedBlocks.push_back(block);
-		}
-		// If the current block is the same as the last, we have a run
-		else {
-			// So long as num < 255, increment num
-			if (num != UINT8_MAX) {
-				num++;
-			}
-			// if num = 255, we effectively have reset like we found a new blocktype
-			else {
-				encodedBlocks.push_back(num);
-				encodedBlocks.push_back(block);
-				c = block;
-				num = 0;
-			}
-		}
-	}
-	// Don't forget to push back our final count, and shrink the vector to the size of the data
-	encodedBlocks.push_back(num); encodedBlocks.shrink_to_fit();
-	// Clear out the raw block data to make way for compressed data
+void TreeChunk::EncodeChunk() {
+	dataContainer encodedBlocks;
+	encodedBlocks = encode(this->ChunkBlocks);
 	this->ChunkBlocks.clear();
-	// Make this chunk's blocks the compressed version, and shrink the vector to fit,
-	// especially because this one was the full size required to fit every block in the volume
-	this->ChunkBlocks = encodedBlocks; this->ChunkBlocks.shrink_to_fit();
+	this->ChunkBlocks = encodedBlocks;
+	this->ChunkBlocks.shrink_to_fit();
+	this->ChunkCompressed = true;
 }
 
+void TreeChunk::BuildTree() {
+	// If the block data is uncompressed, do so now
+	if (!this->ChunkCompressed) {
+		this->EncodeChunk();
+	}
+	std::vector<Interval<blockType>> blockIntervals;
+	int intervalStart = 0;
+	for (auto iter = this->ChunkBlocks.cbegin(); iter < this->ChunkBlocks.cend(); ++iter) {
+		bool repeat = (*iter & repetitionBit) > 0;
+		auto count = *iter & counterBits;
+		if (repeat) {
+			++iter;
+			blockIntervals.push_back(Interval<blockType>(intervalStart, intervalStart + count, *iter));
+			intervalStart = intervalStart + count;
+
+		}
+		else {
+			++iter;
+			blockIntervals.push_back(Interval<blockType>(intervalStart, ++intervalStart, *iter));
+			++intervalStart;
+
+		}
+	}
+	this->ChunkTree = IntervalTree<blockType>(blockIntervals);
+}

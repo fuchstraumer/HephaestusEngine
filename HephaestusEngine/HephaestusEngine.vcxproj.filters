@@ -49,19 +49,16 @@
     <ClInclude Include="util\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="splay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="treeChunk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="chunk_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\intervaltree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\TerrainGen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\rle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -76,9 +73,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="chunk_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -131,24 +131,25 @@ int main(){
 	
 	// Create chunk list
 
-	std::vector<TreeChunk*> chunkList; chunkList.reserve(chunks*chunks);
-	std::fstream file; file.open("chunkdata.txt", std::ios::out);
+	std::vector<std::unique_ptr<TreeChunk>> chunkList; chunkList.reserve(chunks*chunks);
+	//std::fstream file; file.open("chunkdata.txt", std::ios::out);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
-			TreeChunk* NewChunk = new TreeChunk(grid);
+			std::unique_ptr<TreeChunk> NewChunk(new TreeChunk(grid));
 			NewChunk->BuildTerrain(gen, terrainType);
 			NewChunk->BuildData();
 			NewChunk->BuildRender();
-			NewChunk->encodeChunk();
-			file << NewChunk->ChunkBlocks.data();
-			file << "\n";
+			NewChunk->EncodeChunk();
+			//NewChunk->BuildTree();
+			//file << NewChunk->ChunkBlocks.data();
+			//file << "\n";
 			chunkList.push_back(NewChunk);
 			if(chunkList.size() % 10 == 0)
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 		}
 	}
-	file.close();
+	//file.close();
 	chunkList.shrink_to_fit();
 
 
@@ -213,10 +214,6 @@ int main(){
 		glfwSwapBuffers(window);
 
 	} 
-	// Delete our chunks now
-	for (auto chunk : chunkList) {
-		chunk->~TreeChunk();
-	}
 	glfwTerminate();
     return 0;
 }
