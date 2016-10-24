@@ -238,7 +238,7 @@ void TreeChunk::BuildData() {
 	for (int i = 0; i < CHUNK_SIZE; i++) {
 		for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
 			for (int k = 0; k < CHUNK_SIZE; k++) {
-				this->ChunkTree.findContained(treeXYZ(i, j, k), treeXYZ(i, j, k) + 1);
+				//this->ChunkTree.findContained(treeXYZ(i, j, k), treeXYZ(i, j, k) + 1);
 				// If the block at i,j,k is air, we won't build a mesh for it
 				if (this->ChunkBlocks[treeXYZ(i,j,k)] == blockTypes::AIR) {
 					continue;

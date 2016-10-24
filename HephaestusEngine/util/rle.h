@@ -14,7 +14,7 @@ static const dataType counterBits = std::numeric_limits<dataType>::max() / 2;
 // Get the repetition bits, or the binary inversion of the counterBits
 static const dataType repetitionBit = ~counterBits;
 
-auto countRepetitions(dataIterator iter, dataIterator end) {
+inline auto countRepetitions(dataIterator iter, dataIterator end) {
 	const auto first = iter;
 	// While our iter isn't at the end and our values are equal, iterate
 	// down iter until we find a new value. Return the distance we iterated 
@@ -25,7 +25,7 @@ auto countRepetitions(dataIterator iter, dataIterator end) {
 	return std::distance(first, iter);
 }
 
-auto countUniques(dataIterator iter, dataIterator end) {
+inline auto countUniques(dataIterator iter, dataIterator end) {
 	const auto first = iter;
 	// Make sure to check the range
 	// while not at the end and while the value of iter + 1
@@ -37,7 +37,7 @@ auto countUniques(dataIterator iter, dataIterator end) {
 
 // This divides our N-items into chunks of the maximum size permitted by counter bits
 template<typename T>
-auto split(std::ptrdiff_t num, T&& t) {
+inline auto split(std::ptrdiff_t num, T&& t) {
 	// ptrdiff is the standard type of the difference between two iterators
 	do {
 		// Our count is the smallest of these two. This is only okay because we always know 
@@ -48,7 +48,7 @@ auto split(std::ptrdiff_t num, T&& t) {
 	} while (num > 0);
 }
 
-dataContainer encode(const dataContainer &data) {
+inline dataContainer encode(const dataContainer &data) {
 	dataContainer out;
 	out.reserve(data.size());
 	for (auto iter = data.cbegin(); iter != data.cend();) {
@@ -83,7 +83,7 @@ dataContainer encode(const dataContainer &data) {
 	return out;
 }
 
-dataContainer decode(const dataContainer &data) {
+inline dataContainer decode(const dataContainer &data) {
 	dataContainer out; // No good way to reserve - can't guess 
 	// size of decompressed data very easily.
 	for (auto iter = data.cbegin(); iter != data.cend();) {

@@ -61,6 +61,9 @@
     <ClInclude Include="util\rle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="interval.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="util\lodepng.cpp">

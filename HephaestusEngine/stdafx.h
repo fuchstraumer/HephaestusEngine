@@ -20,7 +20,7 @@
 #include <glm/gtc/constants.hpp>
 
 // Chunk vars
-typedef uint8_t blockType;
+typedef uint16_t blockType;
 static const float BLOCK_RENDER_SIZE = 0.5f;
 static const int CHUNK_SIZE = 32;
 static const int CHUNK_SIZE_Z = 128;

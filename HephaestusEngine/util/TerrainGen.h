@@ -76,9 +76,9 @@ public:
 	double RollingHills(int x, int y, int z);
 
 	// Generates ridges and other bizarre patterns. Currently broken.
-	inline double PerlinRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
-	inline double SimplexRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
-	inline double SimplexRidged(int x, int y, double freq, int octaves, float lac, float gain);
+	double PerlinRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
+	double SimplexRidged(int x, int y, int z, double freq, int octaves, float lac, float gain);
+	double SimplexRidged(int x, int y, double freq, int octaves, float lac, float gain);
 	
 	// "Swiss" noise using derivatives to simulate erosion and create better mountains
 	inline double SimplexSwiss(int x, int y, double freq, int octaves, float lac, float gain);
@@ -109,7 +109,7 @@ private:
 	}
 	// Finds the dot product of x,y,z and the gradient vector "hash". 
 	// Source: http://riven8192.blogspot.com/2010/08/calculate-perlinnoise-twice-as-fast.html //
-	inline double grad(int hash, double x, double y, double z)
+	double grad(int hash, double x, double y, double z)
 	{
 		switch (hash & 0xF)
 		{
@@ -134,7 +134,7 @@ private:
 	}
 
 	// Main noise function: terrain is specialized usage of this.
-	inline double perlin(double x, double y, double z) {
+	double perlin(double x, double y, double z) {
 		glm::dvec3 p(x, y, z);
 		// Calculate integer coords and fractional component for weighting
 		// We have to normalize to be within the unit cube defined as part of the perlin function
@@ -171,57 +171,9 @@ private:
 		return (lerp(y00, y01, w.z) + 1) * (1/sqrt(PERLIN_NORM));
 	}
 
-	// Used to finely add detail to various noise functions, like simulating erosion or making dunes
-	double perlinDeriv(double x, double y, double z) {
-		glm::dvec3 p(x, y, z);
-		// Calculate integer coords and fractional component for weighting
-		// We have to normalize to be within the unit cube defined as part of the perlin function
-		glm::ivec3 p0; p0.x = (int)floor(p.x);
-		p0.y = (int)floor(p.y); p0.z = (int)floor(p.z);
-		glm::dvec3 p1(p0.x + 1, p0.y + 1, p0.z + 1);
-
-		// Get ease curve values ease(u,v,w)
-		glm::dvec3 w;
-		w.x = fade(p.x - p0.x);
-		w.y = fade(p.y - p0.y);
-		w.z = fade(p.z - p0.z);
-		// Get derivative ease curve values
-		glm::dvec3 dw;
-		dw.x = fadeDeriv(p.x - p0.x);
-		dw.y = fadeDeriv(p.y - p0.y);
-		dw.z = fadeDeriv(p.z - p0.z);
-
-		// Noise hash function, grabbing the values at the 8 points of our unit cube
-		int aaa, aba, aab, abb, baa, bba, bab, bbb;
-		aaa = hashTable[hashTable[hashTable[p0.x] + p0.y] + p0.z];
-		aba = hashTable[hashTable[hashTable[p0.x] + p0.y + 1] + p0.z];
-		aab = hashTable[hashTable[hashTable[p0.x] + p0.y] + p0.z + 1];
-		abb = hashTable[hashTable[hashTable[p0.x] + p0.y + 1] + p0.z + 1];
-		baa = hashTable[hashTable[hashTable[p0.x + 1] + p0.y] + p0.z];
-		bba = hashTable[hashTable[hashTable[p0.x + 1] + p0.y + 1] + p0.z];
-		bab = hashTable[hashTable[hashTable[p0.x + 1] + p0.y] + p0.z + 1];
-		bbb = hashTable[hashTable[hashTable[p0.x + 1] + p0.y + 1] + p0.z + 1];
-		// Get gradient vectors and interpolate using ease curve found earlier
-		double x00, x10, x01, x11, y00, y01;
-		x00 = lerp(grad(aaa, p0.x, p0.y, p0.z), grad(baa, p1.x, p0.y, p0.z), w.x);
-		x10 = lerp(grad(aba, p0.x, p1.y, p0.z), grad(bba, p1.x, p1.y, p0.z), w.x);
-		x01 = lerp(grad(aab, p0.x, p0.y, p1.z), grad(bab, p1.x, p0.y, p1.z), w.x);
-		x11 = lerp(grad(abb, p0.x, p1.y, p1.z), grad(bbb, p1.x, p1.y, p1.z), w.x);
-		//float k0, k1, k2, k3, k4, k5, k6, k7;
-		//k0 = grad(baa,p1.x,p0.y,p0.z) - grad(aaa, p1.x, p0.y, p0.z);
-		//k1 = grad(aba,p - grad(baa, p1.x, p0.y, p0.z);
-		//k2 = dot001 - dot000
-		// Interpolate (bilinear)
-		y00 = lerp(x00, x10, w.y);
-		y01 = lerp(x01, x11, w.y);
-		// Final step, trilinear interpolation (narrowing subrectangles)
-		return (lerp(y00, y01, w.z) + 1) / 2;
-		
-	}
-
 
 	// Function for finding gradient of simplex noise
-	inline double sGrad(int hash, double x, double y) {
+	double sGrad(int hash, double x, double y) {
 		int h = hash & 7;      // Convert low 3 bits of hash code
 		double u = h<4 ? x : y;  // into 8 simple gradient directions,
 		double v = h<4 ? y : x;  // and compute the dot product with (x,y).
@@ -237,7 +189,7 @@ private:
 
 	// Simplex noise gens
 	// return the derivatives at x,y if non-null pointers dx,dy are supplied
-	inline double simplex(double x, double y, double* dx, double* dy) {
+	double simplex(double x, double y, double* dx, double* dy) {
 		#define F2 0.366025403 // F2 = 0.5*(sqrt(3.0)-1.0)
 		#define G2 0.211324865 // G2 = (3.0-Math.sqrt(3.0))/6.0
 
@@ -332,7 +284,8 @@ private:
 		return 40.0 * (n0 + n1 + n2); // TODO: The scale factor is preliminary!
 
 	}
-	inline double simplex(double x, double y, double z) {
+
+	double simplex(double x, double y, double z) {
 
 		// Simple skewing factors for the 3D case
 		#define F3 0.333333333
