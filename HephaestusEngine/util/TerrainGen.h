@@ -1,12 +1,9 @@
-#define GLM_SWIZZLE
+#ifndef TERRAIN_GEN_H
+#define TERRAIN_GEN_H
 #include "glm/glm.hpp"
 #include <math.h>
 #include <random>
 #include <algorithm>
-
-#ifndef TERRAIN_GEN_H
-#define TERRAIN_GEN_H
-
 #include "../stdafx.h"
 /*
 	Class: Terrain Generator
@@ -82,6 +79,9 @@ public:
 	
 	// "Swiss" noise using derivatives to simulate erosion and create better mountains
 	inline double SimplexSwiss(int x, int y, double freq, int octaves, float lac, float gain);
+
+	// Jordan noise
+	inline auto SimplexJordan(int x, int y, double freq, int octaves, float lac, float gain);
 
 	// ridged optimized for nice caves
 	double SimplexCaves(int x, int y);
@@ -611,34 +611,49 @@ inline double TerrainGenerator::SimplexCaves(int x, int y) {
 
 // The following functions come from:
 // http://www.decarpentier.nl/scape-procedural-extensions
-static double SWISS_FREQ = 0.00008; static double SWISS_OCTAVES = 5; // This is a slow terrain function because of high octaves
-static float SWISS_LACUNARITY = 3.0f; static float SWISS_GAIN = 2.0f;
+static double SWISS_FREQ = 0.008; static double SWISS_OCTAVES = 7; // This is a slow terrain function because of high octaves
+static float SWISS_LACUNARITY = 3.0f; static float SWISS_GAIN = 1.5f;
 
 inline double TerrainGenerator::SimplexSwiss(int x, int y, double freq = SWISS_FREQ, int octaves = SWISS_OCTAVES,
 	float lac = SWISS_LACUNARITY, float gain = SWISS_GAIN) {
 	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
-	double sum = 0; double amplitude = 1.0;
+	auto sum = 0.0; auto amplitude = 1.0;
 	glm::dvec2 derivSum(0.0, 0.0);
-	double *dx = new double;
-	double *dy = new double;
-	double warp = 0.15;
+	auto warp = 0.15;
 	for (int i = 0; i < octaves; ++i) {
-		double n = simplex(f.x + warp*derivSum.x, f.y + warp*derivSum.y, dx, dy);
-		sum += amplitude * (1 - abs(n));
+		double *dx = new double;
+		double *dy = new double;
+		auto n = 1.0 - abs(simplex(f.x + warp*derivSum.x, f.y + warp*derivSum.y, dx, dy));
+		sum += amplitude * n;
 		derivSum += glm::dvec2(*dx*amplitude*(-n), *dy*amplitude*(-n));
 		freq *= lac;
-		amplitude *= gain;
+		amplitude *= (gain * glm::clamp(sum, 0.0, 1.0));
+		delete dx, dy;
 	}
-	double temp = (sum / amplitude);
-	temp = 32 * temp;
+	auto temp = sum / amplitude;
+	temp = temp * 16;
 	if (temp >= CHUNK_SIZE_Z - 4) {
 		temp = CHUNK_SIZE_Z - 4;
 	}
 	if (temp <= 1) {
 		temp = 1;
 	}
-	delete dx, dy;
 	return temp;
 }
 
+
+// Jordan-style terrain
+static auto JORDAN_FREQ = 0.008; static auto JORDAN_OCTAVES = 7; // This is a slow terrain function because of high octaves
+static auto JORDAN_LACUNARITY = 3.0; static auto JORDAN_GAIN = 1.5;
+static auto warp0 = 0.4, warp1 = 0.35;
+static auto damp0 = 1.0, damp1 = 0.8;
+
+auto TerrainGenerator::SimplexJordan(int x, int y, double freq, int octaves, float lac, float gain) {
+	double* dx1 = new double; double* dy1 = new double;
+	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
+	auto n = simplex(f.x, f.y, dx1, dy1);
+	glm::dvec3 nSq = glm::dvec3(n*n, *dx1*n, *dy1*n);
+	glm::dvec2 dWarp = glm::dvec2(*dx1*warp0, *dy1*warp0);
+	glm::dvec2 dDamp = glm::dvec2(*dx1*damp0, *dy1*warp1);
+}
 #endif

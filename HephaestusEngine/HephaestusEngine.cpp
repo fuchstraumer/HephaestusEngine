@@ -132,7 +132,6 @@ int main(){
 	// Create chunk list
 
 	std::vector<std::shared_ptr<TreeChunk>> chunkList; chunkList.reserve(chunks*chunks);
-	std::fstream file; file.open("chunkdata.txt", std::ios::out);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
@@ -141,15 +140,11 @@ int main(){
 			NewChunk->BuildData();
 			NewChunk->BuildRender();
 			NewChunk->EncodeChunk();
-			//NewChunk->BuildTree();
-			file << NewChunk->ChunkBlocks.data();
-			file << "\n";
 			chunkList.push_back(NewChunk);
 			if(chunkList.size() % 10 == 0)
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 		}
 	}
-	file.close();
 	chunkList.shrink_to_fit();
 
 

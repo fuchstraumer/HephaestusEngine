@@ -22,7 +22,7 @@
 // Chunk vars
 typedef uint16_t blockType;
 static const float BLOCK_RENDER_SIZE = 0.5f;
-static const int CHUNK_SIZE = 32;
+static const int CHUNK_SIZE = 64;
 static const int CHUNK_SIZE_Z = 128;
 static const bool SIMPLE_CULLING_GLOBAL = true;
 static const bool WIREFRAME_MODE = false;
