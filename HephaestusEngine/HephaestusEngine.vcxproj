@@ -166,6 +166,7 @@
     <ClInclude Include="util\camera.h" />
     <ClInclude Include="util\intervaltree.h" />
     <ClInclude Include="util\lodepng.h" />
+    <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="util\mesh.h" />
     <ClInclude Include="util\rle.h" />
     <ClInclude Include="util\shader.h" />

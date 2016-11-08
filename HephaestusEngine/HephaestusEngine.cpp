@@ -8,6 +8,7 @@
 #include <sstream>
 #define LODEPNG_COMPILE_CPP
 #include "util/lodepng.h"
+#include "util\lodeTexture.h"
 #include "util/shader.h"
 #include "util/camera.h"
 #include "treeChunk.h"
@@ -89,9 +90,9 @@ int main(){
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 	// Load block textures
-	unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass, *coal_ore, *iron_ore, *diamond_ore;
+	/*unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass, *coal_ore, *iron_ore, *diamond_ore;
 	unsigned int width, height;
-	lodepng_decode32_file(&grass_top,&width,&height,"./textures/blocks/grass_top.png");
+	lodepng_decode32_file(&grass_top,&width,&height, "./textures/blocks/grass_top.png");
 	lodepng_decode32_file(&grass_side, &width, &height, "./textures/blocks/grass_side.png");
 	lodepng_decode32_file(&dirt, &width, &height, "./textures/blocks/dirt.png");
 	lodepng_decode32_file(&sand, &width, &height, "./textures/blocks/sand.png");
@@ -101,9 +102,7 @@ int main(){
 	lodepng_decode32_file(&coal_ore, &width, &height, "./textures/blocks/coal_ore.png");
 	lodepng_decode32_file(&iron_ore, &width, &height, "./textures/blocks/iron_ore.png");
 	lodepng_decode32_file(&diamond_ore, &width, &height, "./textures/blocks/diamond_ore.png");
-
 	// Create texture array
-
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glActiveTexture(GL_TEXTURE0);
@@ -125,9 +124,24 @@ int main(){
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 	GLenum error = glGetError();
-
 	// Free texture data
-	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);
+	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);*/
+
+	std::vector<std::string> filelist = {
+		{ "./textures/blocks/grass_top.png" },
+		{ "./textures/blocks/grass_side.png" },
+		{ "./textures/blocks/dirt.png" },
+		{ "./textures/blocks/sand.png" },
+		{ "./textures/blocks/stone.png" },
+		{ "./textures/blocks/bedrock.png" },
+		{ "./textures/blocks/tallgrass.png" },
+		{ "./textures/blocks/coal_ore.png" },
+		{ "./textures/blocks/iron_ore.png" },
+		{ "./textures/blocks/diamond_ore.png" },
+	};
+	
+	TextureArray textures(filelist, 16);
+	textures.BuildTextureArray(GL_TEXTURE0);
 	
 	// Create chunk list
 
@@ -171,7 +185,7 @@ int main(){
 		// Textures 
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, textures.GL_Handle);
 		glUniform1i(glGetUniformLocation(ourShader.Program, "texSampler"), 0);
 
 		// Do lighting stuff
