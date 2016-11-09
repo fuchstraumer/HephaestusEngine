@@ -65,8 +65,8 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
 					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::GRASS;
 				}
 			}
 			if (terrainType == 1) {
@@ -75,8 +75,8 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
 					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::GRASS;
 				}
 			}
 			if (terrainType == 2) {
@@ -85,8 +85,8 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
 					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::GRASS; 
 				}
 			}
 			if (terrainType == 3) {
@@ -95,8 +95,8 @@ void TreeChunk::BuildTerrain(TerrainGenerator& gen, int terrainType) {
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
 					this->ChunkBlocks[treeXYZ(x, y, z)] = blockTypes::STONE;
-					this->ChunkBlocks[treeXYZ(x, y + 3, z)] = blockTypes::GRASS;
-					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::DIRT; this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 1, z)] = blockTypes::DIRT;
+					this->ChunkBlocks[treeXYZ(x, y + 2, z)] = blockTypes::GRASS;
 				}
 			}
 		}
@@ -116,116 +116,56 @@ inline void TreeChunk::createCube(int x, int y, int z, bool frontFace, bool righ
 		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
 		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE)} // Point 7, right upper rear
 	};
-	// If the frontface of this cube will be visible, build the tris needed for that face
-	if (frontFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 0, 1, 2, 3 and Normal 0
-		// Set the relevant UV's. The front face uses the first column of the blocks array
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][0]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][0]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][0]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][0]);
-		// Assign each vertice it's appropriate UV
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		// Assign each vertice a position. the W component of each vert is currently empty
-		// It will likely be used for calculating/holding AO data
-		vert0.position.xyz = vertices[0]; vert1.position.xyz = vertices[1];
-		vert2.position.xyz = vertices[2]; vert3.position.xyz = vertices[3];
-		// Assign each vert a normal - the normals are all the same per face,
-		// but each vert needs it's own copy
-		vert0.normal = normals[0];  vert1.normal = normals[0];
-		vert2.normal = normals[0];  vert3.normal = normals[0];
-		// Add the verts to the chunkMesh's vert list
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-		// Add the triangles to the mesh, via indices. Note shared verts.
+	auto buildface = [this,uv_type](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, int norm, int face) {
+		// We'll need four indices and four vertices for the two tris defining a face.
+		index_t i0, i1, i2, i3; 
+		vertType v0, v1, v2, v3;
+		// Assign each vertex it's appropriate UV coords based on the blocks type
+		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][face]);
+		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][face]);
+		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][face]);
+		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][face]);
+		v0.uv = uv0; v1.uv = uv1; v2.uv = uv2; v3.uv = uv3;
+		// Set the vertex positions.
+		v0.position.xyz = p0; 
+		v1.position.xyz = p1;
+		v2.position.xyz = p2; 
+		v3.position.xyz = p3;
+		// Set vertex normals.
+		v0.normal = normals[norm];  
+		v1.normal = normals[norm];
+		v2.normal = normals[norm];  
+		v3.normal = normals[norm];
+		// Add the verts to the Mesh's vertex container. Returns index to added vert.
+		i0 = this->chunkMesh.addVert(v0); 
+		i1 = this->chunkMesh.addVert(v1);
+		i2 = this->chunkMesh.addVert(v2); 
+		i3 = this->chunkMesh.addVert(v3);
+		// Add the triangles to the mesh, via indices
 		this->chunkMesh.addTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
 		this->chunkMesh.addTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+	};
+	// If the frontface of this cube will be visible, build the tris needed for that face
+	if (frontFace == false) {
+		buildface(vertices[0], vertices[1], vertices[2], vertices[3], 0, 0); // Using Points 0, 1, 2, 3 and Normal 0
 	}
-	// The rest of the faces follow the same format as the front face.
 	if (rightFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 1, 4, 7, 2 and Normal 1
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][1]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][1]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][1]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][1]);
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position.xyz = vertices[1]; vert1.position.xyz = vertices[4];
-		vert2.position.xyz = vertices[7]; vert3.position.xyz = vertices[2];
-		vert0.normal = normals[1];  vert1.normal = normals[1];
-		vert2.normal = normals[1];  vert3.normal = normals[1];
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-
-		this->chunkMesh.addTriangle(i0, i1, i2); this->chunkMesh.addTriangle(i0, i2, i3);
+		buildface(vertices[1], vertices[4], vertices[7], vertices[2], 1, 1); // Using Points 1, 4, 7, 2 and Normal 1
 	}
-
 	if (topFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 3, 2, 7, 6 and Normal 2
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][2]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][2]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][2]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][2]);
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position.xyz = vertices[3]; vert1.position.xyz = vertices[2];
-		vert2.position.xyz = vertices[7]; vert3.position.xyz = vertices[6];
-		vert0.normal = normals[2];  vert1.normal = normals[2];
-		vert2.normal = normals[2];  vert3.normal = normals[2];
-
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-
-		this->chunkMesh.addTriangle(i0, i1, i2); this->chunkMesh.addTriangle(i0, i2, i3);
+		buildface(vertices[3], vertices[2], vertices[7], vertices[6], 2, 2); // Using Points 3, 2, 7, 6 and Normal 2
 	}
 
 	if (leftFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 0, 3, 6 and Normal 3
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][3]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][3]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][3]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][3]);
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position.xyz = vertices[5]; vert1.position.xyz = vertices[0];
-		vert2.position.xyz = vertices[3]; vert3.position.xyz = vertices[6];
-		vert0.normal = normals[3];  vert1.normal = normals[3];
-		vert2.normal = normals[3];  vert3.normal = normals[3];
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-
-		this->chunkMesh.addTriangle(i0, i1, i2); this->chunkMesh.addTriangle(i0, i2, i3);
+		buildface(vertices[5], vertices[0], vertices[3], vertices[6], 3, 3); // Using Points 5, 0, 3, 6 and Normal 3
 	}
 
-	if (bottomFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 5, 4, 1, 0 and Normal 4
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][4]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][4]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][4]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][4]);
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position.xyz = vertices[5]; vert1.position.xyz = vertices[4];
-		vert2.position.xyz = vertices[1]; vert3.position.xyz = vertices[0];
-		vert0.normal = normals[4];  vert1.normal = normals[4];
-		vert2.normal = normals[4];  vert3.normal = normals[4];
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-
-		this->chunkMesh.addTriangle(i0, i1, i2); this->chunkMesh.addTriangle(i0, i2, i3);
+	if (bottomFace == false) { 
+		buildface(vertices[5], vertices[4], vertices[1], vertices[0], 4, 4); // Using Points 5, 4, 1, 0 and Normal 4
 	}
 
 	if (backFace == false) {
-		index_t i0, i1, i2, i3; vertType vert0, vert1, vert2, vert3; // Using Points 4, 5, 6, 7 and Normal 5
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][5]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][5]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][5]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][5]);
-		vert0.uv = uv0; vert1.uv = uv1; vert2.uv = uv2; vert3.uv = uv3;
-		vert0.position.xyz = vertices[4]; vert1.position.xyz = vertices[5];
-		vert2.position.xyz = vertices[6]; vert3.position.xyz = vertices[7];
-		vert0.normal = normals[5];  vert1.normal = normals[5];
-		vert2.normal = normals[5];  vert3.normal = normals[5];
-		i0 = this->chunkMesh.addVert(vert0); i1 = this->chunkMesh.addVert(vert1);
-		i2 = this->chunkMesh.addVert(vert2); i3 = this->chunkMesh.addVert(vert3);
-
-		this->chunkMesh.addTriangle(i0, i1, i2); this->chunkMesh.addTriangle(i0, i2, i3);
+		buildface(vertices[4], vertices[5], vertices[6], vertices[7], 5, 5); // Using Points 4, 5, 6, 7 and Normal 5
 	}
 
 }

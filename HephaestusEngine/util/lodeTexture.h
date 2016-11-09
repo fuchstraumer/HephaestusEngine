@@ -26,7 +26,7 @@ public:
 private:
 	std::vector<unsigned char*> textureData;
 	std::vector<std::string> fileList;
-	uint depth; // Sets amount of slots to reserve in the texture array
+	std::size_t depth; // Sets amount of slots to reserve in the texture array
 };
 
 
@@ -38,13 +38,14 @@ inline void TextureArray::BuildTextureArray(GLenum activetexture) {
 		this->textureData.push_back(data);
 	}
 	GLenum err;
+	glGenTextures(1, &this->GL_Handle);
 	glActiveTexture(activetexture);
 	err = glGetError();
 	glBindTexture(GL_TEXTURE_2D_ARRAY,this->GL_Handle);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, this->TextureDimensions, this->TextureDimensions, 
 		this->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	for (uint i = 0; i < this->depth; ++i) {
-		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, this->TextureDimensions, this->TextureDimensions, i, 
+		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, this->TextureDimensions, this->TextureDimensions, 1, 
 			GL_RGBA, GL_UNSIGNED_BYTE, this->textureData[i]);
 	}
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// Set texture wrapping to GL_REPEAT

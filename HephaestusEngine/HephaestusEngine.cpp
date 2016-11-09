@@ -21,7 +21,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void Do_Movement();
-void loadTextures(std::vector<std::string> texList);
 
 // RenderDoc Manager
 
@@ -63,7 +62,7 @@ int main(){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwWindowHint(GLFW_SAMPLES, MULTISAMPLE_AMOUNT);
+	glfwWindowHint(GLFW_SAMPLES, 2);
 	
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
@@ -89,43 +88,6 @@ int main(){
 	if (WIREFRAME_MODE == true) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
-	// Load block textures
-	/*unsigned char *grass_top, *grass_side, *dirt, *sand, *stone, *bedrock, *tallgrass, *coal_ore, *iron_ore, *diamond_ore;
-	unsigned int width, height;
-	lodepng_decode32_file(&grass_top,&width,&height, "./textures/blocks/grass_top.png");
-	lodepng_decode32_file(&grass_side, &width, &height, "./textures/blocks/grass_side.png");
-	lodepng_decode32_file(&dirt, &width, &height, "./textures/blocks/dirt.png");
-	lodepng_decode32_file(&sand, &width, &height, "./textures/blocks/sand.png");
-	lodepng_decode32_file(&stone, &width, &height, "./textures/blocks/stone.png");
-	lodepng_decode32_file(&bedrock, &width, &height, "./textures/blocks/bedrock.png");
-	lodepng_decode32_file(&tallgrass, &width, &height, "./textures/blocks/tallgrass.png");
-	lodepng_decode32_file(&coal_ore, &width, &height, "./textures/blocks/coal_ore.png");
-	lodepng_decode32_file(&iron_ore, &width, &height, "./textures/blocks/iron_ore.png");
-	lodepng_decode32_file(&diamond_ore, &width, &height, "./textures/blocks/diamond_ore.png");
-	// Create texture array
-	GLuint texture;
-	glGenTextures(1, &texture);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, width, height, 16, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_top);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass_side);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 2, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, dirt);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 3, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, sand);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 4, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, stone);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 5, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, bedrock);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 6, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, tallgrass);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 7, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, coal_ore);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 8, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, iron_ore);
-	glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 9, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, diamond_ore);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);	// Set texture wrapping to GL_REPEAT
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-	GLenum error = glGetError();
-	// Free texture data
-	free(grass_top); free(grass_side); free(dirt); free(sand); free(stone); free(bedrock); free(tallgrass); free(coal_ore); free(iron_ore); free(diamond_ore);*/
 
 	std::vector<std::string> filelist = {
 		{ "./textures/blocks/grass_top.png" },

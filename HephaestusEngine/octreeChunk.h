@@ -1,6 +1,6 @@
-#ifndef TREECHUNK_H
+#ifndef OCTREECHUNK_H
 
-#define TREECHUNK_H
+#define OCTREECHUNK_H
 
 #include "stdafx.h"
 #include "util/shader.h"
@@ -8,8 +8,9 @@
 #include <stdint.h>
 #include <array>
 #include <iterator>
-#include "util\intervaltree.h"
-#include <forward_list>
+
+
+
 
 enum blockTypes : blockType {
 	AIR = 0,
@@ -81,12 +82,12 @@ enum blockTypes : blockType {
 
 */
 
-class TreeChunk {
+class OctreeChunk {
 public:
 	// This initializer takes in the normalized integer chunk-space world coords and
 	// calculates the actual world coords, then builds the initial list of blocks
-	TreeChunk(glm::ivec3 gridpos);
-	~TreeChunk();
+	OctreeChunk(glm::ivec3 gridpos);
+	~OctreeChunk();
 	// Takes pointer to global Terrain_generator, and builds the terrain
 	void BuildTerrain(TerrainGenerator& gen, int terrainType);
 	// Chunkpos is the worldspace coords, gridPos is the chunk-space coords
@@ -103,7 +104,6 @@ public:
 	void BuildTree();
 	// Really don't touch this.
 	std::vector<blockType> ChunkBlocks;
-	IntervalTree<blockType> ChunkTree;
 	bool ChunkBuilt = false;
 	bool ChunkRendered = false;
 	bool ChunkCompressed = false;
@@ -113,6 +113,19 @@ private:
 	// Called by buildData. Used to only make faces that need to be made.
 	void createCube(int x, int y, int z, bool leftFace, bool rightFace, bool frontFace,
 		bool backFace, bool bottomFace, bool topFace, int type);
+	// Offsets for octree subdivision
+	const glm::vec3 offsets[8] = 
+	{
+		{ -0.5f, -0.5f, -0.5f },
+		{ +0.5f, -0.5f, -0.5f },
+		{ -0.5f, -0.5f, +0.5f },
+		{ +0.5f, -0.5f, +0.5f },
+		{ -0.5f, +0.5f, -0.5f },
+		{ +0.5f, +0.5f, -0.5f },
+		{ -0.5f, +0.5f, +0.5f },
+		{ +0.5f, +0.5f, +0.5f }
+	};
+
 };
 
 #endif // !TREECHUNK_H
