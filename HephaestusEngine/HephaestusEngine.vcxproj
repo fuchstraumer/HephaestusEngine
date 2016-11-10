@@ -161,22 +161,23 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="interval.h" />
-    <ClInclude Include="Octree.h" />
-    <ClInclude Include="octreeChunk.h" />
     <ClInclude Include="treeChunk.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="util\Block.h" />
     <ClInclude Include="util\camera.h" />
     <ClInclude Include="util\intervaltree.h" />
     <ClInclude Include="util\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="util\mesh.h" />
+    <ClInclude Include="util\Morton.h" />
+    <ClInclude Include="util\MortonChunk.h" />
+    <ClInclude Include="util\MortonChunkBlockLUT.h" />
     <ClInclude Include="util\rle.h" />
     <ClInclude Include="util\shader.h" />
     <ClInclude Include="util\TerrainGen.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HephaestusEngine.cpp" />
-    <ClCompile Include="octreeChunk.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

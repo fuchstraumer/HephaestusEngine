@@ -2,7 +2,7 @@
 
 #define MESH_H
 // STD libs
-#include "stdafx.h"
+#include "../stdafx.h"
 #include <stdint.h>
 #include <assert.h>
 // external libs

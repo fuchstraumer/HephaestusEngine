@@ -6,12 +6,13 @@
 #include <iostream>
 #include <cmath>
 #include <string>
-#define GLFW_DLL
 
 // Import glew for OpenGl pointers and handlers
 #define GLEW_STATIC
 #include <GL/glew.h>
 
+#define GLFW_DLL
+#include <GLFW/glfw3.h>
 // GLM
 #define GLM_SWIZZLE
 #include <glm/glm.hpp>
@@ -20,9 +21,10 @@
 #include <glm/gtc/constants.hpp>
 
 // Chunk vars
-typedef uint16_t blockType;
+using blockType = uint16_t;
+using mortonBlockType = uint32_t;
 static const float BLOCK_RENDER_SIZE = 0.5f;
-static const int CHUNK_SIZE = 64;
+static const int CHUNK_SIZE = 32;
 static const int CHUNK_SIZE_Z = 128;
 static const bool SIMPLE_CULLING_GLOBAL = true;
 static const bool WIREFRAME_MODE = false;

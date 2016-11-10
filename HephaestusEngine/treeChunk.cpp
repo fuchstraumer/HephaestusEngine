@@ -1,6 +1,6 @@
 #include "treeChunk.h"
 #include "util\rle.h"
-
+#include "util\Morton.h"
 
 // Face normals
 static const std::vector<glm::vec3> normals = {

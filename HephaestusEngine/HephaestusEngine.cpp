@@ -2,18 +2,11 @@
 //
 
 #include "stdafx.h"
-#include <GLFW/glfw3.h>
-#include <iostream>
-#include <math.h>
-#include <sstream>
-#define LODEPNG_COMPILE_CPP
-#include "util/lodepng.h"
 #include "util\lodeTexture.h"
 #include "util/shader.h"
 #include "util/camera.h"
 #include "treeChunk.h"
-#include <ctime>
-
+#include "util\MortonChunk.h"
 static GLuint WIDTH = 1440, HEIGHT = 900;
 
 // Function declarations
@@ -53,8 +46,12 @@ int main(){
 	std::stringstream(stringSeed) >> intSeed;
 	// Build and seed our terrain generator
 	TerrainGenerator gen(intSeed);
-	if (chunks > 64)
-		chunks = 64;
+	if (chunks > 48) {
+		chunks = 48;
+	}
+
+	MortonChunk test1(glm::ivec3(0,0,0));
+	test1.Blocks[6]
 	// Init GLFW to get OpenGL functions and pointers
 	glfwInit();
 	// Set all the required options for GLFW
@@ -105,8 +102,6 @@ int main(){
 	TextureArray textures(filelist, 16);
 	textures.BuildTextureArray(GL_TEXTURE0);
 	
-	// Create chunk list
-
 	std::vector<std::shared_ptr<TreeChunk>> chunkList; chunkList.reserve(chunks*chunks);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
