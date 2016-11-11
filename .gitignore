@@ -13,7 +13,7 @@
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
-[Rr]elease/
+# [Rr]elease/
 [Rr]eleases/
 [Xx]64/
 [Xx]86/
@@ -256,3 +256,4 @@ Fast_Terrain/stdafx.cpp
 Fast_Terrain/stdafx.h
 HephaestusEngine/chunkdata.txt
 HephaestusEngine/deprecated/testrle.txt
+*.tlog
