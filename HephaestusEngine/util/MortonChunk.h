@@ -2,124 +2,86 @@
 #ifndef MORTON_CHUNK_H
 #define MORTON_CHUNK_H
 #include "../stdafx.h"
-#include <array>
 #include "mesh.h"
-#include "MortonChunkBlockLUT.h"
 #include "Morton.h"
 #include <bitset>
-enum blockTypes : blockType {
-	AIR = 0,
-	GRASS,
-	SAND,
-	DIRT,
-	STONE,
-	BEDROCK,
-	TALL_GRASS,
-	COAL_ORE,
-	IRON_ORE,
-	DIAMOND_ORE,
-	BRICK,
-	WOOD,
-	CEMENT,
-	PLANK,
-	SNOW,
-	GLASS,
-	COBBLE,
-	LIGHT_STONE,
-	DARK_STONE,
-	CHEST,
-	LEAVES,
-	YELLOW_FLOWER,
-	RED_FLOWER,
-	PURPLE_FLOWER,
-	SUN_FLOWER,
-	WHITE_FLOWER,
-	BLUE_FLOWER,
-	COLOR_00,
-	COLOR_01,
-	COLOR_02,
-	COLOR_03,
-	COLOR_04,
-	COLOR_05,
-	COLOR_06,
-	COLOR_07,
-	COLOR_08,
-	COLOR_09,
-	COLOR_10,
-	COLOR_11,
-	COLOR_12,
-	COLOR_13,
-	COLOR_14,
-	COLOR_15,
-	COLOR_16,
-	COLOR_17,
-	COLOR_18,
-	COLOR_19,
-	COLOR_20,
-	COLOR_21,
-	COLOR_22,
-	COLOR_23,
-	COLOR_24,
-	COLOR_25,
-	COLOR_26,
-	COLOR_27,
-	COLOR_28,
-	COLOR_29,
-	COLOR_30,
-	COLOR_31,
+#include "shader.h"
 
-};
 
 // First 32 bits of a block give its morton code and pos
-const unsigned int codeBits(0xFFFF0000);
+const uint32_t codeBits(0x0000FFFF);
 // Bits 33-48 give the blocks type
-const unsigned int typeBits(0x0000FF00);
+const uint32_t typeBits(0x00FF0000);
 // Bits 49-64 are for currently unused attributes
-const unsigned int attrBits(0x000000FF);
-
+const uint32_t attrBits(0xFF000000);
+using uint = unsigned int;
 using uchar = unsigned char;
 
 class Block{
 public:
+	Block() { 
+		this->Data = new uint32_t(~0xFFFFFFFF);
+		SetType(blockTypes::AIR);
+	}
+	~Block() {
+		if (Data != nullptr) {
+			delete Data;
+		}
+	}
 	blockType GetType() {
-
+		return static_cast<uint8_t>((*this->Data & typeBits) >> 16);
 	}
 	glm::vec3 GetPosition() {
-		uint32_t code;
-		code = (this->Data & codeBits);
-		glm::uvec3 pos = MortonDecodeLUT<uint32_t,uint32_t>(code);
+		uint16_t code;
+		code = (*this->Data & codeBits);
+		glm::uvec3 pos = MortonDecodeLUT<uint32_t,uint16_t>(code);
 		return pos;
 	}
 	void SetType(uint16_t type) {
-		
-		
+		*this->Data |= (static_cast<uint32_t>(type) << 16);
 	}
-	void SetPosition() {
-
-	}
-	std::uint64_t Data;
+	std::uint32_t* Data;
 };
 
-static const uint32_t codeBits = std::numeric_limits<uint32_t>::max();
+class BlockLite {
+public:
+	BlockLite() {
+		SetType(blockTypes::AIR);
+	}
+	blockType GetType() {
+		return this->Type;
+	}
+	void SetPosition(uint x, uint y, uint z) {
+		this->Data = MortonEncodeLUT<uint32_t, uint32_t>(x, y, z);
+	}
+	glm::vec3 GetPosition() {
+		glm::uvec3 pos = MortonDecodeLUT<uint32_t, uint32_t>(Data);
+		return pos;
+	}
+	void SetType(blockType type) {
+		this->Type = type;
+	}
+	std::uint32_t Data;
+	blockType Type;
+};
+
 
 class MortonChunk {
 public:
-	std::array<Block, 131072> Blocks;
+	std::vector<blockType> Blocks;
 	glm::ivec3 GridPosition;
 	glm::vec3 Position;
 	MortonChunk(glm::ivec3 gridpos) {
 		this->GridPosition = gridpos;
 		float x_pos, y_pos, z_pos;
+		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
+		this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks,blockTypes::AIR);
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
 		x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		this->Position = glm::vec3(x_pos, y_pos, z_pos);
-		// Set our initial block array values using the prebuilt LUT
-		for (unsigned int i = 0; i < LUTBlocks.size(); ++i) {
-			this->Blocks[i].Data = LUTBlocks[i];
-		}
 	}
 	~MortonChunk() {
 		glDeleteBuffers(1, &this->VBO);
@@ -127,13 +89,21 @@ public:
 		glDeleteVertexArrays(1, &this->VAO);
 	}
 	// Calls noise function to build terrain
-	void BuildTerrain(TerrainGenerator& gen);
+	void BuildTerrain(TerrainGenerator& gen, int terraintype);
 	// Builds the mesh and populates the buffers
 	void BuildChunkMesh();
 	// Renders this chunk
-	void RenderChunk();
+	void RenderChunk(Shader shader);
+	// Deletes data for blocks that aren't currently set to anything.
+	void CleanChunkBlocks();
+	// Returns index to block in vector
+	inline uint32_t GetBlockIndex(uint32_t x, uint32_t y, uint32_t z){
+		return (MortonEncodeLUT<uint32_t,uint32_t>(x, y, z));
+	}
 private:
 	GLuint VAO, VBO, EBO;
 	Mesh chunkMesh;
+	void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
+
 };
 #endif // !MORTON_CHUNK_H

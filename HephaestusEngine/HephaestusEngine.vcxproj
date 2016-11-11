@@ -160,10 +160,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="interval.h" />
-    <ClInclude Include="treeChunk.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="util\Block.h" />
     <ClInclude Include="util\camera.h" />
     <ClInclude Include="util\intervaltree.h" />
     <ClInclude Include="util\lodepng.h" />
@@ -171,7 +168,6 @@
     <ClInclude Include="util\mesh.h" />
     <ClInclude Include="util\Morton.h" />
     <ClInclude Include="util\MortonChunk.h" />
-    <ClInclude Include="util\MortonChunkBlockLUT.h" />
     <ClInclude Include="util\rle.h" />
     <ClInclude Include="util\shader.h" />
     <ClInclude Include="util\TerrainGen.h" />
@@ -182,11 +178,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="treeChunk.cpp">
+    <ClCompile Include="util\TerrainGen.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="util\lodepng.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="util\MortonChunk.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

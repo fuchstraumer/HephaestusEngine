@@ -5,7 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include "stdafx.h"
+#include "../stdafx.h"
 
 class Shader
 {

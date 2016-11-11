@@ -5,8 +5,8 @@
 #include "util\lodeTexture.h"
 #include "util/shader.h"
 #include "util/camera.h"
-#include "treeChunk.h"
 #include "util\MortonChunk.h"
+#include <ctime>
 static GLuint WIDTH = 1440, HEIGHT = 900;
 
 // Function declarations
@@ -32,7 +32,7 @@ int main(){
 	std::cin >> stringSeed;
 	int chunks;
 	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
-	std::cout << "Warning: Using values greater than 32 may cause memory allocation crashes. " << std::endl;
+	std::cout << "Warning: Using values greater than 16 may cause memory allocation crashes. " << std::endl;
 	std::cin >> chunks;
 	std::cout << "What terrain generator would you like to use?" << std::endl;
 	std::cout << "Options: 0 = FBM, 1 = Billow, 2 = RidgedMulti, 3 = SwissNoise" << std::endl;
@@ -41,17 +41,14 @@ int main(){
 		std::cout << "Erronenous terrain generator value chosen. Defaulting to FBM..." << std::endl;
 		terrainType = 0;
 	}
-	
 	int intSeed;
 	std::stringstream(stringSeed) >> intSeed;
 	// Build and seed our terrain generator
 	TerrainGenerator gen(intSeed);
-	if (chunks > 48) {
-		chunks = 48;
+	if (chunks > 16) {
+		chunks = 16;
 	}
-
-	MortonChunk test1(glm::ivec3(0,0,0));
-	test1.Blocks[6]
+	//glm::vec3 pos = test1.Blocks[6].GetPosition();
 	// Init GLFW to get OpenGL functions and pointers
 	glfwInit();
 	// Set all the required options for GLFW
@@ -59,7 +56,7 @@ int main(){
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-	glfwWindowHint(GLFW_SAMPLES, 2);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	
 	// Create a GLFWwindow object that we can use for GLFW's functions
 	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
@@ -101,22 +98,39 @@ int main(){
 	
 	TextureArray textures(filelist, 16);
 	textures.BuildTextureArray(GL_TEXTURE0);
-	
-	std::vector<std::shared_ptr<TreeChunk>> chunkList; chunkList.reserve(chunks*chunks);
+	/*std::vector<TreeChunk*> chunkList; chunkList.reserve(chunks*chunks);
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
-			std::shared_ptr<TreeChunk> NewChunk(new TreeChunk(grid));
+			TreeChunk* NewChunk = new TreeChunk(grid);
 			NewChunk->BuildTerrain(gen, terrainType);
-			NewChunk->BuildData();
-			NewChunk->BuildRender();
-			NewChunk->EncodeChunk();
+			NewChunk->BuildChunkMesh();
 			chunkList.push_back(NewChunk);
-			if(chunkList.size() % 10 == 0)
+			if (chunkList.size() % 10 == 0)
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 		}
 	}
+	chunkList.shrink_to_fit();*/
+	std::clock_t time; 
+	std::vector<MortonChunk*> chunkList; chunkList.reserve(chunks*chunks);
+	time = std::clock();
+	for (int i = 0; i < chunks; ++i) {
+		for (int j = 0; j < chunks; ++j) {
+			glm::ivec3 grid = glm::ivec3(i, 0, j);
+			MortonChunk* NewChunk = new MortonChunk(grid);
+			NewChunk->BuildTerrain(gen, terrainType);
+			NewChunk->BuildChunkMesh();
+			//NewChunk->CleanChunkBlocks();
+			chunkList.push_back(std::move(NewChunk));
+			if (chunkList.size() % 10 == 0)
+				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
+		}
+	}
+	auto duration = (std::clock() - time) / CLOCKS_PER_SEC;
+	std::cerr << "Total time to generate all chunks was: " << duration << " seconds." << std::endl;
 	chunkList.shrink_to_fit();
+	
+	
 
 
 	// Set the global light position
@@ -172,14 +186,18 @@ int main(){
 		// Once transformed, we can then render that chunk
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
 			glm::mat4 model; 
-			model = glm::translate(model, chunkList[i]->ChunkPos);
+			model = glm::translate(model, chunkList[i]->Position);
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-			chunkList[i]->ChunkRender(ourShader);
+			chunkList[i]->RenderChunk(ourShader);
 		}
 		// Swap the buffers to avoid visible refresh
 		glfwSwapBuffers(window);
 
 	} 
+	for (auto chk : chunkList) {
+		chk->~MortonChunk();
+		delete chk;
+	}
 	glfwTerminate();
     return 0;
 }
@@ -215,10 +233,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			keys[key] = false;
 	}
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
-		camera.MovementSpeed += 20;
+		camera.MovementSpeed += 60;
 	}
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
-		camera.MovementSpeed -= 20;
+		camera.MovementSpeed -= 60;
 	}
 }
 

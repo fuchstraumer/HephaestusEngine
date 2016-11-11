@@ -2,13 +2,7 @@
 #ifndef MORTON_H
 #define MORTON_H
 #include "../stdafx.h"
-#include <array>
 
-template<typename coord, typename code>
-inline code MortonEncode(coord x, coord y, coord z);
-
-template<typename code, typename coord>
-inline void MortonDecode(const code m, coord& x, coord& y, coord& z);
 
 // Small LUT for decoding
 static uint_fast32_t magicbit3D_masks32[5] = { 0x000003ff, 0x30000ff, 0x0300f00f, 0x30c30c3, 0x9249249 };
@@ -57,7 +51,9 @@ inline void MortonDecodemBits(const code m, coord& x, coord& y, coord& z) {
 /*
 	Look-Up-Tables follow
 */
-static const uint_fast32_t morton256_x[256] = {
+// Based on: http://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+static const uint32_t morton256_x[256] =
+{
 	0x00000000,
 	0x00000001, 0x00000008, 0x00000009, 0x00000040, 0x00000041, 0x00000048, 0x00000049, 0x00000200,
 	0x00000201, 0x00000208, 0x00000209, 0x00000240, 0x00000241, 0x00000248, 0x00000249, 0x00001000,
@@ -93,7 +89,8 @@ static const uint_fast32_t morton256_x[256] = {
 	0x00249201, 0x00249208, 0x00249209, 0x00249240, 0x00249241, 0x00249248, 0x00249249
 };
 
-static const uint_fast32_t morton256_y[256] = {
+// pre-shifted table for Y coordinates (1 bit to the left)
+static const uint32_t morton256_y[256] = {
 	0x00000000,
 	0x00000002, 0x00000010, 0x00000012, 0x00000080, 0x00000082, 0x00000090, 0x00000092, 0x00000400,
 	0x00000402, 0x00000410, 0x00000412, 0x00000480, 0x00000482, 0x00000490, 0x00000492, 0x00002000,
@@ -129,7 +126,8 @@ static const uint_fast32_t morton256_y[256] = {
 	0x00492402, 0x00492410, 0x00492412, 0x00492480, 0x00492482, 0x00492490, 0x00492492
 };
 
-static const uint_fast32_t morton256_z[256] = {
+// Pre-shifted table for z (2 bits to the left)
+static const uint32_t morton256_z[256] = {
 	0x00000000,
 	0x00000004, 0x00000020, 0x00000024, 0x00000100, 0x00000104, 0x00000120, 0x00000124, 0x00000800,
 	0x00000804, 0x00000820, 0x00000824, 0x00000900, 0x00000904, 0x00000920, 0x00000924, 0x00004000,
@@ -164,6 +162,7 @@ static const uint_fast32_t morton256_z[256] = {
 	0x00924004, 0x00924020, 0x00924024, 0x00924100, 0x00924104, 0x00924120, 0x00924124, 0x00924800,
 	0x00924804, 0x00924820, 0x00924824, 0x00924900, 0x00924904, 0x00924920, 0x00924924
 };
+
 
 static const uint_fast8_t morton512_decode_x[512] = {
 	0, 1, 0, 1, 0, 1, 0, 1, 2, 3, 2, 3, 2, 3, 2, 3,
@@ -275,7 +274,7 @@ static const uint_fast8_t morton512_decode_z[512] = {
 	without incurring a heavy computational expense
 */
 
-static const std::array<uint_fast32_t, 256> deltaX = { 
+static const std::array<int_fast32_t, 256> deltaX = { 
 	1, 7, 1, 55, 1, 7, 1, 439, 1, 7, 1, 55, 1, 7, 1, 
 	3511, 1, 7, 1, 55, 1, 7, 1, 439, 1, 7, 1, 55, 1, 
 	7, 1, 28087, 1, 7, 1, 55, 1, 7, 1, 439, 1, 7, 1, 
@@ -295,7 +294,7 @@ static const std::array<uint_fast32_t, 256> deltaX = {
 	55, 1, 7, 1, 439, 1, 7, 1, 55, 1, 7, 1, 3511, 1, 
 	7, 1, 55, 1, 7, 1, 439, 1, 7, 1, 55, 1, 7, 1   };
 
-static const std::array<uint_fast32_t, 256> deltaY = {
+static const std::array<int_fast32_t, 256> deltaY = {
 	2, 14, 2, 110, 2, 14, 2, 878, 2, 14, 2, 110, 2, 
 	14, 2, 7022, 2, 14, 2, 110, 2, 14, 2, 878, 2, 14, 
 	2, 110, 2, 14, 2, 56174, 2, 14, 2, 110, 2, 14, 2, 
@@ -317,7 +316,7 @@ static const std::array<uint_fast32_t, 256> deltaY = {
 	110, 2, 14, 2, 7022, 2, 14, 2, 110, 2, 14, 2, 878, 
 	2, 14, 2, 110, 2, 14, 2		};
 
-static const std::array<uint_fast32_t, 256> deltaZ = {
+static const std::array<int_fast32_t, 256> deltaZ = {
 	4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 
 	28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 
 	28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 
@@ -347,7 +346,7 @@ template<typename code, typename coord>
 inline coord mortonDecodeHelper(const code m, const uint_fast8_t *LUT, const unsigned int startshift) {
 	code a = 0;
 	code NINEBITMASK = 0x000001ff;
-	unsigned int loops = (sizeof(morton) <= 4) ? 4 : 7; // ceil for 32bit, floor for 64bit
+	unsigned int loops = (sizeof(code) <= 4) ? 4 : 7; // ceil for 32bit, floor for 64bit
 	for (unsigned int i = 0; i < loops; ++i) {
 		a |= (LUT[(m >> ((i * 9) + startshift)) & NINEBITMASK] << (3 * i));
 	}
@@ -367,17 +366,35 @@ inline code MortonEncodeLUT(coord x, coord y, coord z){
 template<typename code, typename coord>
 inline glm::uvec3 MortonDecodeLUT(const code m) {
 	glm::uvec3 res;
-	res.x = morton3D_DecodeCoord_LUT256<code, coord>(m, morton512_decode_x, 0);
-	res.y = morton3D_DecodeCoord_LUT256<code, coord>(m, morton512_decode_y, 1);
-	res.z = morton3D_DecodeCoord_LUT256<code, coord>(m, morton512_decode_z, 2);
+	res.x = mortonDecodeHelper<code, coord>(m, morton512_decode_x, 0);
+	res.y = mortonDecodeHelper<code, coord>(m, morton512_decode_y, 1);
+	res.z = mortonDecodeHelper<code, coord>(m, morton512_decode_z, 2);
 	return res;
 }
 
-#define NEG_X_DELTA (-(deltaX[xPos-1]))
-#define POS_X_DELTA (deltaX[xPos])
-#define NEG_Y_DELTA (-(deltaY[yPos-1]))
-#define POS_Y_DELTA (deltaY[yPos])
-#define NEG_Z_DELTA (-(deltaZ[zPos-1]))
-#define POS_Z_DELTA (deltaZ[zPos])
+inline int_fast32_t negXDelta(uint_fast64_t x) {
+	return (-(deltaX[x - 1]));
+}
+
+inline int_fast32_t posXDelta(uint_fast64_t x) {
+	return (deltaX[x]);
+}
+
+inline int_fast32_t negYDelta(uint_fast64_t y) {
+	return (-(deltaY[y - 1]));
+}
+
+inline int_fast32_t posYDelta(uint_fast64_t y) {
+	return (deltaY[y]);
+}
+
+inline int_fast32_t negZDelta(uint_fast64_t z) {
+	return (-(deltaZ[z - 1]));
+}
+
+inline int_fast32_t posZDelta(uint_fast64_t z) {
+	return (deltaZ[z]);
+}
+
 
 #endif // !MORTON_H

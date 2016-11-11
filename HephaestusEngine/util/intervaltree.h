@@ -1,10 +1,9 @@
 #ifndef __INTERVAL_TREE_H
 #define __INTERVAL_TREE_H
-
-#include <vector>
+#include "../stdafx.h"
 #include <algorithm>
-#include <iostream>
-#include <memory>
+
+
 
 template <class T, typename K = std::size_t>
 class Interval {

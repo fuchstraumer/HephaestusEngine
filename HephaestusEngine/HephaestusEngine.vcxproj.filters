@@ -46,9 +46,6 @@
     <ClInclude Include="util\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="treeChunk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\intervaltree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -56,9 +53,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\rle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="interval.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\lodeTexture.h">
@@ -70,20 +64,11 @@
     <ClInclude Include="util\Morton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util\Block.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\MortonChunk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="util\MortonChunkBlockLUT.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="treeChunk.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HephaestusEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -91,6 +76,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="util\lodepng.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\MortonChunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="util\TerrainGen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

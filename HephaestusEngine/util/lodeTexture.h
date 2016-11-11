@@ -2,9 +2,7 @@
 #ifndef LODE_TEXTURE_H
 #define LODE_TEXTURE_H
 #include "lodepng.h"
-#define GLEW_STATIC
-#include <GL/glew.h>
-#include <string>
+#include "../stdafx.h"	
 using uint = unsigned int;
 // Builds and loads an OpenGL 3D texture for use as a 2D texture array.
 // To use in a program, call glBindTexture(texture->GL_Handle)
@@ -14,7 +12,7 @@ public:
 	// The input vector contains the filenames to use for importing
 	TextureArray(std::vector<std::string> filelist, uint textureDims) {
 		glGenTextures(1, &this->GL_Handle);
-		this->depth = filelist.size();
+		this->depth = (GLsizei)filelist.size();
 		this->fileList = filelist;
 		this->TextureDimensions = textureDims;
 	}
@@ -26,7 +24,7 @@ public:
 private:
 	std::vector<unsigned char*> textureData;
 	std::vector<std::string> fileList;
-	std::size_t depth; // Sets amount of slots to reserve in the texture array
+	GLsizei depth; // Sets amount of slots to reserve in the texture array
 };
 
 
@@ -44,7 +42,7 @@ inline void TextureArray::BuildTextureArray(GLenum activetexture) {
 	glBindTexture(GL_TEXTURE_2D_ARRAY,this->GL_Handle);
 	glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, this->TextureDimensions, this->TextureDimensions, 
 		this->depth, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	for (uint i = 0; i < this->depth; ++i) {
+	for (GLsizei i = 0; i < this->depth; ++i) {
 		glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, this->TextureDimensions, this->TextureDimensions, 1, 
 			GL_RGBA, GL_UNSIGNED_BYTE, this->textureData[i]);
 	}
