@@ -160,6 +160,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="SIMD.h" />
+    <ClInclude Include="SIMD_AVX.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="util\camera.h" />
     <ClInclude Include="util\intervaltree.h" />

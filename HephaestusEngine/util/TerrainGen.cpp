@@ -1,4 +1,6 @@
 #include "TerrainGen.h"
+#include "../SIMD.h"
+
 
 double TerrainGenerator::simplex(double x, double y, double* dx, double* dy) {
 #define F2 0.366025403 // F2 = 0.5*(sqrt(3.0)-1.0)

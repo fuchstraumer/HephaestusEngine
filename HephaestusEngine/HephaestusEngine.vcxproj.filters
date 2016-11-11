@@ -67,6 +67,12 @@
     <ClInclude Include="util\MortonChunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SIMD.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SIMD_AVX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HephaestusEngine.cpp">
