@@ -1,6 +1,11 @@
 #pragma once
 #ifndef SIMD_H
 #define SIMD_H
+template<class T, size_t N>
+class __declspec(align(N)) SIMDv {
+public:
+	T Data;
+};
 #if defined(_WIN64)
 // 64-bit CPU's should all support SSE3 instruction set
 #define SIMD_LEVEL_SSE3
@@ -25,7 +30,7 @@ __inline T* aligned_malloc(std::size_t alignment) {
 	return posix_memalign(sizeof(T),alignment);
 }
 #endif
-
+#define SIMD_LEVEL_AVX2
 // AVX implementation not functional. AVX is very sparse
 // features-wise, AVX2 has actual features
 #ifdef SIMD_LEVEL_AVX2

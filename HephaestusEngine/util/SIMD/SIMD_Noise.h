@@ -19,16 +19,14 @@ namespace simd {
 	}
 	
 	static ivec4 hash(ivec4 const &seed, ivec4 const& x, ivec4 const& y, ivec4 const& z) {
-		ivec4 hashtmp; hashtmp.Load(seed.Data);
+		ivec4 hashtmp = seed;
 		hashtmp += (x * xPrime);
 		hashtmp += (y * yPrime);
 		hashtmp += (z * zPrime);
 
 		hashtmp = ((hashtmp * hashtmp) * ivec4(60493)) * hashtmp;
 		hashtmp = ivec4::xor((hashtmp >> 13), hashtmp);
-		ivec4 hashresult; 
-		hashresult.Load(hashtmp.Data);
-		return hashresult;
+		return hashtmp;
 	}
 
 	static vec4 gradientcoord(ivec4 const &seed, ivec4 const &xi, ivec4 const &yi, ivec4 const &zi, vec4 const &x, vec4 const& y, vec4 const &z) {
@@ -95,43 +93,41 @@ namespace simd {
 		vec4 n3 = t3 >= vec4(0.0f);
 
 		t0 = t0 * t0;
-		t0 = t0 * t0;
-		t1 = t1 * t1;
 		t1 = t1 * t1;
 		t2 = t2 * t2;
-		t2 = t2 * t2;
-		t3 = t3 * t3;
 		t3 = t3 * t3;
 
-		n0 = n0 & ((t0) * gradientcoord(seed, i, j, k, x0, y0, z0));
-		n1 = n1 & ((t1) * gradientcoord(seed, i + i1, j + j1, k + k1, x1, y1, z1));
-		n2 = n2 & ((t2) * gradientcoord(seed, i + i2, j + j2, k + k2, x2, y2, z2));
-		n3 = n2 & ((t3) * gradientcoord(seed, i + oneVecI, j + oneVecI, k + oneVecI, x3, y3, z3));
-		vec4 result; result.Load((vec4(32.0f) * (n0 + n1 + n2 + n3)).Data);
-		return result;
+		n0 = n0 & ((t0 * t0) * gradientcoord(seed, i, j, k, x0, y0, z0));
+		n1 = n1 & ((t1 * t1) * gradientcoord(seed, i + i1, j + j1, k + k1, x1, y1, z1));
+		n2 = n2 & ((t2 * t2) * gradientcoord(seed, i + i2, j + j2, k + k2, x2, y2, z2));
+		n3 = n2 & ((t3 * t3) * gradientcoord(seed, i + oneVecI, j + oneVecI, k + oneVecI, x3, y3, z3));
+
+		return (vec4(32.0f, 32.0f, 32.0f, 32.0f) * (n0 + n1 + n2 + n3));
 	}
 
-	static vec4 FBM(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunarity, float gain) {
+	static vec8 simplex(ivec4 const &seed, vec8 const &xi, vec8 const& yi, vec8 const &zi) {
+
+	}
+
+	static float FBM(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunarity, float gain) {
+		vec4 sum(0.0f);
 		vec4 amplitude(1.0f);
-		vec4 x, y, z, n; // n = result
-		vec4 f(frequency);
-		x = xi * f; y = yi * f; z = zi * f;
-		n = simplex(seed, x, y, z);
+		vec4 x, y, z;
 		for (int i = 0; i < octaves; ++i) {
 			// Multiply initial coords by frequency to scale them to right domain
 			x = xi * vec4(frequency);
 			y = yi * vec4(frequency);
 			z = zi * vec4(frequency);
 			// Get simplex value
-			n = simplex(seed, x, y, z);
+			vec4 n = simplex(seed, x, y, z);
 			// Total simplex value is current * amplitude
-			n = n + (n * amplitude);
+			sum += n * amplitude;
 			// Scale the frequency by the lacunarity since this is octaved noise
 			frequency *= lacunarity;
 			// Gain changes over octaves as well.
-			amplitude = vec4(gain) * amplitude;
+			amplitude *= gain;
 		}
-		return (n / amplitude) + vec4(1.0f);
+		return sum.Data.m128_f32[0];
 	}
 
 	static vec4 RidgedMulti(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunariy, float gain) {

@@ -1,5 +1,6 @@
 #include "MortonChunk.h"
 #include "./SIMD/SIMD_VecSet.h"
+#include <ctime>`
 // Face normals
 static const std::vector<glm::vec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
@@ -145,13 +146,14 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 	// So get FBM at (0,0,1) (0,0,1)
 	// using x = 0 1 2 3
 	// z = 0 - 64
+	std::time_t start; double duration;
+	start = std::clock();
 	std::vector<simd::vec4> xcoords; xcoords.reserve(256);
 	std::vector<simd::vec4> zcoords; zcoords.reserve(256);
 	for (float i = 0.0f; i < CHUNK_SIZE - 1; ++i) {
 		simd::vec4 x(i, i, i, i); x = x + simd::vec4(this->Position.x);
 		for (float k = 0.0f; k < CHUNK_SIZE - 1; k += 4) {
 			xcoords.push_back(x);
-			x.freeData();
 			simd::vec4 z(k, k + 1.0f, k + 2.0f, k + 3.0f);
 			z = z + simd::vec4(this->Position.z);
 			zcoords.push_back(z);
@@ -161,11 +163,11 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 	simd::vec4 zeroVec(1.0f, 1.0f, 1.0f, 1.0f);
 	for (std::size_t i = 0; i < xcoords.size(); ++i) {
 		// Get the four noise values at our four points
-		simd::vec4 result(simd::FBM(seed, xcoords[i], zeroVec, zcoords[i], 0.0001f, 6, 2.5f, 0.4f));
+		simd::vec4 result(simd::FBM(seed, xcoords[i], zeroVec, zcoords[i], 0.01f, 6, 2.5f, 0.6f));
 		// Use the noise value at the first point to populate the terrain at this point
-		glm::vec4 res1(xcoords[i].Data->m128_f32[0], 0.0f, zcoords[i].Data->m128_f32[0], result.Data->m128_f32[0]);
+		glm::vec4 res1(xcoords[i].Data.m128_f32[0], 0.0f, zcoords[i].Data.m128_f32[0], result.Data.m128_f32[0]);
 		// This helps to avoid out-of-bounds errors and multiplying by this number helps add more variety/scale
-		res1.w = abs(res1.w); res1.w *= 32.0f;
+		res1.w = abs(res1.w); res1.w =  res1.w * 32.0f;
 		if (res1.w > CHUNK_SIZE_Z - 1) {
 			res1.w = CHUNK_SIZE_Z - 2;
 		}
@@ -179,7 +181,7 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
 		}
 		// Build terrain at second point, same procedure as last point
-		glm::vec4 res2(xcoords[i].Data->m128_f32[1], 0.0f, zcoords[i].Data->m128_f32[1], result.Data->m128_f32[1]);
+		glm::vec4 res2(xcoords[i].Data.m128_f32[1], 0.0f, zcoords[i].Data.m128_f32[1], result.Data.m128_f32[1]);
 		res2.w = abs(res2.w); res2.w = res2.w * 32.0f;
 		if (res2.w > CHUNK_SIZE_Z - 1) {
 			res2.w = CHUNK_SIZE_Z - 2;
@@ -194,7 +196,7 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
 		}
 		// Terrain at third point
-		glm::vec4 res3(xcoords[i].Data->m128_f32[2], 0.0f, zcoords[i].Data->m128_f32[2], result.Data->m128_f32[2]);
+		glm::vec4 res3(xcoords[i].Data.m128_f32[2], 0.0f, zcoords[i].Data.m128_f32[2], result.Data.m128_f32[2]);
 		res3.w = abs(res3.w); res3.w = res3.w * 32.0f;
 		if (res3.w > CHUNK_SIZE_Z - 1) {
 			res3.w = CHUNK_SIZE_Z - 2;
@@ -209,7 +211,7 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
 		}
 		// Terrain at fourth point
-		glm::vec4 res4(xcoords[i].Data->m128_f32[3], 0.0f, zcoords[i].Data->m128_f32[3], result.Data->m128_f32[3]);
+		glm::vec4 res4(xcoords[i].Data.m128_f32[3], 0.0f, zcoords[i].Data.m128_f32[3], result.Data.m128_f32[3]);
 		res4.w = abs(res4.w); res4.w = res4.w * 32.0f;
 		if (res4.w > CHUNK_SIZE_Z - 1) {
 			res4.w = CHUNK_SIZE_Z - 2;
@@ -224,8 +226,9 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
 		}
 		// Now at the end of this loop, iterate through coord vectors to fill the whole chunk a point at a time.
-		result.freeData();
 	}
+	duration = (std::clock() - start); 
+	std::cerr << "Generating terrain for this chunk took " << duration << " clock cycles, or " << (duration / CLOCKS_PER_SEC) << " seconds." << std::endl;
 }
 
 
