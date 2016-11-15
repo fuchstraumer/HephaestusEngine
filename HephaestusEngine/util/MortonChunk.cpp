@@ -1,4 +1,5 @@
 #include "MortonChunk.h"
+#include "./SIMD/SIMD_VecSet.h"
 // Face normals
 static const std::vector<glm::vec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
@@ -135,11 +136,105 @@ void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 }
 
 
+
+
+void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
+	// Set of coords for a chunk in 2D noise will be:
+	// x: 0, 1, 2, 3 (one 4-long run) + 4 (per i) until x[3] = 64
+	// For each set of these X's, get values of Z across range above
+	// So get FBM at (0,0,1) (0,0,1)
+	// using x = 0 1 2 3
+	// z = 0 - 64
+	std::vector<simd::vec4> xcoords; xcoords.reserve(256);
+	std::vector<simd::vec4> zcoords; zcoords.reserve(256);
+	for (float i = 0.0f; i < CHUNK_SIZE - 1; ++i) {
+		simd::vec4 x(i, i, i, i); x = x + simd::vec4(this->Position.x);
+		for (float k = 0.0f; k < CHUNK_SIZE - 1; k += 4) {
+			xcoords.push_back(x);
+			x.freeData();
+			simd::vec4 z(k, k + 1.0f, k + 2.0f, k + 3.0f);
+			z = z + simd::vec4(this->Position.z);
+			zcoords.push_back(z);
+		}
+	}
+	std::vector<simd::vec4> vals; vals.reserve(256);
+	simd::vec4 zeroVec(1.0f, 1.0f, 1.0f, 1.0f);
+	for (std::size_t i = 0; i < xcoords.size(); ++i) {
+		// Get the four noise values at our four points
+		simd::vec4 result(simd::FBM(seed, xcoords[i], zeroVec, zcoords[i], 0.0001f, 6, 2.5f, 0.4f));
+		// Use the noise value at the first point to populate the terrain at this point
+		glm::vec4 res1(xcoords[i].Data->m128_f32[0], 0.0f, zcoords[i].Data->m128_f32[0], result.Data->m128_f32[0]);
+		// This helps to avoid out-of-bounds errors and multiplying by this number helps add more variety/scale
+		res1.w = abs(res1.w); res1.w *= 32.0f;
+		if (res1.w > CHUNK_SIZE_Z - 1) {
+			res1.w = CHUNK_SIZE_Z - 2;
+		}
+		else if (res1.w <= 0.5f) {
+			res1.w = 1.0f;
+		}
+		for (int j = 1; j < res1.w; ++j) {
+			int32_t currentIndex = GetBlockIndex(res1.x, j, res1.z);
+			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+			this->Blocks[currentIndex] = blockTypes::DIRT;
+			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+		}
+		// Build terrain at second point, same procedure as last point
+		glm::vec4 res2(xcoords[i].Data->m128_f32[1], 0.0f, zcoords[i].Data->m128_f32[1], result.Data->m128_f32[1]);
+		res2.w = abs(res2.w); res2.w = res2.w * 32.0f;
+		if (res2.w > CHUNK_SIZE_Z - 1) {
+			res2.w = CHUNK_SIZE_Z - 2;
+		}
+		else if (res2.w <= 0.5f) {
+			res2.w = 1.0f;
+		}
+		for (int j = 1; j < res2.w; ++j) {
+			int32_t currentIndex = GetBlockIndex(res2.x, j, res2.z);
+			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+			this->Blocks[currentIndex] = blockTypes::DIRT;
+			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+		}
+		// Terrain at third point
+		glm::vec4 res3(xcoords[i].Data->m128_f32[2], 0.0f, zcoords[i].Data->m128_f32[2], result.Data->m128_f32[2]);
+		res3.w = abs(res3.w); res3.w = res3.w * 32.0f;
+		if (res3.w > CHUNK_SIZE_Z - 1) {
+			res3.w = CHUNK_SIZE_Z - 2;
+		}
+		else if (res3.w <= 0.5f) {
+			res3.w = 1.0f;
+		}
+		for (int j = 1; j < res3.w; ++j) {
+			int32_t currentIndex = GetBlockIndex(res3.x, j, res3.z);
+			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+			this->Blocks[currentIndex] = blockTypes::DIRT;
+			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+		}
+		// Terrain at fourth point
+		glm::vec4 res4(xcoords[i].Data->m128_f32[3], 0.0f, zcoords[i].Data->m128_f32[3], result.Data->m128_f32[3]);
+		res4.w = abs(res4.w); res4.w = res4.w * 32.0f;
+		if (res4.w > CHUNK_SIZE_Z - 1) {
+			res4.w = CHUNK_SIZE_Z - 2;
+		}
+		else if (res4.w <= 0.5f) {
+			res4.w = 1.0f;
+		}
+		for (int j = 1; j < res4.w; ++j) {
+			int32_t currentIndex = GetBlockIndex(res4.x, j, res4.z);
+			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+			this->Blocks[currentIndex] = blockTypes::DIRT;
+			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+		}
+		// Now at the end of this loop, iterate through coord vectors to fill the whole chunk a point at a time.
+		result.freeData();
+	}
+}
+
+
 void MortonChunk::BuildChunkMesh() {
 	// Default block adjacency value assumes true
 	bool def = true;
 	// Iterate over each block in the volume via intervals
 	// If an interval has a value
+	this->chunkMesh.meshIndices.reserve(600000); this->chunkMesh.meshVerts.reserve(400000);
 	for (int j = 0; j < CHUNK_SIZE - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
@@ -207,6 +302,7 @@ void MortonChunk::BuildChunkMesh() {
 			}
 		}
 	}
+	this->chunkMesh.meshIndices.shrink_to_fit(); this->chunkMesh.meshVerts.shrink_to_fit();
 	glGenVertexArrays(1, &this->VAO);
 	glGenBuffers(1, &this->VBO); glGenBuffers(1, &this->EBO);
 	glBindVertexArray(this->VAO);

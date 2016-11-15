@@ -45,6 +45,12 @@ static const bool DAY_NIGHT_CYCLE = true;
 // Terrain gen
 #include "util/TerrainGen.h"
 
+// SIMD stuff
+#include "util/SIMD/SIMD.h"
+#include "util/SIMD/SIMD_Noise.h"
+#include "util/SIMD/SIMD_Math.h"
+#include "util/SIMD/SIMD_Constants.h"
+
 enum blockTypes : blockType {
 	AIR = 0,
 	GRASS,
@@ -107,3 +113,4 @@ enum blockTypes : blockType {
 	COLOR_31,
 
 };
+

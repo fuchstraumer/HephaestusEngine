@@ -26,12 +26,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="compressed_fragment.glsl">
-      <Filter>Shader Files</Filter>
-    </Text>
-    <Text Include="compressed_vertex.glsl">
-      <Filter>Shader Files</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -67,10 +61,25 @@
     <ClInclude Include="util\MortonChunk.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SIMD.h">
+    <ClInclude Include="util\SIMD\SIMD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SIMD_AVX.h">
+    <ClInclude Include="util\SIMD\SIMD_AVX.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\SIMD\SIMD_Constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\SIMD\SIMD_Math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\SIMD\SIMD_Noise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\SIMD\SIMD_SSE.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\SIMD\SIMD_VecSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -215,5 +224,13 @@
     <Image Include="textures\blocks\tallgrass.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\vertex.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="shaders\fragment.glsl">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

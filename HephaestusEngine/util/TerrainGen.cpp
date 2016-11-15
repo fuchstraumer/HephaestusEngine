@@ -1,7 +1,6 @@
 #include "TerrainGen.h"
-#include "../SIMD.h"
-
-
+static const int CHUNK_SIZE = 32;
+static const int CHUNK_SIZE_Z = 64;
 double TerrainGenerator::simplex(double x, double y, double* dx, double* dy) {
 #define F2 0.366025403 // F2 = 0.5*(sqrt(3.0)-1.0)
 #define G2 0.211324865 // G2 = (3.0-Math.sqrt(3.0))/6.0
@@ -398,3 +397,4 @@ auto TerrainGenerator::SimplexJordan(int x, int y, double freq, int octaves, flo
 	glm::dvec2 dWarp = glm::dvec2(*dx1*warp0, *dy1*warp0);
 	glm::dvec2 dDamp = glm::dvec2(*dx1*damp0, *dy1*warp1);
 }
+

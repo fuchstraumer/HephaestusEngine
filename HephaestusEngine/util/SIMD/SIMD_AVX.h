@@ -106,7 +106,7 @@ class SIMD16uv : public SIMDV<__m256i, 16> {
 public:
 	// Construct with four values equal to a,b,c,d
 	SIMD16uv(double a, double b, double c, double d) : SIMDV() {
-		*this->Data = _mm256_set_epi16(a, b, c, d);
+		//*this->Data = _mm256_set_epi16(a, b, c, d);
 	}
 	// Construct with all four values equal to x
 	SIMD16uv(double x) {
@@ -114,7 +114,7 @@ public:
 	}
 	// Get specified element
 	int* GetElement(int i) {
-		this->Data->m256i_u16[i % 16];
+		this->Data->m256i_i32[i % 16];
 	}
 	// Operators for SIMD types
 	__inline SIMD16uv operator+(SIMD16uv& other) const {

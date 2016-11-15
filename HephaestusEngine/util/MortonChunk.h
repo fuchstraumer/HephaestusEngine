@@ -90,6 +90,7 @@ public:
 	}
 	// Calls noise function to build terrain
 	void BuildTerrain(TerrainGenerator& gen, int terraintype);
+	void BuildTerrain_SIMD(simd::ivec4 seed);
 	// Builds the mesh and populates the buffers
 	void BuildChunkMesh();
 	// Renders this chunk

@@ -4,7 +4,6 @@
 #include <math.h>
 #include <random>
 #include <algorithm>
-#include "../stdafx.h"
 /*
 	Class: Terrain Generator
 	Primary terrain generation system for this library/engine.

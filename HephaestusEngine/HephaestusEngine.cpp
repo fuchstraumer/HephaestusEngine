@@ -48,6 +48,11 @@ int main(){
 	if (chunks > 16) {
 		chunks = 16;
 	}
+	std::uniform_int_distribution<> distr(-5000, 5000);
+	simd::ivec4 simdSeed(distr(gen.r_gen), distr(gen.r_gen), distr(gen.r_gen), distr(gen.r_gen));
+
+
+
 	//glm::vec3 pos = test1.Blocks[6].GetPosition();
 	// Init GLFW to get OpenGL functions and pointers
 	glfwInit();
@@ -72,7 +77,7 @@ int main(){
 
 	// Initialize glew and build our shader program
 	glewExperimental = GL_TRUE; glewInit();
-	Shader ourShader("compressed_vertex.glsl", "compressed_fragment.glsl");
+	Shader ourShader("./shaders/vertex.glsl", "./shaders/fragment.glsl");
 	glViewport(0, 0, WIDTH, HEIGHT);
 
 	// Setup some OpenGL options
@@ -118,7 +123,8 @@ int main(){
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			MortonChunk* NewChunk = new MortonChunk(grid);
-			NewChunk->BuildTerrain(gen, terrainType);
+			NewChunk->BuildTerrain_SIMD(simdSeed);
+			//NewChunk->BuildTerrain(gen, terrainType);
 			NewChunk->BuildChunkMesh();
 			//NewChunk->CleanChunkBlocks();
 			chunkList.push_back(std::move(NewChunk));
