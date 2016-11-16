@@ -109,25 +109,32 @@ namespace simd {
 
 	}
 
-	static float FBM(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunarity, float gain) {
-		vec4 sum(0.0f);
+	static vec4 FBM(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunarity, float gain) {
 		vec4 amplitude(1.0f);
-		vec4 x, y, z;
+		vec4 x, y, z; ivec4 seedv = seed;
+		x = xi * vec4(frequency);
+		y = yi * vec4(frequency);
+		z = zi * vec4(frequency);
+		vec4 max = oneVecF;
+		vec4 n = simplex(seed, x, y, z);
 		for (int i = 0; i < octaves; ++i) {
 			// Multiply initial coords by frequency to scale them to right domain
 			x = xi * vec4(frequency);
 			y = yi * vec4(frequency);
 			z = zi * vec4(frequency);
+			seedv = seedv + oneVecI;
 			// Get simplex value
-			vec4 n = simplex(seed, x, y, z);
+			n = simplex(seed, x, y, z);
 			// Total simplex value is current * amplitude
-			sum += n * amplitude;
+			n = n + n * amplitude;
 			// Scale the frequency by the lacunarity since this is octaved noise
 			frequency *= lacunarity;
 			// Gain changes over octaves as well.
-			amplitude *= gain;
+			amplitude *= vec4(gain);
+			max = max + amplitude;
 		}
-		return sum.Data.m128_f32[0];
+		n = (n / max);
+		return n;
 	}
 
 	static vec4 RidgedMulti(ivec4 const &seed, vec4 const &xi, vec4 const &yi, vec4 const &zi, float frequency, int octaves, float lacunariy, float gain) {

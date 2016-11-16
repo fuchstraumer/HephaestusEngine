@@ -148,84 +148,78 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 	// z = 0 - 64
 	std::time_t start; double duration;
 	start = std::clock();
+	// Two sets of coords, one for the noise function and
 	std::vector<simd::vec4> xcoords; xcoords.reserve(256);
 	std::vector<simd::vec4> zcoords; zcoords.reserve(256);
-	for (float i = 0.0f; i < CHUNK_SIZE - 1; ++i) {
-		simd::vec4 x(i, i, i, i); x = x + simd::vec4(this->Position.x);
-		for (float k = 0.0f; k < CHUNK_SIZE - 1; k += 4) {
-			xcoords.push_back(x);
+	// one for the actual mesh generation and indexing into the morton array
+	for (float i = 0.0f; i < CHUNK_SIZE; ++i) {
+		for (float k = 0.0f; k < CHUNK_SIZE; k +=4) {
+			simd::vec4 x(i, i, i, i);
 			simd::vec4 z(k, k + 1.0f, k + 2.0f, k + 3.0f);
-			z = z + simd::vec4(this->Position.z);
-			zcoords.push_back(z);
+			simd::vec4 result(simd::FBM(seed, x + simd::vec4(this->Position.x), simd::vec4(0.0f), 
+				z + simd::vec4(this->Position.z), 0.00001f, 6, 2.5f, 0.6f));
+			// Use the noise value at the first point to populate the terrain at this point
+			glm::vec4 res1(x.Data.m128_f32[0], 0.0f, z.Data.m128_f32[0], result.Data.m128_f32[0]);
+			// This helps to avoid out-of-bounds errors and multiplying by this number helps add more variety/scale
+			res1.w = abs(res1.w); res1.w = res1.w * 32.0f;
+			if (res1.w > CHUNK_SIZE_Z - 1) {
+				res1.w = CHUNK_SIZE_Z - 2;
+			}
+			else if (res1.w <= 0.5f) {
+				res1.w = 1.0f;
+			}
+			for (int j = 1; j < res1.w; ++j) {
+				int32_t currentIndex = GetBlockIndex(res1.x, j, res1.z);
+				this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+				this->Blocks[currentIndex] = blockTypes::DIRT;
+				this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+			}
+			// Build terrain at second point, same procedure as last point
+			glm::vec4 res2(x.Data.m128_f32[1], 0.0f, z.Data.m128_f32[1], result.Data.m128_f32[1]);
+			res2.w = abs(res2.w); res2.w = res2.w * 32.0f;
+			if (res2.w > CHUNK_SIZE_Z - 1) {
+				res2.w = CHUNK_SIZE_Z - 2;
+			}
+			else if (res2.w <= 0.5f) {
+				res2.w = 1.0f;
+			}
+			for (int j = 1; j < res2.w; ++j) {
+				int32_t currentIndex = GetBlockIndex(res2.x, j, res2.z);
+				this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+				this->Blocks[currentIndex] = blockTypes::DIRT;
+				this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+			}
+			// Terrain at third point
+			glm::vec4 res3(x.Data.m128_f32[2], 0.0f, z.Data.m128_f32[2], result.Data.m128_f32[2]);
+			res3.w = abs(res3.w); res3.w = res3.w * 32.0f;
+			if (res3.w > CHUNK_SIZE_Z - 1) {
+				res3.w = CHUNK_SIZE_Z - 2;
+			}
+			else if (res3.w <= 0.5f) {
+				res3.w = 1.0f;
+			}
+			for (int j = 1; j < res3.w; ++j) {
+				int32_t currentIndex = GetBlockIndex(res3.x, j, res3.z);
+				this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+				this->Blocks[currentIndex] = blockTypes::DIRT;
+				this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+			}
+			// Terrain at fourth point
+			glm::vec4 res4(x.Data.m128_f32[3], 0.0f, z.Data.m128_f32[3], result.Data.m128_f32[3]);
+			res4.w = abs(res4.w); res4.w = res4.w * 32.0f;
+			if (res4.w > CHUNK_SIZE_Z - 1) {
+				res4.w = CHUNK_SIZE_Z - 2;
+			}
+			else if (res4.w <= 0.5f) {
+				res4.w = 1.0f;
+			}
+			for (int j = 1; j < res4.w; ++j) {
+				int32_t currentIndex = GetBlockIndex(res4.x, j, res4.z);
+				this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
+				this->Blocks[currentIndex] = blockTypes::DIRT;
+				this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
+			}
 		}
-	}
-	std::vector<simd::vec4> vals; vals.reserve(256);
-	simd::vec4 zeroVec(1.0f, 1.0f, 1.0f, 1.0f);
-	for (std::size_t i = 0; i < xcoords.size(); ++i) {
-		// Get the four noise values at our four points
-		simd::vec4 result(simd::FBM(seed, xcoords[i], zeroVec, zcoords[i], 0.01f, 6, 2.5f, 0.6f));
-		// Use the noise value at the first point to populate the terrain at this point
-		glm::vec4 res1(xcoords[i].Data.m128_f32[0], 0.0f, zcoords[i].Data.m128_f32[0], result.Data.m128_f32[0]);
-		// This helps to avoid out-of-bounds errors and multiplying by this number helps add more variety/scale
-		res1.w = abs(res1.w); res1.w =  res1.w * 32.0f;
-		if (res1.w > CHUNK_SIZE_Z - 1) {
-			res1.w = CHUNK_SIZE_Z - 2;
-		}
-		else if (res1.w <= 0.5f) {
-			res1.w = 1.0f;
-		}
-		for (int j = 1; j < res1.w; ++j) {
-			int32_t currentIndex = GetBlockIndex(res1.x, j, res1.z);
-			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
-			this->Blocks[currentIndex] = blockTypes::DIRT;
-			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
-		}
-		// Build terrain at second point, same procedure as last point
-		glm::vec4 res2(xcoords[i].Data.m128_f32[1], 0.0f, zcoords[i].Data.m128_f32[1], result.Data.m128_f32[1]);
-		res2.w = abs(res2.w); res2.w = res2.w * 32.0f;
-		if (res2.w > CHUNK_SIZE_Z - 1) {
-			res2.w = CHUNK_SIZE_Z - 2;
-		}
-		else if (res2.w <= 0.5f) {
-			res2.w = 1.0f;
-		}
-		for (int j = 1; j < res2.w; ++j) {
-			int32_t currentIndex = GetBlockIndex(res2.x, j, res2.z);
-			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
-			this->Blocks[currentIndex] = blockTypes::DIRT;
-			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
-		}
-		// Terrain at third point
-		glm::vec4 res3(xcoords[i].Data.m128_f32[2], 0.0f, zcoords[i].Data.m128_f32[2], result.Data.m128_f32[2]);
-		res3.w = abs(res3.w); res3.w = res3.w * 32.0f;
-		if (res3.w > CHUNK_SIZE_Z - 1) {
-			res3.w = CHUNK_SIZE_Z - 2;
-		}
-		else if (res3.w <= 0.5f) {
-			res3.w = 1.0f;
-		}
-		for (int j = 1; j < res3.w; ++j) {
-			int32_t currentIndex = GetBlockIndex(res3.x, j, res3.z);
-			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
-			this->Blocks[currentIndex] = blockTypes::DIRT;
-			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
-		}
-		// Terrain at fourth point
-		glm::vec4 res4(xcoords[i].Data.m128_f32[3], 0.0f, zcoords[i].Data.m128_f32[3], result.Data.m128_f32[3]);
-		res4.w = abs(res4.w); res4.w = res4.w * 32.0f;
-		if (res4.w > CHUNK_SIZE_Z - 1) {
-			res4.w = CHUNK_SIZE_Z - 2;
-		}
-		else if (res4.w <= 0.5f) {
-			res4.w = 1.0f;
-		}
-		for (int j = 1; j < res4.w; ++j) {
-			int32_t currentIndex = GetBlockIndex(res4.x, j, res4.z);
-			this->Blocks[currentIndex + negYDelta(j)] = blockTypes::STONE;
-			this->Blocks[currentIndex] = blockTypes::DIRT;
-			this->Blocks[currentIndex + posYDelta(j)] = blockTypes::GRASS;
-		}
-		// Now at the end of this loop, iterate through coord vectors to fill the whole chunk a point at a time.
 	}
 	duration = (std::clock() - start); 
 	std::cerr << "Generating terrain for this chunk took " << duration << " clock cycles, or " << (duration / CLOCKS_PER_SEC) << " seconds." << std::endl;
@@ -235,6 +229,11 @@ void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed){
 void MortonChunk::BuildChunkMesh() {
 	// Default block adjacency value assumes true
 	bool def = true;
+	for (int x = 0; x < CHUNK_SIZE; ++x) {
+		for (int z = 0; z < CHUNK_SIZE; ++z) {
+			this->Blocks[GetBlockIndex(x, 0, z)] = blockTypes::BEDROCK;
+		}
+	}
 	// Iterate over each block in the volume via intervals
 	// If an interval has a value
 	this->chunkMesh.meshIndices.reserve(600000); this->chunkMesh.meshVerts.reserve(400000);
