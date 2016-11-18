@@ -1,0 +1,11 @@
+
+# Baseline config
+cmake_minimum_required (VERSION 2.6)
+project(HephaestusEngine)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_INCLUDE_CURRENT_DIR_IN_INTERFACE ON)
+
+
+
+include_directories("${PROJECT_SOURCE_DIR}/OpenGL/include")

@@ -55,6 +55,10 @@ namespace simd {
 	__inline static vec4 const floor(vec4 const &in) {
 		return vec4(_mm_floor_ps(in.Data));
 	}
+	__inline static ivec4 const ifloor(vec4 const &in) {
+		vec4 result(_mm_round_ps(in.Data, 0x0));
+		return CastToInt(result);
+	}
 	// Round the input float-vec up to the nearest integer
 	__inline static vec4 const ceil(vec4 const &in) {
 		return vec4(_mm_ceil_ps(in.Data));

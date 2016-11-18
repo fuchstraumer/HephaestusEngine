@@ -49,7 +49,8 @@ int main(){
 		chunks = 16;
 	}
 	std::uniform_int_distribution<> distr(-5000, 5000);
-	simd::ivec4 simdSeed(distr(gen.r_gen), distr(gen.r_gen), distr(gen.r_gen), distr(gen.r_gen));
+	simd::ivec4 simdSeed(distr(gen.r_gen) + intSeed, distr(gen.r_gen), distr(gen.r_gen), distr(gen.r_gen));
+	simdSeed = simdSeed + simd::ivec4(intSeed);
 
 
 
