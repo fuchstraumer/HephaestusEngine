@@ -83,27 +83,27 @@ public:
 		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		this->Position = glm::vec3(x_pos, y_pos, z_pos);
 	}
-	~MortonChunk() {
-		glDeleteBuffers(1, &this->VBO);
-		glDeleteBuffers(1, &this->EBO);
-		glDeleteVertexArrays(1, &this->VAO);
+
+	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos) {
+		glm::vec3 res;
+		res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
+		res.y = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
+		res.z = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
+		return res;
 	}
+	~MortonChunk() = default;
 	// Calls noise function to build terrain
 	void BuildTerrain(TerrainGenerator& gen, int terraintype);
-	void BuildTerrain_SIMD(simd::ivec4 seed);
 	// Builds the mesh and populates the buffers
-	void BuildChunkMesh();
-	// Renders this chunk
-	void RenderChunk(Shader shader);
+	void BuildMesh();
 	// Deletes data for blocks that aren't currently set to anything.
 	void CleanChunkBlocks();
 	// Returns index to block in vector
 	inline uint32_t GetBlockIndex(uint32_t x, uint32_t y, uint32_t z){
 		return (MortonEncodeLUT<uint32_t,uint32_t>(x, y, z));
 	}
-private:
-	GLuint VAO, VBO, EBO;
-	Mesh chunkMesh;
+
+	Mesh mesh;
 	void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
 
 };

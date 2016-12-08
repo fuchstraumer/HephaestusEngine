@@ -1,6 +1,6 @@
 #include "MortonChunk.h"
-#include "./SIMD/SIMD_VecSet.h"
-#include <ctime>`
+#include <ctime>
+
 // Face normals
 static const std::vector<glm::vec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
@@ -44,31 +44,31 @@ inline void MortonChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 	auto buildface = [this, uv_type](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, int norm, int face) {
 		// We'll need four indices and four vertices for the two tris defining a face.
 		index_t i0, i1, i2, i3;
-		vertType v0, v1, v2, v3;
+		vertex_t v0, v1, v2, v3;
 		// Assign each vertex it's appropriate UV coords based on the blocks type
 		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][face]);
 		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][face]);
 		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][face]);
 		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][face]);
-		v0.uv = uv0; v1.uv = uv1; v2.uv = uv2; v3.uv = uv3;
+		v0.UV = uv0; v1.UV = uv1; v2.UV = uv2; v3.UV = uv3;
 		// Set the vertex positions.
-		v0.position.xyz = p0;
-		v1.position.xyz = p1;
-		v2.position.xyz = p2;
-		v3.position.xyz = p3;
+		v0.Position.xyz = p0;
+		v1.Position.xyz = p1;
+		v2.Position.xyz = p2;
+		v3.Position.xyz = p3;
 		// Set vertex normals.
-		v0.normal = normals[norm];
-		v1.normal = normals[norm];
-		v2.normal = normals[norm];
-		v3.normal = normals[norm];
+		v0.Normal = normals[norm];
+		v1.Normal = normals[norm];
+		v2.Normal = normals[norm];
+		v3.Normal = normals[norm];
 		// Add the verts to the Mesh's vertex container. Returns index to added vert.
-		i0 = this->chunkMesh.addVert(v0);
-		i1 = this->chunkMesh.addVert(v1);
-		i2 = this->chunkMesh.addVert(v2);
-		i3 = this->chunkMesh.addVert(v3);
+		i0 = this->mesh.AddVert(v0);
+		i1 = this->mesh.AddVert(v1);
+		i2 = this->mesh.AddVert(v2);
+		i3 = this->mesh.AddVert(v3);
 		// Add the triangles to the mesh, via indices
-		this->chunkMesh.addTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
-		this->chunkMesh.addTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+		this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
+		this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
 	};
 	// If the frontface of this cube will be visible, build the tris needed for that face
 	if (frontFace == false) {
@@ -136,66 +136,7 @@ void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 	}
 }
 
-
-
-
-void MortonChunk::BuildTerrain_SIMD(simd::ivec4 seed) {
-	// Set of coords for a chunk in 2D noise will be:
-	// x: 0, 1, 2, 3 (one 4-long run) + 4 (per i) until x[3] = 64
-	// For each set of these X's, get values of Z across range above
-	// So get FBM at (0,0,1) (0,0,1)
-	// using x = 0 1 2 3
-	// z = 0 - 64
-	std::time_t start; double duration;
-	start = std::clock();
-	// Two sets of coords, one for the noise function and
-	std::vector<simd::vec4> xcoords; xcoords.reserve(256);
-	std::vector<simd::vec4> zcoords; zcoords.reserve(256);
-	// one for the actual mesh generation and indexing into the morton array
-	std::vector<glm::vec2> positions; positions.reserve(CHUNK_SIZE * CHUNK_SIZE);
-	for (int i = 0; i < CHUNK_SIZE; ++i) {
-		for (int k = 0; k < CHUNK_SIZE; ++k) {
-			// x, z
-			positions.push_back(glm::vec2(i, k));
-
-		}
-	}
-	std::vector<glm::vec3> data; data.reserve(positions.size());
-	for (int i = 0; i < positions.size(); i+=4) {
-		simd::vec4 xset(positions[i].x, positions[i + 1].x, positions[i + 2].x, positions[i + 3].x);
-		simd::vec4 zset(positions[i].y, positions[i + 1].y, positions[i + 2].y, positions[i + 3].y);
-		simd::vec4 results = simd::FBM(seed, xset, zset, 0.1f, 5, 1.5f, 1.0f);
-		glm::vec3 res1, res2, res3, res4;
-		res1 = glm::vec3(positions[i].x, positions[i].y, results.Data.m128_f32[0]);
-		data.push_back(res1);
-		res2 = glm::vec3(positions[i + 1].x, positions[i + 1].y, results.Data.m128_f32[1]);
-		data.push_back(res2);
-		res3 = glm::vec3(positions[i + 2].x, positions[i + 2].y, results.Data.m128_f32[2]);
-		data.push_back(res3);
-		res4 = glm::vec3(positions[i + 3].x, positions[i + 3].y, results.Data.m128_f32[3]);
-		data.push_back(res4);
-	}
-	for (int i = 0; i < data.size(); ++i) {
-		int maxheight = floorf(data[i].z);
-		if (maxheight > CHUNK_SIZE - 1) {
-			maxheight = CHUNK_SIZE - 1;
-		}
-		if (maxheight < 1) {
-			maxheight = 1;
-		}
-		for (int y = 1; y < maxheight; ++y) {
-			uint_fast32_t currentIndex = GetBlockIndex(data[i].x, y, data[i].y);
-			this->Blocks[currentIndex + negYDelta(y)] = blockTypes::STONE;
-			this->Blocks[currentIndex] = blockTypes::DIRT;
-			this->Blocks[currentIndex + posYDelta(y)] = blockTypes::GRASS;
-		}
-	}
-	duration = (std::clock() - start); 
-	std::cerr << "Generating terrain for this chunk took " << duration << " clock cycles, or " << (duration / CLOCKS_PER_SEC) << " seconds." << std::endl;
-}
-
-
-void MortonChunk::BuildChunkMesh() {
+void MortonChunk::BuildMesh() {
 	// Default block adjacency value assumes true
 	bool def = true;
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
@@ -205,7 +146,7 @@ void MortonChunk::BuildChunkMesh() {
 	}
 	// Iterate over each block in the volume via intervals
 	// If an interval has a value
-	this->chunkMesh.meshIndices.reserve(600000); this->chunkMesh.meshVerts.reserve(400000);
+	mesh.Indices.reserve(600000); mesh.Vertices.reserve(400000);
 	for (int j = 0; j < CHUNK_SIZE - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
@@ -273,35 +214,6 @@ void MortonChunk::BuildChunkMesh() {
 			}
 		}
 	}
-	this->chunkMesh.meshIndices.shrink_to_fit(); this->chunkMesh.meshVerts.shrink_to_fit();
-	glGenVertexArrays(1, &this->VAO);
-	glGenBuffers(1, &this->VBO); glGenBuffers(1, &this->EBO);
-	glBindVertexArray(this->VAO);
-	// Bind the vertex buffer and then specify what data it will be loaded with
-	glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
-	glBufferData(GL_ARRAY_BUFFER, this->chunkMesh.meshVerts.size() * sizeof(vertType), &(this->chunkMesh.meshVerts[0]), GL_STATIC_DRAW);
-	// Bind the element array (indice) buffer and fill it with data
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->chunkMesh.meshIndices.size() * sizeof(index_t), &(this->chunkMesh.meshIndices[0]), GL_STATIC_DRAW);
-	// Pointer to the position attribute of a vertex
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)0);
-	// Pointer to the normal attribute of a vertex
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType, normal));
-	// Pointer to the UV attribute of a vertex
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertType), (GLvoid*)offsetof(vertType, uv));
-	glBindVertexArray(0);
+	mesh.Indices.shrink_to_fit(); mesh.Vertices.shrink_to_fit();
 }
 
-
-void MortonChunk::RenderChunk(Shader shader) {
-	// Bind this chunk's VAO as OpenGL's currently active VAO
-	glBindVertexArray(this->VAO);
-	// glDrawElements is for use with indexed vertices. It reads from the element array buffer, 
-	// going as far as we specify with the second parameter
-	glDrawElements(GL_TRIANGLES, (GLsizei)this->chunkMesh.getNumIndices(), GL_UNSIGNED_INT, 0);
-	// Done rendering this chunk, unbind it's VAO
-	glBindVertexArray(0);
-}

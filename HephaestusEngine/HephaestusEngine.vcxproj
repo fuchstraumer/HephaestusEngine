@@ -22,7 +22,7 @@
     <ProjectGuid>{E2D5DCC3-E128-4028-9496-46A1095CAF01}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>HephaestusEngine</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -161,29 +161,33 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="util\camera.h" />
+    <ClInclude Include="util\Camera.h" />
     <ClInclude Include="util\intervaltree.h" />
     <ClInclude Include="util\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="util\mesh.h" />
+    <ClInclude Include="util\MeshComponents.h" />
     <ClInclude Include="util\Morton.h" />
     <ClInclude Include="util\MortonChunk.h" />
     <ClInclude Include="util\rle.h" />
-    <ClInclude Include="util\shader.h" />
-    <ClInclude Include="util\SIMD\SIMD.h" />
-    <ClInclude Include="util\SIMD\SIMD_AVX.h" />
-    <ClInclude Include="util\SIMD\SIMD_Constants.h" />
-    <ClInclude Include="util\SIMD\SIMD_Math.h" />
-    <ClInclude Include="util\SIMD\SIMD_Noise.h" />
-    <ClInclude Include="util\SIMD\SIMD_SSE.h" />
-    <ClInclude Include="util\SIMD\SIMD_VecSet.h" />
+    <ClInclude Include="util\Shader.h" />
+    <ClInclude Include="util\Skybox.h" />
     <ClInclude Include="util\TerrainGen.h" />
+    <ClInclude Include="util\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HephaestusEngine.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="util\Camera.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="util\Mesh.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="util\TerrainGen.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -195,6 +199,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="util\MortonChunk.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="util\Viewport.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

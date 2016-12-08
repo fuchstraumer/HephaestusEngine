@@ -1,14 +1,11 @@
 // stdafx.h 
 #pragma once
-#include <stdio.h>
-#include <tchar.h>
 #include <vector>
 #include <iostream>
 #include <cmath>
 #include <string>
 #include <array>
 #include <stdint.h>
-#include <memory>
 #include <iterator>
 
 // Import glew for OpenGl pointers and handlers
@@ -28,15 +25,12 @@
 using blockType = uint8_t;
 using mortonBlockType = uint32_t;
 static const float BLOCK_RENDER_SIZE = 0.5f;
-static const int CHUNK_SIZE = 128;
-static const int CHUNK_SIZE_Z = 128;
+static const int CHUNK_SIZE = 64;
+static const int CHUNK_SIZE_Z = 64;
 static const bool SIMPLE_CULLING_GLOBAL = true;
-static const bool WIREFRAME_MODE = false;
 
 // Client settings
 static const int MULTISAMPLE_AMOUNT = 8;
-static const int VIEW_DISTANCE = 24;
-static const bool DAY_NIGHT_CYCLE = true;
 
 // Constant function to convert from spatial coordinates to interval tree vals
 #define treeXYZ(x,y,z) ((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z))
@@ -44,12 +38,6 @@ static const bool DAY_NIGHT_CYCLE = true;
 
 // Terrain gen
 #include "util/TerrainGen.h"
-
-// SIMD stuff
-#include "util/SIMD/SIMD.h"
-#include "util/SIMD/SIMD_Noise.h"
-#include "util/SIMD/SIMD_Math.h"
-#include "util/SIMD/SIMD_Constants.h"
 
 enum blockTypes : blockType {
 	AIR = 0,

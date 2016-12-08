@@ -10,6 +10,7 @@ uniform mat4 projection;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 lightPos;
+uniform mat4 normTransform;
 
 out vec3 worldNormal;
 out vec3 fragPos;
@@ -18,7 +19,7 @@ out vec3 fragUV;
 void main(){
 
 	vec4 Position = vec4(position,1.0f);
-	worldNormal = mat3(transpose(inverse(model))) * normal;
+	worldNormal = mat3(normTransform) * normal;
 
 	// Get tile coords
 	fragUV = uv;
