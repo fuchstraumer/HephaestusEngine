@@ -30,7 +30,7 @@ static const int CHUNK_SIZE_Z = 64;
 static const bool SIMPLE_CULLING_GLOBAL = true;
 
 // Client settings
-static const int MULTISAMPLE_AMOUNT = 8;
+static const int MULTISAMPLE_AMOUNT = 2;
 
 // Constant function to convert from spatial coordinates to interval tree vals
 #define treeXYZ(x,y,z) ((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z))

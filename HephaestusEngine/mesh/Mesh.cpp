@@ -90,93 +90,6 @@ face_t Mesh::CreateFace(const index_t& t0, const index_t& t1) const {
 	return face_t(t0, t1);
 }
 
-// Checking triangle for best edge for subdivision - returns key for searching the edges lookup
-edge_key Mesh::LongestEdge(triangle_t const &tri) const {
-	/*
-		o\ i2
-		| \
-		|  o  iNew
-		|   \
-	i0	o----o i1
-
-		Best edge to split will always be across from largest angle.
-		This vertex will be on the edge that defines the hypotenuse
-		And the connection point will be the base of this largest angle
-		So, get three angles using
-		edge0, edge1, edge2
-	*/
-	auto edges = { tri.e0, tri.e1, tri.e2 };
-	float best = 0.0f;
-	edge_key longest;
-	// For each edge in the initalizer list, get its length
-	for (auto edge : edges) {
-		auto&& v0 = GetVertex(edge.first);
-		auto&& v1 = GetVertex(edge.second);
-		float dist = glm::distance2(v0.Position, v1.Position);
-		if (dist > best) {
-			best = dist;
-			longest = edge;
-		}
-	}
-	// Longest edge acquired, return it
-	return longest;
-}
-
-index_t Mesh::SplitEdge(edge_key const &edge) {
-	// Use input key to build what would we be the new edge.
-	// first search
-	auto&& v0 = GetVertex(edge.first);
-	auto&& v1 = GetVertex(edge.second);
-	vertex_t newVert = getMiddlePoint(v0, v1);
-	index_t newIndex = AddVert(newVert);
-	return newIndex;
-}
-
-void Mesh::SubdivideTriangles() {
-	Mesh temp = *this;
-	for (auto triangle : this->Triangles) {
-		// Find the longest edge in each triangle and split that.
-		auto&& edgeToSplit = LongestEdge(triangle);
-		index_t splitIndex = temp.SplitEdge(edgeToSplit);
-		face_t subdiv = temp.CreateFace(triangle.i0, triangle.i1, triangle.i2, splitIndex);
-		temp.AddFace(subdiv);
-	}
-	this->Clear();
-	*this = std::move(temp);
-}
-
-vertex_t Mesh::VertToSphere(vertex_t in, float radius) const {
-	vertex_t result;
-	in.Position = glm::normalize(in.Position);
-	result.Normal = in.Position - glm::vec3(0.0f);
-	result.Position = glm::normalize(result.Normal * radius);
-	return result;
-}
-
-vertex_t Mesh::VertToUnitSphere(const vertex_t & in) const{
-	vertex_t result;
-	result.Position = glm::normalize(in.Position);
-	result.Normal = in.Position - glm::vec3(0.0f);
-	result.Position = glm::normalize(result.Normal);
-	return result;
-}
-
-glm::vec3 Mesh::PointToUnitSphere(const glm::vec3 &in) const {
-	glm::vec3 res;
-	res = glm::normalize(in);
-	glm::vec3 dir = res - glm::vec3(0.0f);
-	res = glm::normalize(dir);
-	return res;
-}
-
-vertex_t Mesh::GetMiddlePoint(const index_t &i0, const index_t &i1) {
-	vertex_t res;
-	auto&& v0 = GetVertex(i0);
-	auto&& v1 = GetVertex(i1);
-	res.Position = (v0.Position + v1.Position) / 2.0f;
-	return res;
-}
-
 void Mesh::BuildRenderData(ShaderProgram& shader){
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO); glGenBuffers(1, &EBO);
@@ -210,6 +123,9 @@ void Mesh::BuildRenderData(ShaderProgram& shader){
 void Mesh::Render(ShaderProgram & shader){
 	shader.Use();
 	glBindVertexArray(this->VAO);
+	if (GetNumIndices() > std::numeric_limits<uint16_t>::max()) {
+		throw("Number of indices too high");
+	}
 	glDrawElements(GL_TRIANGLES, GetNumIndices(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }

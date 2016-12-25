@@ -21,7 +21,7 @@
 */
 
 // Index type
-using index_t = std::uint32_t;
+using index_t = std::uint16_t;
 
 // Unordered map does not have hash function defined for a std::pair
 // of indices, need to supply our own. Wrapping in struct makes 
@@ -47,10 +47,33 @@ public:
 	}
 	vert() { }
 	glm::vec3 Position;
-	glm::vec3 Normal;
+	glm::ivec3 Normal;
 	// Vec3 for UV here: 3rd component is for texture array layer
-	glm::vec3 UV;
+	glm::ivec3 UV;
 	
+};
+
+// Compressed vertex
+using compressed_vertex_t = struct c_vert {
+	c_vert(glm::vec3 pos) {
+		this->Position = pos;
+	}
+
+	c_vert(glm::vec3 pos, glm::vec3 normal) {
+		this->Position = pos;
+	}
+
+	void setNormal(glm::vec3 normal) {
+
+	}
+
+	uint64_t encodeNormal(glm::vec3 normal) {
+
+	}
+
+	glm::vec3 Position;
+	uint64_t Normal;
+	glm::vec3 UV;
 };
 
 // Get vertex with position in between the two input vertices

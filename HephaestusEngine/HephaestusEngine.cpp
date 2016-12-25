@@ -1,13 +1,32 @@
+// HephaestusEngine.cpp : Defines the entry point for the console application.
+//
+
 #include "stdafx.h"
 #include "util\lodeTexture.h"
-#include "util\MortonChunk.h"
-#include "util\Viewport.h"
+#include "util/shader.h"
+#include "util/camera.h"
+#include "objects\MortonChunk.h"
 #include <ctime>
-
 static GLuint WIDTH = 1440, HEIGHT = 900;
 
-int main() {
+// Function declarations
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void Do_Movement();
 
+// RenderDoc Manager
+
+// Camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+bool keys[1024];
+GLfloat lastX = 400, lastY = 300;
+bool firstMouse = true;
+
+GLfloat deltaTime = 0.0f;
+GLfloat lastFrame = 0.0f;
+
+int main() {
 	std::string stringSeed;
 	std::cout << "Enter a string of characters to use as the terrain gen seed value: " << std::endl;
 	std::cin >> stringSeed;
@@ -30,27 +49,58 @@ int main() {
 		chunks = 16;
 	}
 
-	// Create main window
-	Viewport MainWindow(WIDTH, HEIGHT);
 
-	auto& currProgram = MainWindow.CoreProgram;
 
-	// List of uniforms we expect to access
-	std::vector<std::string> uniforms = {
-		{"model"},
-		{"view"},
-		{"projection"},
-		{"lightPos"},
-		{"viewPos"},
-		{"lightColor"},
-		{"texSampler"},
-		{"normTransform"},
+	//glm::vec3 pos = test1.Blocks[6].GetPosition();
+	// Init GLFW to get OpenGL functions and pointers
+	glfwInit();
+	// Set all the required options for GLFW
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
+
+	// Create a GLFWwindow object that we can use for GLFW's functions
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "HephaestusEngine", nullptr, nullptr);
+	glfwMakeContextCurrent(window);
+
+	// Set the required callback functions
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+
+	// Options
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	// Initialize glew and build our shader program
+	glewExperimental = GL_TRUE; 
+	glewInit();
+
+	Shader vertShader("./shaders/vertex.glsl", VERTEX_SHADER);
+	Shader fragShader("./shaders/fragment.glsl", FRAGMENT_SHADER);
+	ShaderProgram mainProgram;
+	mainProgram.Init();
+	mainProgram.AttachShader(vertShader);
+	mainProgram.AttachShader(fragShader);
+	mainProgram.CompleteProgram();
+	std::vector<std::string> uniforms{
+		"model",
+		"view",
+		"projection",
+		"lightPos",
+		"lightColor",
+		"cameraPos",
+		"textureAtlas",
+		"normTransform",
 	};
+	mainProgram.BuildUniformMap(uniforms);
+	mainProgram.Use();
+	glViewport(0, 0, WIDTH, HEIGHT);
 
-	// Build the hash map for the uniforms we need
-	currProgram.BuildUniformMap(uniforms);
-
-	// List of textures to use in the texture array
+	// Setup some OpenGL options
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
 	std::vector<std::string> filelist = {
 		{ "./textures/blocks/grass_top.png" },
 		{ "./textures/blocks/grass_side.png" },
@@ -63,12 +113,10 @@ int main() {
 		{ "./textures/blocks/iron_ore.png" },
 		{ "./textures/blocks/diamond_ore.png" },
 	};
-	// Create texture array
-	TextureArray textures(filelist, 16);
-	// Build the texture array, readying it for use/activation
-	textures.BuildTexture();
 
-	std::clock_t time; 
+	TextureArray textures(filelist, 16);
+	textures.BuildTexture();
+	std::clock_t time;
 	std::vector<MortonChunk*> chunkList; chunkList.reserve(chunks*chunks);
 	time = std::clock();
 	for (int i = 0; i < chunks; ++i) {
@@ -76,10 +124,8 @@ int main() {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
 			MortonChunk* NewChunk = new MortonChunk(grid);
 			NewChunk->BuildTerrain(gen, terrainType);
-			//NewChunk->BuildTerrain(gen, terrainType);
 			NewChunk->BuildMesh();
-			NewChunk->mesh.Position = NewChunk->Position;
-			NewChunk->mesh.BuildRenderData(currProgram);
+			NewChunk->mesh.BuildRenderData(mainProgram);
 			//NewChunk->CleanChunkBlocks();
 			chunkList.push_back(std::move(NewChunk));
 			if (chunkList.size() % 10 == 0)
@@ -89,18 +135,125 @@ int main() {
 	auto duration = (std::clock() - time) / CLOCKS_PER_SEC;
 	std::cerr << "Total time to generate all chunks was: " << duration << " seconds." << std::endl;
 	chunkList.shrink_to_fit();
-	
-	for (auto chk : chunkList) {
-		auto& obj = MainWindow.CreateRenderObject(chk->mesh, currProgram);
-		MainWindow.AddRenderObject(obj, "core");
-	}
+
+	textures.BindTexture();
+	GLint textureLoc = mainProgram.GetUniformLocation("textureAtlas");
+	glUniform1i(textureLoc, 0);
 
 
 	// Set the global light position
 	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
-	GLuint lightPosLoc = currProgram.GetUniformLocation("lightPos");
-	textures.BindTexture();
-	MainWindow.Use();
-	
-    return 0;
+	GLint lightPosLoc = mainProgram.GetUniformLocation("lightPos");
+	glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+	GLint lightColorLoc = mainProgram.GetUniformLocation("lightColor");
+	glUniform3f(lightColorLoc, 219.0f / 255.0f, 255.0f / 255.0f, 240.0f / 255.0f);
+	GLint viewPosLoc = mainProgram.GetUniformLocation("cameraPos");
+
+	glm::mat4 projection;
+	projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 1000.0f);
+	GLint viewLoc = mainProgram.GetUniformLocation("view");
+	GLint projLoc = mainProgram.GetUniformLocation("projection");
+
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+	// GLFW main loop
+	while (!glfwWindowShouldClose(window)) {
+
+		
+		// Set frame time to avoid slowdowns and speedups etc
+		GLfloat currentFrame = (GLfloat)glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		// Event handling
+		glfwPollEvents();
+		Do_Movement();
+
+		// Clear the buffers, set clear color
+		glClearColor(160.0f / 255.0f, 239.0f / 255.0f, 255.0f / 255.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Textures 
+		
+		// Do lighting stuff
+		glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
+
+		// Prepare to draw objects
+		glm::mat4 view;
+		view = camera.GetViewMatrix();
+		
+		// Pass view matrix to the shader
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		
+		// Render all chunks
+		for (unsigned int i = 0; i < chunkList.size(); ++i) {
+			chunkList[i]->mesh.Render(mainProgram);
+		}
+
+		// Swap the buffers to avoid visible refresh
+		glfwSwapBuffers(window);
+
+	}
+	glfwTerminate();
+	return 0;
+}
+
+
+// Moves/alters the camera positions based on user input
+void Do_Movement() {
+	// Camera controls
+	if (keys[GLFW_KEY_W]) {
+		camera.ProcessKeyboard(FORWARD, deltaTime);
+	}
+	if (keys[GLFW_KEY_S]) {
+		camera.ProcessKeyboard(BACKWARD, deltaTime);
+	}
+	if (keys[GLFW_KEY_A]) {
+		camera.ProcessKeyboard(LEFT, deltaTime);
+	}
+	if (keys[GLFW_KEY_D]) {
+		camera.ProcessKeyboard(RIGHT, deltaTime);
+	}
+}
+
+// Is called whenever a key is pressed/released via GLFW
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+	//cout << key << endl;
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
+	if (key >= 0 && key < 1024) {
+		if (action == GLFW_PRESS)
+			keys[key] = true;
+		else if (action == GLFW_RELEASE)
+			keys[key] = false;
+	}
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
+		camera.MovementSpeed += 60;
+	}
+	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
+		camera.MovementSpeed -= 60;
+	}
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
+	if (firstMouse)
+	{
+		lastX = (GLfloat)xpos;
+		lastY = (GLfloat)ypos;
+		firstMouse = false;
+	}
+
+	GLfloat xoffset = (GLfloat)xpos - lastX;
+	GLfloat yoffset = lastY - (GLfloat)ypos;  // Reversed since y-coordinates go from bottom to left
+
+	lastX = (GLfloat)xpos;
+	lastY = (GLfloat)ypos;
+
+	camera.ProcessMouseMovement(xoffset, yoffset);
+}
+
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	camera.ProcessMouseScroll((GLfloat)yoffset);
 }

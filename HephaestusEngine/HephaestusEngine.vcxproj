@@ -160,33 +160,38 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="objects\ChunkManager.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="util\Camera.h" />
-    <ClInclude Include="util\intervaltree.h" />
+    <ClInclude Include="util\Context.h" />
     <ClInclude Include="util\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
-    <ClInclude Include="util\mesh.h" />
-    <ClInclude Include="util\MeshComponents.h" />
+    <ClInclude Include="mesh\mesh.h" />
+    <ClInclude Include="mesh\MeshComponents.h" />
     <ClInclude Include="util\Morton.h" />
-    <ClInclude Include="util\MortonChunk.h" />
+    <ClInclude Include="objects\MortonChunk.h" />
     <ClInclude Include="util\rle.h" />
     <ClInclude Include="util\Shader.h" />
-    <ClInclude Include="util\Skybox.h" />
     <ClInclude Include="util\TerrainGen.h" />
     <ClInclude Include="util\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HephaestusEngine.cpp" />
+    <ClCompile Include="objects\ChunkManager.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\Camera.cpp">
+    <ClCompile Include="mesh\Mesh.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\Mesh.cpp">
+    <ClCompile Include="util\Shader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="util\TerrainGen.cpp">
@@ -198,11 +203,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\MortonChunk.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="util\Viewport.cpp">
+    <ClCompile Include="objects\MortonChunk.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>

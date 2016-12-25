@@ -2,10 +2,10 @@
 #ifndef MORTON_CHUNK_H
 #define MORTON_CHUNK_H
 #include "../stdafx.h"
-#include "mesh.h"
-#include "Morton.h"
+#include "../mesh/mesh.h"
+#include "../util/Morton.h"
 #include <bitset>
-#include "shader.h"
+#include "../util/Shader.h"
 
 
 // First 32 bits of a block give its morton code and pos
@@ -102,6 +102,15 @@ public:
 	inline uint32_t GetBlockIndex(uint32_t x, uint32_t y, uint32_t z){
 		return (MortonEncodeLUT<uint32_t,uint32_t>(x, y, z));
 	}
+	// Keeps list of neighbors of this chunk, ordered as such:
+	/*
+		0: Top Left
+		1: Top Right
+		2: Bottom Left
+		3: Bottom Right
+	*/
+	bool neighbors[4];
+private:
 
 	Mesh mesh;
 	void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);

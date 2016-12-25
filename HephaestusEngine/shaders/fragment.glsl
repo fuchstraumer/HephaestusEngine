@@ -2,22 +2,26 @@
 
 // This part of the shader requires much less work.
 // simple passed input from vertex shader
-in vec3 worldNormal;
-in vec3 fragPos;
-in vec3 fragUV;
+in uint vNormal;
+in vec3 vPos;
+in vec3 vUV;
 
 // color uniforms
 uniform vec3 lightPos; 
 uniform vec3 viewPos;
-uniform vec3 lightColor;
-uniform sampler2DArray texSampler;
+uniform mat4 normTransform;
+uniform sampler2DArray textureAtlas;
 
 // color that gets written to the display
 out vec4 outColor;
 
-void main(){
-	vec4 color = texture(texSampler, fragUV);
+vec2 getSign(vec2 v){
+	return vec2((v.x >= 0.0) ? +1.0 : -1.0, (v.y >= 0.0) ? +1.0 : -1.0);
+}
 
+void main(){
+	vec4 color = texture(textureAtlas, fragUV);
+	vec3 lightColor = vec3(0.99f, 0.99f, 0.88f);
 	// Ambient lighting
 	float ambientStrength = 0.3f;
 	vec3 ambient = ambientStrength*lightColor;

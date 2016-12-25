@@ -2,7 +2,7 @@
 #include <ctime>
 
 // Face normals
-static const std::vector<glm::vec3> normals = {
+static const std::vector<glm::ivec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
 	glm::ivec3(1, 0, 0),   // (right)
 	glm::ivec3(0, 1, 0),   // (top)
@@ -46,10 +46,10 @@ inline void MortonChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 		index_t i0, i1, i2, i3;
 		vertex_t v0, v1, v2, v3;
 		// Assign each vertex it's appropriate UV coords based on the blocks type
-		glm::vec3 uv0 = glm::vec3(0.0, 0.0, blocks[uv_type][face]);
-		glm::vec3 uv1 = glm::vec3(1.0, 0.0, blocks[uv_type][face]);
-		glm::vec3 uv3 = glm::vec3(0.0, 1.0, blocks[uv_type][face]);
-		glm::vec3 uv2 = glm::vec3(1.0, 1.0, blocks[uv_type][face]);
+		glm::ivec3 uv0 = glm::ivec3(0.0, 0.0, blocks[uv_type][face]);
+		glm::ivec3 uv1 = glm::ivec3(1.0, 0.0, blocks[uv_type][face]);
+		glm::ivec3 uv3 = glm::ivec3(0.0, 1.0, blocks[uv_type][face]);
+		glm::ivec3 uv2 = glm::ivec3(1.0, 1.0, blocks[uv_type][face]);
 		v0.UV = uv0; v1.UV = uv1; v2.UV = uv2; v3.UV = uv3;
 		// Set the vertex positions.
 		v0.Position.xyz = p0;
