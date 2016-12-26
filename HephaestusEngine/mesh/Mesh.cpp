@@ -51,7 +51,7 @@ const triangle_t & Mesh::GetTri(index_t t_index) const {
 // Add vert and return index to it
 index_t Mesh::AddVert(const vertex_t & vert) {
 	Vertices.push_back(vert);
-	return (index_t)Vertices.size() - 1;
+	return static_cast<index_t>(Vertices.size() - 1);
 }
 
 // Add triangle using three indices and return a reference to this triangle
@@ -91,9 +91,10 @@ face_t Mesh::CreateFace(const index_t& t0, const index_t& t1) const {
 }
 
 void Mesh::BuildRenderData(ShaderProgram& shader){
+	shader.Use();
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO); glGenBuffers(1, &EBO);
-	glBindVertexArray(VAO);
+	glBindVertexArray(this->VAO);
 	// Bind the vertex buffer and then specify what data it will be loaded with
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, GetNumVerts() * sizeof(vertex_t), &(Vertices[0]), GL_DYNAMIC_DRAW);
@@ -123,9 +124,6 @@ void Mesh::BuildRenderData(ShaderProgram& shader){
 void Mesh::Render(ShaderProgram & shader){
 	shader.Use();
 	glBindVertexArray(this->VAO);
-	if (GetNumIndices() > std::numeric_limits<uint16_t>::max()) {
-		throw("Number of indices too high");
-	}
 	glDrawElements(GL_TRIANGLES, GetNumIndices(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }

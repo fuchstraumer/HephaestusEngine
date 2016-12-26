@@ -5,7 +5,7 @@
 #include "util\lodeTexture.h"
 #include "util/shader.h"
 #include "util/camera.h"
-#include "objects\MortonChunk.h"
+#include "objects\LinearChunk.h"
 #include <ctime>
 static GLuint WIDTH = 1440, HEIGHT = 900;
 
@@ -117,15 +117,15 @@ int main() {
 	TextureArray textures(filelist, 16);
 	textures.BuildTexture();
 	std::clock_t time;
-	std::vector<MortonChunk*> chunkList; chunkList.reserve(chunks*chunks);
+	std::vector<LinearChunk> chunkList; chunkList.reserve(chunks*chunks);
 	time = std::clock();
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
-			MortonChunk* NewChunk = new MortonChunk(grid);
-			NewChunk->BuildTerrain(gen, terrainType);
-			NewChunk->BuildMesh();
-			NewChunk->mesh.BuildRenderData(mainProgram);
+			LinearChunk NewChunk(grid);
+			NewChunk.BuildTerrain(gen, terrainType);
+			NewChunk.BuildMesh();
+			NewChunk.mesh.BuildRenderData(mainProgram);
 			//NewChunk->CleanChunkBlocks();
 			chunkList.push_back(std::move(NewChunk));
 			if (chunkList.size() % 10 == 0)
@@ -150,7 +150,7 @@ int main() {
 	GLint viewPosLoc = mainProgram.GetUniformLocation("cameraPos");
 
 	glm::mat4 projection;
-	projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 1000.0f);
+	projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 10000.0f);
 	GLint viewLoc = mainProgram.GetUniformLocation("view");
 	GLint projLoc = mainProgram.GetUniformLocation("projection");
 
@@ -187,7 +187,7 @@ int main() {
 		
 		// Render all chunks
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
-			chunkList[i]->mesh.Render(mainProgram);
+			chunkList[i].mesh.Render(mainProgram);
 		}
 
 		// Swap the buffers to avoid visible refresh

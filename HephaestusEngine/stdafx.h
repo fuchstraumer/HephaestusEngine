@@ -25,8 +25,8 @@
 using blockType = uint8_t;
 using mortonBlockType = uint32_t;
 static const float BLOCK_RENDER_SIZE = 0.5f;
-static const int CHUNK_SIZE = 64;
-static const int CHUNK_SIZE_Z = 64;
+static const int CHUNK_SIZE = 32;
+static const int CHUNK_SIZE_Z = 128;
 static const bool SIMPLE_CULLING_GLOBAL = true;
 
 // Client settings

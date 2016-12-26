@@ -1,5 +1,5 @@
-#include "MortonChunk.h"
-#include <ctime>
+#include "../stdafx.h"
+#include "LinearChunk.h"
 
 // Face normals
 static const std::vector<glm::ivec3> normals = {
@@ -28,7 +28,7 @@ static const float blocks[256][6] = {
 };
 
 
-inline void MortonChunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
+inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
 	// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 	// This setup means that the xyz of a given block is actually the center of the block's mesh
 	std::array<glm::vec3, 8> vertices{
@@ -95,50 +95,51 @@ inline void MortonChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 
 }
 
-
-
-void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
+void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 		for (int z = 0; z < CHUNK_SIZE; ++z) {
 			this->Blocks[GetBlockIndex(x, 0, z)] = blockTypes::BEDROCK;
-				if (terraintype == 0) {
-					for (int y = 1; y < gen.SimplexFBM(this->Position.x + x, this->Position.z + z); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						uint32_t currentIndex = GetBlockIndex(x, y, z);
-						this->Blocks[currentIndex + negYDelta(y)] = blockTypes::STONE;
-						this->Blocks[currentIndex] = blockTypes::DIRT;
-						this->Blocks[currentIndex + posYDelta(y)] = blockTypes::GRASS;
-					}
+			if (terraintype == 0) {
+				for (int y = 1; y < gen.SimplexFBM(this->Position.x + x, this->Position.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					int currentIndex = GetBlockIndex(x, y, z);
+					this->Blocks[GetBlockIndex(x, y - 1, z)] = blockTypes::STONE;
+					this->Blocks[currentIndex] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 1, z)] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 2, z)] = blockTypes::GRASS;
 				}
-				if (terraintype == 1) {
-					for (int y = 1; y < gen.SimplexBillow(this->Position.x + x, this->Position.z + z); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						uint32_t currentIndex = GetBlockIndex(x, y, z);
-						this->Blocks[currentIndex + negYDelta(y)] = blockTypes::STONE;
-						this->Blocks[currentIndex] = blockTypes::DIRT;
-						this->Blocks[currentIndex + posYDelta(y)] = blockTypes::GRASS;
-					}
+			}
+			if (terraintype == 1) {
+				for (int y = 1; y < gen.SimplexBillow(this->Position.x + x, this->Position.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					int currentIndex = GetBlockIndex(x, y, z);
+					this->Blocks[GetBlockIndex(x, y - 1, z)] = blockTypes::STONE;
+					this->Blocks[currentIndex] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 1, z)] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 2, z)] = blockTypes::GRASS;
 				}
-				if (terraintype == 2) {
-					for (int y = 1; y < gen.SimplexRidged(this->Position.x + x, this->Position.z + z); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						uint32_t currentIndex = GetBlockIndex(x, y, z);
-						this->Blocks[currentIndex + negYDelta(y)] = blockTypes::STONE;
-						this->Blocks[currentIndex] = blockTypes::DIRT;
-						this->Blocks[currentIndex + posYDelta(y)] = blockTypes::GRASS;
-					}
+			}
+			if (terraintype == 2) {
+				for (int y = 1; y < gen.SimplexRidged(this->Position.x + x, this->Position.z + z); ++y) {
+					// Since we start at y = 1 and iterate up the column progressively
+					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
+					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
+					int currentIndex = GetBlockIndex(x, y, z);
+					this->Blocks[GetBlockIndex(x, y - 1, z)] = blockTypes::STONE;
+					this->Blocks[currentIndex] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 1, z)] = blockTypes::DIRT;
+					this->Blocks[GetBlockIndex(x, y + 2, z)] = blockTypes::GRASS;
 				}
+			}
 		}
 	}
 }
 
-void MortonChunk::BuildMesh() {
+void LinearChunk::BuildMesh(){
 	// Default block adjacency value assumes true
 	bool def = true;
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
@@ -152,7 +153,7 @@ void MortonChunk::BuildMesh() {
 	for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
-				uint32_t currBlock = MortonEncodeLUT<uint32_t,uint32_t>(i,j,k);
+				int currBlock = GetBlockIndex(i, j, k);
 				// If the block at i,j,k is air, we won't build a mesh for it
 				if (this->Blocks[currBlock] == blockTypes::AIR) {
 					continue;
@@ -163,43 +164,43 @@ void MortonChunk::BuildMesh() {
 					int uv_type;
 					uv_type = Blocks[currBlock];
 					// If we are primitively culling invisible faces, run this system
-					
+
 					if (SIMPLE_CULLING_GLOBAL == true) {
 						// If a face is visible, set that face's value to be false
 						bool xNeg = def; // left
 						if (i > 0) {
-							if (this->Blocks[currBlock + negXDelta(i)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i - 1, j, k)] == blockTypes::AIR) {
 								xNeg = false;
 							}
 						}
 						bool xPos = def; // right
 						if (i < CHUNK_SIZE - 1) {
-							if (this->Blocks[currBlock + posXDelta(i)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i + 1, j, k)] == blockTypes::AIR) {
 								xPos = false;
 							}
 						}
 						bool yPos = def; // bottom
 						if (j > 0) {
-							if (this->Blocks[currBlock + negYDelta(j)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i, j - 1, k)] == blockTypes::AIR) {
 								yPos = false;
 							}
 						}
 						bool yNeg = def; // top
 						if (j < CHUNK_SIZE_Z - 1) {
 							//std::cerr << GetBlockIndex(i, j - 1, k);
-							if (this->Blocks[currBlock + posYDelta(j)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i, j + 1, k)] == blockTypes::AIR) {
 								yNeg = false;
 							}
 						}
 						bool zNeg = def; // back
 						if (k < CHUNK_SIZE - 1) {
-							if (this->Blocks[currBlock + posZDelta(k)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i, j, k + 1)] == blockTypes::AIR) {
 								zNeg = false;
 							}
 						}
 						bool zPos = def; // front
 						if (k > 0) {
-							if (this->Blocks[currBlock + negZDelta(k)] == blockTypes::AIR) {
+							if (this->Blocks[GetBlockIndex(i, j, k - 1)] == blockTypes::AIR) {
 								zPos = false;
 							}
 						}

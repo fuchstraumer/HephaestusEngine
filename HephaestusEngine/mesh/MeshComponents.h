@@ -21,7 +21,7 @@
 */
 
 // Index type
-using index_t = std::uint16_t;
+using index_t = std::uint32_t;
 
 // Unordered map does not have hash function defined for a std::pair
 // of indices, need to supply our own. Wrapping in struct makes 
@@ -47,9 +47,9 @@ public:
 	}
 	vert() { }
 	glm::vec3 Position;
-	glm::ivec3 Normal;
+	glm::vec3 Normal;
 	// Vec3 for UV here: 3rd component is for texture array layer
-	glm::ivec3 UV;
+	glm::vec3 UV;
 	
 };
 

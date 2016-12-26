@@ -17,32 +17,6 @@ const uint32_t attrBits(0xFF000000);
 using uint = unsigned int;
 using uchar = unsigned char;
 
-class Block{
-public:
-	Block() { 
-		this->Data = new uint32_t(~0xFFFFFFFF);
-		SetType(blockTypes::AIR);
-	}
-	~Block() {
-		if (Data != nullptr) {
-			delete Data;
-		}
-	}
-	blockType GetType() {
-		return static_cast<uint8_t>((*this->Data & typeBits) >> 16);
-	}
-	glm::vec3 GetPosition() {
-		uint16_t code;
-		code = (*this->Data & codeBits);
-		glm::uvec3 pos = MortonDecodeLUT<uint32_t,uint16_t>(code);
-		return pos;
-	}
-	void SetType(uint16_t type) {
-		*this->Data |= (static_cast<uint32_t>(type) << 16);
-	}
-	std::uint32_t* Data;
-};
-
 class BlockLite {
 public:
 	BlockLite() {
@@ -81,7 +55,7 @@ public:
 		x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
 		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
-		this->Position = glm::vec3(x_pos, y_pos, z_pos);
+		mesh.Position = GetPosFromGrid(GridPosition);
 	}
 
 	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos) {
@@ -110,9 +84,11 @@ public:
 		3: Bottom Right
 	*/
 	bool neighbors[4];
-private:
 
 	Mesh mesh;
+private:
+
+	
 	void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
 
 };
