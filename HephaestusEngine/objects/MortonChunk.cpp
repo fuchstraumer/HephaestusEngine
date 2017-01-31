@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "MortonChunk.h"
 #include <ctime>
 
@@ -102,7 +103,7 @@ void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 		for (int z = 0; z < CHUNK_SIZE; ++z) {
 			this->Blocks[GetBlockIndex(x, 0, z)] = blockTypes::BEDROCK;
 				if (terraintype == 0) {
-					for (int y = 1; y < gen.SimplexFBM(this->Position.x + x, this->Position.z + z); ++y) {
+					for (int y = 1; y < static_cast<int>(gen.SimplexFBM(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 						// Since we start at y = 1 and iterate up the column progressively
 						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
@@ -113,7 +114,7 @@ void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 					}
 				}
 				if (terraintype == 1) {
-					for (int y = 1; y < gen.SimplexBillow(this->Position.x + x, this->Position.z + z); ++y) {
+					for (int y = 1; y < static_cast<int>(gen.SimplexBillow(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 						// Since we start at y = 1 and iterate up the column progressively
 						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
@@ -124,7 +125,7 @@ void MortonChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 					}
 				}
 				if (terraintype == 2) {
-					for (int y = 1; y < gen.SimplexRidged(this->Position.x + x, this->Position.z + z); ++y) {
+					for (int y = 1; y < static_cast<int>(gen.SimplexRidged(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 						// Since we start at y = 1 and iterate up the column progressively
 						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
