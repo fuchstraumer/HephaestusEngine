@@ -1,12 +1,11 @@
 #pragma once
 #ifndef MORTON_CHUNK_H
 #define MORTON_CHUNK_H
-#include "../stdafx.h"
+#include "stdafx.h"
 #include "../mesh/mesh.h"
 #include "../util/Morton.h"
-#include <bitset>
 #include "../util/Shader.h"
-
+#include "..\util\TerrainGen.h"
 
 // First 32 bits of a block give its morton code and pos
 const uint32_t codeBits(0x0000FFFF);

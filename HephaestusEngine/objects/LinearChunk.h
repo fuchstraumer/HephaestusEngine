@@ -1,9 +1,9 @@
 #pragma once
 #ifndef LINEAR_CHUNK_H
 #define LINEAR_CHUNK_H
-#include "../stdafx.h"
+#include "stdafx.h"
 #include "../mesh/mesh.h"
-
+#include "..\util\TerrainGen.h"
 class LinearChunk{
 public:
 	
