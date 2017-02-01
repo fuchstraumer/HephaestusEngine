@@ -8,6 +8,7 @@
 
 // Simple alias for the type that will be inserted into the unordered map container
 using mapEntry = std::pair<glm::ivec3,std::shared_ptr<LinearChunk>>;
+
 // Callable hashing object for an ivec3
 struct ivecHash {
 	
@@ -24,10 +25,13 @@ struct ivecHash {
 		return seed;
 	}
 };
+
 // The main container of chunks in this object, used for all chunks regardless of status
 using chunkMap = std::unordered_map<glm::ivec3, std::shared_ptr<LinearChunk>, ivecHash>;
+
 // Just a vector containing pointers to the underlying chunks: used for updating, pruning
 using chunkContainer = std::vector<std::shared_ptr<LinearChunk>>;
+
 class ChunkManager {
 public:
 	ChunkManager() = default;

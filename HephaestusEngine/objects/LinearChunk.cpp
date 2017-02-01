@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "stdafx.h"
 #include "LinearChunk.h"
 #include "../util/rle.h"
 // Face normals
@@ -15,7 +15,7 @@ static const std::vector<glm::ivec3> normals = {
 static const float blocks[256][6] = {
 	// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
 	// Loading order:: Grass_Top, Grass_Sides, dirt, sand, stone, bedrock
-	{ NULL,NULL,NULL,NULL,NULL,NULL }, // Air block
+	{ 0,0,0,0,0,0 }, // Air block
 	{ 1,1,0,1,2,1 }, // Grass block
 	{ 3,3,3,3,3,3 }, // Sand block
 	{ 2,2,2,2,2,2 }, // Dirt block
@@ -38,7 +38,7 @@ using aoLookup = struct aolookup {
 	1, 0, 1 - (1, -1, 1), (1, -1, 0), (0, -1, 1)
 	1, 1, 1 - (1, 1, 1), (1, 1, 0), (0, 1, 1)
 	*/
-	aolookup(int x, int y, int z) : LUT{
+	aolookup(int x, int y, int z) : LUT {
 		// Vertex 0, 0, 1
 		{ GetBlockIndex(x - 1, y - 1, z + 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
 		// Vertex 1, 0, 1
@@ -73,14 +73,15 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 	// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 	// This setup means that the xyz of a given block is actually the center of the block's mesh
 	std::array<glm::vec3, 8> vertices{
-		{ glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front UV{0,0}
+	{   glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front UV{0,0}
 		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1, right lower front UV{1,0}
 		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 2, right upper front UV{1,1}
 		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 3, left upper front UV{0,1}
 		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 4, right lower rear
 		glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 5, left lower rear
 		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
-		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE) } // Point 7, right upper rear
+		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 7, right upper rear
+	} 
 	};
 
 	// Gets occlusion value for each vertex in a cube 
@@ -198,6 +199,29 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 		buildface(4, 5, 6, 7, 5, 5); // Using Points 4, 5, 6, 7 and Normal 5
 	}
 
+}
+
+LinearChunk::LinearChunk(glm::ivec3 gridpos) {
+	this->GridPosition = gridpos;
+	float x_pos, y_pos, z_pos;
+	std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
+	this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks, blockTypes::AIR);
+	// The gridpos is simply "normalized" world coords to be integral values.
+	// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
+	x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
+	y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
+	z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
+	mesh.Position = glm::vec3(x_pos, y_pos, z_pos);
+	this->Position = glm::vec3(x_pos, y_pos, z_pos);
+	mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
+}
+
+glm::vec3 LinearChunk::GetPosFromGrid(glm::ivec3 gridpos) {
+	glm::vec3 res;
+	res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
+	res.y = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
+	res.z = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
+	return res;
 }
 
 void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
@@ -328,6 +352,17 @@ void LinearChunk::BuildMesh(){
 void LinearChunk::EncodeBlocks(){
 	encodedBlocks.reserve(this->Blocks.size());
 	encodedBlocks = encode(this->Blocks);
+	encodedBlocks.shrink_to_fit();
+}
+
+void LinearChunk::clear(){
+	// Mesh clear method clears data and calls shrink_to_fit()
+	mesh.Clear();
+	// First call clear to empty containers
+	Blocks.clear();
+	encodedBlocks.clear();
+	// Then call shrink to fit to actually free up memory.
+	Blocks.shrink_to_fit();
 	encodedBlocks.shrink_to_fit();
 }
 

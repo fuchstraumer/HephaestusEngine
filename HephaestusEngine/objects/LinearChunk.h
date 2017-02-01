@@ -1,56 +1,63 @@
 #pragma once
 #ifndef LINEAR_CHUNK_H
 #define LINEAR_CHUNK_H
-#include "../stdafx.h"
-#include "../mesh/mesh.h"
-// Converts 3D coordinates into 1D space used for storage in the vector
-inline int GetBlockIndex(const glm::vec3& pos) {
-	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
-}
-// Same as above, with individual positions
-inline int GetBlockIndex(const int& x, const int& y, const int& z) {
-	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
-}
+#include "stdafx.h"
+#include "..\util\TerrainGen.h"
+#include "..\mesh\mesh.h"
 
 class LinearChunk{
 public:
-	std::vector<blockType> Blocks;
+
+	// Position in homogenous integer grid defining chunk layout (used for logic, mostly)
 	glm::ivec3 GridPosition;
+
+	// Floating-point position used for rendering 
 	glm::vec3 Position;
-	LinearChunk(glm::ivec3 gridpos) {
-		this->GridPosition = gridpos;
-		float x_pos, y_pos, z_pos;
-		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
-		this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks, blockTypes::AIR);
-		// The gridpos is simply "normalized" world coords to be integral values.
-		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
-		x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-		y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
-		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
-		mesh.Position = glm::vec3(x_pos, y_pos, z_pos);
-		this->Position = glm::vec3(x_pos, y_pos, z_pos);
-		mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
+
+	// Default Ctor
+	LinearChunk(glm::ivec3 gridpos);
+
+	// Delete copy operator: We don't want to copy whole chunks!
+	LinearChunk(const LinearChunk& other) = delete;
+
+	// Delete copy assignment as well: No copying!
+	LinearChunk& operator=(const LinearChunk& other) = delete;
+
+	// Move operators okay: just make sure to explicitly define them.
+
+	// Move constructor.
+	LinearChunk(LinearChunk&& other) : mesh(other.mesh), Blocks(other.Blocks), encodedBlocks(other.encodedBlocks) {
+		other.clear();
 	}
 
-	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos) {
-		glm::vec3 res;
-		res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-		res.y = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
-		res.z = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
-		return res;
+	// Move assignment.
+	LinearChunk& operator=(LinearChunk&& other) {
+		if (this != &other) {
+			this->mesh = other.mesh;
+			this->Blocks = other.Blocks;
+			this->encodedBlocks = other.encodedBlocks;
+			other.clear();
+		}
+		return *this;
 	}
+
+	// Get position of this chunk in the overall grid.
+	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos);
+
 	~LinearChunk() = default;
+
 	// Calls noise function to build terrain
 	void BuildTerrain(TerrainGenerator& gen, int terraintype);
+
 	// Builds the mesh and populates the buffers
 	void BuildMesh();
-	// Deletes data for blocks that aren't currently set to anything.
-	void CleanChunkBlocks();
+
 	// Encodes blocks in this chunk using RLE compression
 	void EncodeBlocks();
-	// Container for compressed blocks: remove later, after integrating reading/writing
-	// to compressed blocks
-	std::vector<blockType> encodedBlocks;
+	
+	// Clears chunk of data and frees up memory.
+	void clear();
+
 	// Keeps list of neighbors of this chunk, ordered as such:
 	/*
 	0: Top Left
@@ -58,12 +65,19 @@ public:
 	2: Bottom Left
 	3: Bottom Right
 	*/
-	bool neighbors[4];
+	bool Neighbors[4];
 
 	Mesh mesh;
 private:
 
+	// Container for uncompressed block data
+	std::vector<blockType> Blocks;
 
+	// Container for compressed blocks: remove later, after integrating reading/writing
+	// to compressed blocks
+	std::vector<blockType> encodedBlocks;
+
+	// Creates the mesh data for a cube at xyz using the given opacity values at each face and the specified texture coord.
 	void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
 
 };
