@@ -227,9 +227,22 @@ glm::vec3 LinearChunk::GetPosFromGrid(glm::ivec3 gridpos) {
 void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 	for (int x = 0; x < CHUNK_SIZE; ++x) {
 		for (int z = 0; z < CHUNK_SIZE; ++z) {
+
+			// Recall that XZ is our left/right forward/back, so set every single block at Y = 0 and 
+			// with any XZ value to be bedrock, defining the base layer of our world. 
 			this->Blocks[GetBlockIndex(x, 0, z)] = blockTypes::BEDROCK;
+
+			/*
+
+			Following terrain generation method is fast but primitive. We query the noise generator for a value,
+			and use that value as a height value. We iterate from above the bedrock layer (Y=1) to whatever this
+			height value is.
+
+			*/
+
+			// If we're using the FBM generator, use this branch.
 			if (terraintype == 0) {
-				for (int y = 1; y < gen.SimplexFBM(this->Position.x + x, this->Position.z + z); ++y) {
+				for (int y = 1; y < static_cast<int>(gen.SimplexFBM(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
@@ -240,8 +253,10 @@ void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 					this->Blocks[GetBlockIndex(x, y + 2, z)] = blockTypes::GRASS;
 				}
 			}
+
+			// Billow generator.
 			if (terraintype == 1) {
-				for (int y = 1; y < gen.SimplexBillow(this->Position.x + x, this->Position.z + z); ++y) {
+				for (int y = 1; y < static_cast<int>(gen.SimplexBillow(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
@@ -252,8 +267,10 @@ void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 					this->Blocks[GetBlockIndex(x, y + 2, z)] = blockTypes::GRASS;
 				}
 			}
+
+			// Ridged generator.
 			if (terraintype == 2) {
-				for (int y = 1; y < gen.SimplexRidged(this->Position.x + x, this->Position.z + z); ++y) {
+				for (int y = 1; y < static_cast<int>(gen.SimplexRidged(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
 					// Since we start at y = 1 and iterate up the column progressively
 					// set the majority of blocks to be stone, blocks 3 above stone to be grass,
 					// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
@@ -271,30 +288,34 @@ void LinearChunk::BuildTerrain(TerrainGenerator & gen, int terraintype){
 void LinearChunk::BuildMesh(){
 	// Default block adjacency value assumes true
 	bool def = true;
-	for (int x = 0; x < CHUNK_SIZE; ++x) {
-		for (int z = 0; z < CHUNK_SIZE; ++z) {
-			this->Blocks[GetBlockIndex(x, 0, z)] = blockTypes::BEDROCK;
-		}
-	}
-	// Iterate over each block in the volume via intervals
-	// If an interval has a value
-	mesh.Indices.reserve(std::numeric_limits<uint16_t>::max()); mesh.Vertices.reserve(400000);
+
+	// Reserve some space in our containers, hopefully cutting down on costly re-allocations.
+	mesh.Indices.reserve(60000);
+	mesh.Vertices.reserve(80000);
+
+	// Iterate through every block in this chunk one-by-one to decide how/if to render it.
 	for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
+				// Get index of the current block we're at.
 				int currBlock = GetBlockIndex(i, j, k);
-				// If the block at i,j,k is air, we won't build a mesh for it
+
+				// If the current block is an air block, we don't need to worry about meshing+rendering it.
 				if (this->Blocks[currBlock] == blockTypes::AIR) {
 					continue;
 				}
+				// Current block isn't air, lets look at all its adjacent blocks to find out what we need to do next.
 				else {
-					// The uv_type is simpyly the value of the block at the given point
+					// The uv_type is simpyly the value of the block at the given point (grabbed from the enum)
 					// This is used to index into the texture array, so each block gets the right textures and UVs
 					int uv_type;
 					uv_type = Blocks[currBlock];
-					// If we are primitively culling invisible faces, run this system
 
+					// If we are primitively culling invisible faces, run this system
+					// Primitive culling merely means that we don't render faces we can't see: this 
+					// cuts rendered elements by easily 85-95% compared to no culling at all. 
 					if (SIMPLE_CULLING_GLOBAL == true) {
+
 						// If a face is visible, set that face's value to be false
 						bool xNeg = def; // left
 						if (i > 0) {
@@ -302,18 +323,21 @@ void LinearChunk::BuildMesh(){
 								xNeg = false;
 							}
 						}
+
 						bool xPos = def; // right
 						if (i < CHUNK_SIZE - 1) {
 							if (this->Blocks[GetBlockIndex(i + 1, j, k)] == blockTypes::AIR) {
 								xPos = false;
 							}
 						}
+
 						bool yPos = def; // bottom
 						if (j > 0) {
 							if (this->Blocks[GetBlockIndex(i, j - 1, k)] == blockTypes::AIR) {
 								yPos = false;
 							}
 						}
+
 						bool yNeg = def; // top
 						if (j < CHUNK_SIZE_Z - 1) {
 							//std::cerr << GetBlockIndex(i, j - 1, k);
@@ -321,18 +345,21 @@ void LinearChunk::BuildMesh(){
 								yNeg = false;
 							}
 						}
+
 						bool zNeg = def; // back
 						if (k < CHUNK_SIZE - 1) {
 							if (this->Blocks[GetBlockIndex(i, j, k + 1)] == blockTypes::AIR) {
 								zNeg = false;
 							}
 						}
+
 						bool zPos = def; // front
 						if (k > 0) {
 							if (this->Blocks[GetBlockIndex(i, j, k - 1)] == blockTypes::AIR) {
 								zPos = false;
 							}
 						}
+
 						// Create a cube at i,j,k with certain faces rendered
 						// Each false value specifies a face that should be visible, and thus should be rendered
 						// At the end, we include the type of block and thus what texture it needs
