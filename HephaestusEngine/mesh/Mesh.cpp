@@ -110,7 +110,9 @@ void Mesh::BuildRenderData(ShaderProgram& shader){
 	// Pointer to the UV attribute of a vertex
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (GLvoid*)offsetof(vertex_t, UV));
-
+	// Pointer to AO attribute of a vertex
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (GLvoid*)offsetof(vertex_t, ao));
 	// Set model
 	Model = glm::translate(Model, Position);
 	NormTransform = glm::transpose(glm::inverse(Model));

@@ -3,6 +3,14 @@
 #define LINEAR_CHUNK_H
 #include "../stdafx.h"
 #include "../mesh/mesh.h"
+// Converts 3D coordinates into 1D space used for storage in the vector
+inline int GetBlockIndex(const glm::vec3& pos) {
+	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
+}
+// Same as above, with individual positions
+inline int GetBlockIndex(const int& x, const int& y, const int& z) {
+	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
+}
 
 class LinearChunk{
 public:
@@ -19,7 +27,9 @@ public:
 		x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
 		y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
 		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
-		mesh.Position = GetPosFromGrid(GridPosition);
+		mesh.Position = glm::vec3(x_pos, y_pos, z_pos);
+		this->Position = glm::vec3(x_pos, y_pos, z_pos);
+		mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
 	}
 
 	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos) {
@@ -36,14 +46,11 @@ public:
 	void BuildMesh();
 	// Deletes data for blocks that aren't currently set to anything.
 	void CleanChunkBlocks();
-	// Converts 3D coordinates into 1D space used for storage in the vector
-	int GetBlockIndex(const glm::vec3& pos) const {
-		return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z))); 
-	}
-	// Same as above, with individual positions
-	int GetBlockIndex(const int& x, const int& y, const int& z) const {
-		return static_cast<int>((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z));
-	}
+	// Encodes blocks in this chunk using RLE compression
+	void EncodeBlocks();
+	// Container for compressed blocks: remove later, after integrating reading/writing
+	// to compressed blocks
+	std::vector<blockType> encodedBlocks;
 	// Keeps list of neighbors of this chunk, ordered as such:
 	/*
 	0: Top Left

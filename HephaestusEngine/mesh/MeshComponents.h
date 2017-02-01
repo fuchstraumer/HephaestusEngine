@@ -50,7 +50,7 @@ public:
 	glm::vec3 Normal;
 	// Vec3 for UV here: 3rd component is for texture array layer
 	glm::vec3 UV;
-	
+	float ao;
 };
 
 // Compressed vertex

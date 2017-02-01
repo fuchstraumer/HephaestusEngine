@@ -2,12 +2,12 @@
 #ifndef CHUNK_MANAGER_H
 #define CHUNK_MANAGER_H
 #include "../stdafx.h"
-#include "MortonChunk.h"
+#include "LinearChunk.h"
 #include <unordered_map>
 #include <memory>
 
 // Simple alias for the type that will be inserted into the unordered map container
-using mapEntry = std::pair<glm::ivec3,std::shared_ptr<MortonChunk>>;
+using mapEntry = std::pair<glm::ivec3,std::shared_ptr<LinearChunk>>;
 // Callable hashing object for an ivec3
 struct ivecHash {
 	
@@ -25,17 +25,17 @@ struct ivecHash {
 	}
 };
 // The main container of chunks in this object, used for all chunks regardless of status
-using chunkMap = std::unordered_map<glm::ivec3, std::shared_ptr<MortonChunk>, ivecHash>;
+using chunkMap = std::unordered_map<glm::ivec3, std::shared_ptr<LinearChunk>, ivecHash>;
 // Just a vector containing pointers to the underlying chunks: used for updating, pruning
-using chunkContainer = std::vector<std::shared_ptr<MortonChunk>>;
+using chunkContainer = std::vector<std::shared_ptr<LinearChunk>>;
 class ChunkManager {
 public:
 	ChunkManager() = default;
 	~ChunkManager() = default;
 
-	void AddChunk(MortonChunk& chk);
+	void AddChunk(LinearChunk& chk);
 
-	std::shared_ptr<MortonChunk> GetChunk(const glm::ivec3& pos) const;
+	std::shared_ptr<LinearChunk> GetChunk(const glm::ivec3& pos) const;
 
 	void Update();
 
@@ -52,5 +52,7 @@ private:
 	chunkContainer updateChunks;
 	// Container of chunks to be pruned/cleared in this mesh.
 	chunkContainer pruneChunks;
+	// Container of chunks to be written to a region file and saved
+	chunkContainer savedChunks;
 };
 #endif // !CHUNK_MANAGER_H

@@ -5,6 +5,7 @@
 in vec3 vNormal;
 in vec3 vPos;
 in vec3 vUV;
+in float vAO;
 
 // color uniforms
 uniform vec3 lightPos; 
@@ -40,8 +41,12 @@ void main(){
 	float spec = pow(max(dot(viewDir,reflectDir),0.0),32);
 	vec3 specular = specularStrength * spec * lightColor;
 
+	// Ambient occlusion
+	vec3 aoColor = vec3(0.05f, 0.05f, 0.05f);
+	vec3 aoResult = (vAO * -0.08f) * aoColor;
+
 	// Resultant lighting
-	vec4 lightResult = vec4(ambient+diffuse+specular,1.0f);
+	vec4 lightResult = vec4(ambient+diffuse+specular+aoResult,1.0f);
 	if(color.a < 0.1)
 		discard;
 	outColor = lightResult * color;

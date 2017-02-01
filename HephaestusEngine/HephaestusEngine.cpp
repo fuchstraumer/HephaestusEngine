@@ -7,6 +7,7 @@
 #include "util/camera.h"
 #include "objects\LinearChunk.h"
 #include <ctime>
+#include <fstream>
 static GLuint WIDTH = 1440, HEIGHT = 900;
 
 // Function declarations
@@ -119,6 +120,10 @@ int main() {
 	std::clock_t time;
 	std::vector<LinearChunk> chunkList; chunkList.reserve(chunks*chunks);
 	time = std::clock();
+	// Array that will hold the name of each chunk
+	char fname[100];
+	// File object used to write chunks
+	std::fstream chunkWriter;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec3 grid = glm::ivec3(i, 0, j);
@@ -127,9 +132,15 @@ int main() {
 			NewChunk.BuildMesh();
 			NewChunk.mesh.BuildRenderData(mainProgram);
 			//NewChunk->CleanChunkBlocks();
-			chunkList.push_back(std::move(NewChunk));
-			if (chunkList.size() % 10 == 0)
+			chunkList.push_back(NewChunk);
+			sprintf(fname, "./chunks/chunk%zd.txt", chunkList.size());
+			NewChunk.EncodeBlocks();
+			chunkWriter.open(fname, std::ios::out);
+			if (chunkList.size() % 10 == 0) {
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
+			}
+			chunkWriter << NewChunk.encodedBlocks.data();
+			chunkWriter.close();
 		}
 	}
 	auto duration = (std::clock() - time) / CLOCKS_PER_SEC;
@@ -187,6 +198,10 @@ int main() {
 		
 		// Render all chunks
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
+			GLuint modelLoc = mainProgram.GetUniformLocation("model");
+			glm::mat4 model(1.0f);
+			model = glm::translate(model, chunkList[i].Position);
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 			chunkList[i].mesh.Render(mainProgram);
 		}
 

@@ -1,6 +1,6 @@
 #include "../stdafx.h"
 #include "LinearChunk.h"
-
+#include "../util/rle.h"
 // Face normals
 static const std::vector<glm::ivec3> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
@@ -27,6 +27,47 @@ static const float blocks[256][6] = {
 	{ 9,9,9,9,9,9 }, // Diamond Ore
 };
 
+using aoLookup = struct aolookup {
+	/*
+	0, 0, 0 - (-1, -1, -1), (-1, -1, 0), (0, -1, -1)
+	1, 0, 0 - (1, -1, -1), (0, -1, -1), (1, -1, 0)
+	0, 1, 0 - (-1, 1, -1), (-1, 1, 0), (0, 1, -1)
+	0, 0, 1 - (-1, -1, 1), (-1, -1, 0), (0, -1, 1)
+	1, 1, 0 - (1, 1, -1), (0, 1, -1), (1, 1, 0)
+	0, 1, 1 - (-1, 1, 1), (-1, 1, 0), (0, 1, 1)
+	1, 0, 1 - (1, -1, 1), (1, -1, 0), (0, -1, 1)
+	1, 1, 1 - (1, 1, 1), (1, 1, 0), (0, 1, 1)
+	*/
+	aolookup(int x, int y, int z) : LUT{
+		// Vertex 0, 0, 1
+		{ GetBlockIndex(x - 1, y - 1, z + 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
+		// Vertex 1, 0, 1
+		{ GetBlockIndex(x + 1, y - 1, z + 1), GetBlockIndex(x + 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
+		// Vertex 1, 1, 1
+		{ GetBlockIndex(x + 1, y + 1, z + 1), GetBlockIndex(x + 1, y + 1, z), GetBlockIndex(x, y + 1, z + 1), },
+		// Vertex 0, 1, 1
+		{ GetBlockIndex(x - 1, y + 1, z + 1), GetBlockIndex(x - 1, y + 1, z), GetBlockIndex(x, y + 1, z + 1), },
+		// Vertex 1, 0, 0
+		{ GetBlockIndex(x + 1, y - 1, z - 1), GetBlockIndex(x, y - 1, z - 1), GetBlockIndex(x + 1, y - 1, z), },
+		// Vertex 0, 0, 0
+		{ GetBlockIndex(x - 1, y - 1, z - 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z - 1), },
+		// Vertex 0, 1, 0
+		{ GetBlockIndex(x - 1, y + 1, z - 1), GetBlockIndex(x - 1, y + 1, z), GetBlockIndex(x, y + 1, z - 1), },
+		// Vertex 1, 1, 0
+		{ GetBlockIndex(x + 1, y + 1, z - 1), GetBlockIndex(x, y + 1, z - 1), GetBlockIndex(x + 1, y + 1, z), },
+
+	} {
+		this->X = x;
+		this->Y = y;
+		this->Z = z;
+	}
+	aolookup() : LUT() {
+
+	}
+	int X, Y, Z;
+	int LUT[8][3];
+};
+
 
 inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
 	// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
@@ -41,7 +82,31 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
 		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE) } // Point 7, right upper rear
 	};
-	auto buildface = [this, uv_type](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, int norm, int face) {
+
+	// Gets occlusion value for each vertex in a cube 
+	auto AOVal = [this](int index, aoLookup& in)->float {
+		int val = 0;
+		if (this->Blocks[in.LUT[index][0]] != blockTypes::AIR) {
+			val++;
+		}
+		if (this->Blocks[(in.LUT[index][1])] != blockTypes::AIR) {
+			val++;
+		}
+		if (this->Blocks[in.LUT[index][2]] != blockTypes::AIR) {
+			val++;
+		}
+		return val;
+	};
+	
+	// Builds a side of a cube
+	glm::vec3 blockPosition = glm::vec3(x, y, z);
+	auto buildface = [this, uv_type, AOVal, blockPosition, vertices](index_t i00, index_t i01, index_t i02, index_t i03, int norm, int face) {
+		// Get points from input indices into pre-built vertex array
+		glm::vec3 p0, p1, p2, p3;
+		p0 = vertices[i00];
+		p1 = vertices[i01];
+		p2 = vertices[i02];
+		p3 = vertices[i03];
 		// We'll need four indices and four vertices for the two tris defining a face.
 		index_t i0, i1, i2, i3;
 		vertex_t v0, v1, v2, v3;
@@ -61,36 +126,76 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 		v1.Normal = normals[norm];
 		v2.Normal = normals[norm];
 		v3.Normal = normals[norm];
-		// Add the verts to the Mesh's vertex container. Returns index to added vert.
-		i0 = this->mesh.AddVert(v0);
-		i1 = this->mesh.AddVert(v1);
-		i2 = this->mesh.AddVert(v2);
-		i3 = this->mesh.AddVert(v3);
-		// Add the triangles to the mesh, via indices
-		this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
-		this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+		// Set ambient occlusion values. (if this block isn't at the extrema of a chunk)
+		if (blockPosition.x > 0 && blockPosition.y > 0 && blockPosition.z > 0 &&
+			blockPosition.x < CHUNK_SIZE && blockPosition.y < CHUNK_SIZE && blockPosition.z < CHUNK_SIZE) {
+			aoLookup offsets(blockPosition.x, blockPosition.y, blockPosition.z);
+			float ao0, ao1, ao2, ao3;
+			ao0 = AOVal(i00, offsets);
+			ao1 = AOVal(i01, offsets);
+			ao2 = AOVal(i02, offsets);
+			ao3 = AOVal(i03, offsets);
+			v0.ao = ao0;
+			v1.ao = ao1;
+			v2.ao = ao2;
+			v3.ao = ao3;
+			if (v0.ao + v1.ao > v2.ao + v3.ao) {
+				// Add the verts to the Mesh's vertex container. Returns index to added vert.
+				i0 = this->mesh.AddVert(v3);
+				i1 = this->mesh.AddVert(v2);
+				i2 = this->mesh.AddVert(v1);
+				i3 = this->mesh.AddVert(v0);
+				// Add the triangles to the mesh, via indices
+				this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
+				this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+			}
+			else {
+				// Add the verts to the Mesh's vertex container. Returns index to added vert.
+				i0 = this->mesh.AddVert(v0);
+				i1 = this->mesh.AddVert(v1);
+				i2 = this->mesh.AddVert(v2);
+				i3 = this->mesh.AddVert(v3);
+				// Add the triangles to the mesh, via indices
+				this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
+				this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+			}
+		}
+		else {
+			v0.ao = 0.0f;
+			v1.ao = 0.0f;
+			v2.ao = 0.0f;
+			v3.ao = 0.0f;
+			// Add the verts to the Mesh's vertex container. Returns index to added vert.
+			i0 = this->mesh.AddVert(v0);
+			i1 = this->mesh.AddVert(v1);
+			i2 = this->mesh.AddVert(v2);
+			i3 = this->mesh.AddVert(v3);
+			// Add the triangles to the mesh, via indices
+			this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
+			this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
+		}
 	};
 	// If the frontface of this cube will be visible, build the tris needed for that face
 	if (frontFace == false) {
-		buildface(vertices[0], vertices[1], vertices[2], vertices[3], 0, 0); // Using Points 0, 1, 2, 3 and Normal 0
+		buildface(0, 1, 2, 3, 0, 0); // Using Points 0, 1, 2, 3 and Normal 0
 	}
 	if (rightFace == false) {
-		buildface(vertices[1], vertices[4], vertices[7], vertices[2], 1, 1); // Using Points 1, 4, 7, 2 and Normal 1
+		buildface(1, 4, 7, 2, 1, 1); // Using Points 1, 4, 7, 2 and Normal 1
 	}
 	if (topFace == false) {
-		buildface(vertices[3], vertices[2], vertices[7], vertices[6], 2, 2); // Using Points 3, 2, 7, 6 and Normal 2
+		buildface(3, 2, 7, 6, 2, 2); // Using Points 3, 2, 7, 6 and Normal 2
 	}
 
 	if (leftFace == false) {
-		buildface(vertices[5], vertices[0], vertices[3], vertices[6], 3, 3); // Using Points 5, 0, 3, 6 and Normal 3
+		buildface(5, 0, 3, 6, 3, 3); // Using Points 5, 0, 3, 6 and Normal 3
 	}
 
 	if (bottomFace == false) {
-		buildface(vertices[5], vertices[4], vertices[1], vertices[0], 4, 4); // Using Points 5, 4, 1, 0 and Normal 4
+		buildface(5, 4, 1, 0, 4, 4); // Using Points 5, 4, 1, 0 and Normal 4
 	}
 
 	if (backFace == false) {
-		buildface(vertices[4], vertices[5], vertices[6], vertices[7], 5, 5); // Using Points 4, 5, 6, 7 and Normal 5
+		buildface(4, 5, 6, 7, 5, 5); // Using Points 4, 5, 6, 7 and Normal 5
 	}
 
 }
@@ -218,5 +323,11 @@ void LinearChunk::BuildMesh(){
 		}
 	}
 	mesh.Indices.shrink_to_fit(); mesh.Vertices.shrink_to_fit();
+}
+
+void LinearChunk::EncodeBlocks(){
+	encodedBlocks.reserve(this->Blocks.size());
+	encodedBlocks = encode(this->Blocks);
+	encodedBlocks.shrink_to_fit();
 }
 
