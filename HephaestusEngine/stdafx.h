@@ -2,43 +2,39 @@
 #pragma once
 #include <vector>
 #include <iostream>
-#include <cmath>
 #include <string>
 #include <array>
-#include <stdint.h>
-#include <iterator>
 
 // Import glew for OpenGl pointers and handlers
+// GLFW uses this, so include this before GLFW
 #define GLEW_STATIC
 #include <GL/glew.h>
 
+
+// GLFW, used for Windowing and context handling.
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
+
 // GLM
 #define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/constants.hpp>
+
 
 // Chunk vars
+// Type of blocks - can be safely changed, but shouldn't be.
 using blockType = uint8_t;
+// Type of blocks for morton encoding. Need at least 32-bit unsigned 
+// integers
 using mortonBlockType = uint32_t;
 static const float BLOCK_RENDER_SIZE = 0.5f;
 static const int CHUNK_SIZE = 32;
 static const int CHUNK_SIZE_Z = 128;
 static const bool SIMPLE_CULLING_GLOBAL = true;
 
-// Client settings
-static const int MULTISAMPLE_AMOUNT = 2;
-
-// Constant function to convert from spatial coordinates to interval tree vals
-#define treeXYZ(x,y,z) ((y) * CHUNK_SIZE * CHUNK_SIZE + (x) * CHUNK_SIZE + (z))
-#define treeXZ(x,z) ((x * CHUNK_SIZE) + z)
-
-// Terrain gen
-#include "util/TerrainGen.h"
-
+// Block types. Set here so that it can be globally accessed: this is probably unwise, and should be changed 
+// to a better solution when one is found.
 enum blockTypes : blockType {
 	AIR = 0,
 	GRASS,

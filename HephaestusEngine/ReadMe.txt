@@ -7,21 +7,31 @@ eventual OpenGL rendering engine easier. PolyVox is providing inspiration
 for the larger meta-objects, with smaller objects being based upon
 various projects elsewhere.
 
-Terrain generation is currently a bit bland, as it is using FastNoise
-2D ValueFractals. 3D noise generation will be integrated eventually, 
-providing more interesting terrain features along with better different-
-iation of where to place certain types of blocks. The triLerpCube struct
-and triLerp function are intended to be used with 3D noise, allowing for
-3D noise's advantages without a tremendous amount of computation 
+Terrain generation is currently a bit bland, as it is using rather vanilla
+simplex terrain generation with some basic modulation and octave iteration.
+
+Swiss generator is pretty broken, but creates interesting results.
 ========================================================================
 TODO:
 - Expanding procedural terrain, generated as "player" object moves throu-
   ogh world.
-- chunkManager class for paging chunks in and out of memory based on
-  position of player. Also manages building new chunks, and saving data
-- Fix rendering issues with textures. Using a texture atlas causes 
-  bleeding and blurring with mipmaps, 2D tex array is poorly documented
+- ChunkManager class for paging chunks in and out of memory based on
+  position of player. Also manages building new chunks, and saving data. 
+  Outline of this is complete, needs actual implementation.
+- Fix rendering issues on chunk borders and see about how to get SSAO
+  working on chunk edges (querying data here can be risky)
 - Some way to save chunk data
-- Compress textures and import using better methods
-- Integrate proper world and local lighting scheme, including SSAO
+- Make textures into a fileformat that works better with OpenGL and 
+  loads onto the GPU faster. Not a bottleneck currently, but could be.
+- Add a skybox using the method I applied to DiamondDogs.
+- Integrate proper world and local lighting scheme, including SSAO. Some 
+  sort of fog would be nice. Use previous skybox and a timer to shift
+  time and create day/night cycle.
+  NOTE: There was some sort of SSAO implemented, but a botched pull+commit
+  overwrote the files I had for this. May be able to rescue these, somehow.
+- Better investigation into the performance of linearly-encoded vs Z-order
+  curve encoded chunks. Currently using linearly encoded chunks for their
+  simplicity, and because I don't query blocks after initialization. 
+  Frequent block queries during runtime would probably make Z-order enc-
+  -oding worth any initial setup cost.
 ========================================================================

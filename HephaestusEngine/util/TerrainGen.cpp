@@ -1,9 +1,47 @@
+#include "stdafx.h"
 #include "TerrainGen.h"
-static const int CHUNK_SIZE = 32;
-static const int CHUNK_SIZE_Z = 64;
+
+double TerrainGenerator::grad(int hash, double x, double y, double z) {
+	switch (hash & 0xF)
+	{
+	case 0x0: return  x + y;
+	case 0x1: return -x + y;
+	case 0x2: return  x - y;
+	case 0x3: return -x - y;
+	case 0x4: return  x + z;
+	case 0x5: return -x + z;
+	case 0x6: return  x - z;
+	case 0x7: return -x - z;
+	case 0x8: return  y + z;
+	case 0x9: return -y + z;
+	case 0xA: return  y - z;
+	case 0xB: return -y - z;
+	case 0xC: return  y + x;
+	case 0xD: return -y + z;
+	case 0xE: return  y - x;
+	case 0xF: return -y - z;
+	default: return 0; // never happens
+	}
+}
+
+double TerrainGenerator::sGrad(int hash, double x, double y) {
+	int h = hash & 7;      // Convert low 3 bits of hash code
+	double u = h<4 ? x : y;  // into 8 simple gradient directions,
+	double v = h<4 ? y : x;  // and compute the dot product with (x,y).
+	return ((h & 1) ? -u : u) + ((h & 2) ? -2.0*v : 2.0*v);
+}
+
+double TerrainGenerator::sGrad(int hash, double x, double y, double z) {
+	int h = hash & 15;     // Convert low 4 bits of hash code into 12 simple
+	double u = h<8 ? x : y; // gradient directions, and compute dot product.
+	double v = h<4 ? y : h == 12 || h == 14 ? x : z; // Fix repeats at h = 12 to 15
+	return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+}
+
 double TerrainGenerator::simplex(double x, double y, double* dx, double* dy) {
-#define F2 0.366025403 // F2 = 0.5*(sqrt(3.0)-1.0)
-#define G2 0.211324865 // G2 = (3.0-Math.sqrt(3.0))/6.0
+	// These can be compile-time constants.
+	constexpr double F2 = 0.366025403; // F2 = 0.5*(sqrt(3.0)-1.0)
+	constexpr double G2 = 0.211324865; // G2 = (3.0-Math.sqrt(3.0))/6.0
 
 	double n0, n1, n2; // Noise contributions from the three corners
 	double temp0, temp1, temp2;
@@ -99,193 +137,106 @@ double TerrainGenerator::simplex(double x, double y, double* dx, double* dy) {
 
 double TerrainGenerator::simplex(double x, double y, double z) {
 		// Simple skewing factors for the 3D case
-#define F3 0.333333333
-#define G3 0.166666667
+	constexpr double F3 = 0.333333333;
+	constexpr double G3 = 0.166666667;
 
-		double n0, n1, n2, n3; // Noise contributions from the four corners
+	double n0, n1, n2, n3; // Noise contributions from the four corners
 
-							   // Skew the input space to determine which simplex cell we're in
-		double s = (x + y + z)*F3; // Very nice and simple skew factor for 3D
-		double xs = x + s;
-		double ys = y + s;
-		double zs = z + s;
-		int i = fastfloor(xs);
-		int j = fastfloor(ys);
-		int k = fastfloor(zs);
+							// Skew the input space to determine which simplex cell we're in
+	double s = (x + y + z)*F3; // Very nice and simple skew factor for 3D
+	double xs = x + s;
+	double ys = y + s;
+	double zs = z + s;
+	int i = fastfloor(xs);
+	int j = fastfloor(ys);
+	int k = fastfloor(zs);
 
-		double t = (double)(i + j + k)*G3;
-		double X0 = i - t; // Unskew the cell origin back to (x,y,z) space
-		double Y0 = j - t;
-		double Z0 = k - t;
-		double x0 = x - X0; // The x,y,z distances from the cell origin
-		double y0 = y - Y0;
-		double z0 = z - Z0;
+	double t = (double)(i + j + k)*G3;
+	double X0 = i - t; // Unskew the cell origin back to (x,y,z) space
+	double Y0 = j - t;
+	double Z0 = k - t;
+	double x0 = x - X0; // The x,y,z distances from the cell origin
+	double y0 = y - Y0;
+	double z0 = z - Z0;
 
-		// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
-		// Determine which simplex we are in.
-		int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
-		int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
+	// For the 3D case, the simplex shape is a slightly irregular tetrahedron.
+	// Determine which simplex we are in.
+	int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
+	int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
 
-						/* This code would benefit from a backport from the GLSL version! */
-		if (x0 >= y0) {
-			if (y0 >= z0)
-			{
-				i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0;
-			} // X Y Z order
-			else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; } // X Z Y order
-			else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; } // Z X Y order
-		}
-		else { // x0<y0
-			if (y0<z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; } // Z Y X order
-			else if (x0<z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; } // Y Z X order
-			else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; } // Y X Z order
-		}
-
-		// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
-		// a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
-		// a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
-		// c = 1/6.
-
-		double x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
-		double y1 = y0 - j1 + G3;
-		double z1 = z0 - k1 + G3;
-		double x2 = x0 - i2 + 2.0*G3; // Offsets for third corner in (x,y,z) coords
-		double y2 = y0 - j2 + 2.0*G3;
-		double z2 = z0 - k2 + 2.0*G3;
-		double x3 = x0 - 1.0 + 3.0*G3; // Offsets for last corner in (x,y,z) coords
-		double y3 = y0 - 1.0 + 3.0*G3;
-		double z3 = z0 - 1.0 + 3.0*G3;
-
-		// Wrap the integer indices at 256, to avoid indexing perm[] out of bounds
-		int ii = i & 0xff;
-		int jj = j & 0xff;
-		int kk = k & 0xff;
-
-		// Calculate the contribution from the four corners
-		double t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
-		if (t0 < 0.0) n0 = 0.0;
-		else {
-			t0 *= t0;
-			n0 = t0 * t0 * sGrad(hashTable[ii + hashTable[jj + hashTable[kk]]], x0, y0, z0);
-		}
-
-		double t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
-		if (t1 < 0.0) n1 = 0.0;
-		else {
-			t1 *= t1;
-			n1 = t1 * t1 * sGrad(hashTable[ii + i1 + hashTable[jj + j1 + hashTable[kk + k1]]], x1, y1, z1);
-		}
-
-		double t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
-		if (t2 < 0.0) n2 = 0.0;
-		else {
-			t2 *= t2;
-			n2 = t2 * t2 * sGrad(hashTable[ii + i2 + hashTable[jj + j2 + hashTable[kk + k2]]], x2, y2, z2);
-		}
-
-		double t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
-		if (t3<0.0) n3 = 0.0;
-		else {
-			t3 *= t3;
-			n3 = t3 * t3 * sGrad(hashTable[ii + 1 + hashTable[jj + 1 + hashTable[kk + 1]]], x3, y3, z3);
-		}
-
-		// Add contributions from each corner to get the final noise value.
-		// The result is scaled to stay just inside [-1,1]
-		return 32.0 * (n0 + n1 + n2 + n3); // TODO: The scale factor is preliminary!
-}
-
-// This function is just an interface to the private perlin member function.
-double TerrainGenerator::point(int x, int y, int z) {
-	double temp = perlin(x, y, z);
-	if (temp > CHUNK_SIZE_Z)
-		temp = CHUNK_SIZE_Z - 1;
-	if (temp <= 1)
-		temp = 0;
-	return temp;
-}
-// PERLIN NOISE FUNCTIONS FOLLOW
-// Parameters:
-// - Frequency is the frequency of the noise sampling (multiplier on input coords
-// - An octave is an iteration through the noise function, but at smaller levels. It adds finer, grainier detail.
-// - "lac" or Lacunarity controls how long an octave persists after the previous octave. Higher levels = more details. Too high is not good.
-// - Gain controls the overall gain of the function.
-// - Amplitude is set within the function body, in line with what generates the best terrain. The rest of the parameters are also set similarly.
-
-double TerrainGenerator::PerlinFBM(int x, int y, int z, double freq = 0.003, int octaves = 4, float lac = 2.0, float gain = 0.6) {
-	double sum = 0;
-	float amplitude = 1.0;
-	glm::dvec3 f; f.x = x * freq;
-	f.y = y * freq; f.z = z * freq;
-	for (int i = 0; i < octaves; ++i) {
-		double n = perlin(x*freq, y*freq, z*freq);
-		sum += n*amplitude;
-		freq *= lac;
-		amplitude *= gain;
+					/* This code would benefit from a backport from the GLSL version! */
+	if (x0 >= y0) {
+		if (y0 >= z0)
+		{
+			i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0;
+		} // X Y Z order
+		else if (x0 >= z0) { i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; } // X Z Y order
+		else { i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; } // Z X Y order
 	}
-	double temp = (sum / amplitude) + 1;
-	//std::cerr << temp << std::endl;
-	temp = sqrt(temp*temp);
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
-	if (temp <= 1)
-		temp = 1;
-	return temp;
-}
-
-double TerrainGenerator::PerlinBillow(int x, int y, int z, double freq = 0.01, int octaves = 3, float lac = 1.7, float gain = 0.6) {
-	double sum = 0;
-	float amplitude = 1.0;
-	for (int i = 0; i < octaves; ++i) {
-		double n = abs(perlin(x*freq, y*freq, z*freq));
-		sum += n*amplitude;
-		freq *= lac;
-		amplitude *= gain;
+	else { // x0<y0
+		if (y0<z0) { i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; } // Z Y X order
+		else if (x0<z0) { i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; } // Y Z X order
+		else { i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; } // Y X Z order
 	}
-	double temp = (sum / amplitude) + 1;
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
-	if (temp <= 1)
-		temp = 1;
-	return temp;
-}
 
-double TerrainGenerator::RollingHills(int x, int y, int z) {
-	return PerlinBillow(x, y, z, 0.009, 3, 1.6f, 0.6f);
-}
+	// A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
+	// a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
+	// a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
+	// c = 1/6.
 
-double TerrainGenerator::PerlinRidged(int x, int y, int z, double freq = 0.02, int octaves = 3, float lac = 2.5, float gain = 0.8) {
-	double n = 1.0f - abs(perlin(x*freq, y*freq, z*freq));
-	double temp = n * 1.5;
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
-	if (temp <= 1)
-		temp = 1;
-	return temp;
-}
+	double x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
+	double y1 = y0 - j1 + G3;
+	double z1 = z0 - k1 + G3;
+	double x2 = x0 - i2 + 2.0*G3; // Offsets for third corner in (x,y,z) coords
+	double y2 = y0 - j2 + 2.0*G3;
+	double z2 = z0 - k2 + 2.0*G3;
+	double x3 = x0 - 1.0 + 3.0*G3; // Offsets for last corner in (x,y,z) coords
+	double y3 = y0 - 1.0 + 3.0*G3;
+	double z3 = z0 - 1.0 + 3.0*G3;
 
-// Deprecated
-double TerrainGenerator::octPerlin(float x, float y, float z, int octaves = 3, float lacun = 1.0) {
-	double total = 0;
-	double frequency = 1;
-	double amplitude = 1;
-	double maxValue = 0;  // Used for normalizing result to 0.0 - 1.0
-	for (int i = 0; i<octaves; i++) {
-		total += perlin(x * frequency, y * frequency, z * frequency) * amplitude;
+	// Wrap the integer indices at 256, to avoid indexing perm[] out of bounds
+	int ii = i & 0xff;
+	int jj = j & 0xff;
+	int kk = k & 0xff;
 
-		maxValue += amplitude;
-
-		amplitude *= lacun;
-		frequency *= 2;
+	// Calculate the contribution from the four corners
+	double t0 = 0.6 - x0*x0 - y0*y0 - z0*z0;
+	if (t0 < 0.0) n0 = 0.0;
+	else {
+		t0 *= t0;
+		n0 = t0 * t0 * sGrad(hashTable[ii + hashTable[jj + hashTable[kk]]], x0, y0, z0);
 	}
-	return total / maxValue;
+
+	double t1 = 0.6 - x1*x1 - y1*y1 - z1*z1;
+	if (t1 < 0.0) n1 = 0.0;
+	else {
+		t1 *= t1;
+		n1 = t1 * t1 * sGrad(hashTable[ii + i1 + hashTable[jj + j1 + hashTable[kk + k1]]], x1, y1, z1);
+	}
+
+	double t2 = 0.6 - x2*x2 - y2*y2 - z2*z2;
+	if (t2 < 0.0) n2 = 0.0;
+	else {
+		t2 *= t2;
+		n2 = t2 * t2 * sGrad(hashTable[ii + i2 + hashTable[jj + j2 + hashTable[kk + k2]]], x2, y2, z2);
+	}
+
+	double t3 = 0.6 - x3*x3 - y3*y3 - z3*z3;
+	if (t3<0.0) n3 = 0.0;
+	else {
+		t3 *= t3;
+		n3 = t3 * t3 * sGrad(hashTable[ii + 1 + hashTable[jj + 1 + hashTable[kk + 1]]], x3, y3, z3);
+	}
+
+	// Add contributions from each corner to get the final noise value.
+	// The result is scaled to stay just inside [-1,1]
+	return 32.0 * (n0 + n1 + n2 + n3); // TODO: The scale factor is preliminary!
 }
 
 // SIMPLEX NOISE FUNCTIONS FOLLOW
 // SOURCE FROM http://staffwww.itn.liu.se/~stegu/aqsis/aqsis-newnoise/
 
-
-
+// Simplex Fractal-Brownian-Motion function.
 double TerrainGenerator::SimplexFBM(int x, int y, double freq, int octaves, float lac, float gain) {
 	double sum = 0;
 	float amplitude = 1.0;
@@ -307,6 +258,7 @@ double TerrainGenerator::SimplexFBM(int x, int y, double freq, int octaves, floa
 	return temp;
 }
 
+// Simplex "Billow" function, abs() call in for loop means this function billows, essentially
 double TerrainGenerator::SimplexBillow(int x, int y, double freq, int octaves, float lac, float gain) {
 	double sum = 0;
 	float amplitude = 1.0;
@@ -328,6 +280,7 @@ double TerrainGenerator::SimplexBillow(int x, int y, double freq, int octaves, f
 	return temp;
 }
 
+// Simplex "Ridged" function.
 double TerrainGenerator::SimplexRidged(int x, int y, double freq, int octaves,
 	float lac, float gain) {
 	double sum = 0;
@@ -350,11 +303,7 @@ double TerrainGenerator::SimplexRidged(int x, int y, double freq, int octaves,
 	return temp;
 }
 
-inline double TerrainGenerator::SimplexCaves(int x, int y) {
-	return SimplexRidged(x, y, 0.0001, 5, 2.5, 1);
-}
-
-
+// Simplex Swiss function. Currently broken.
 double TerrainGenerator::SimplexSwiss(int x, int y, double freq, int octaves,
 	float lac, float gain) {
 	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
@@ -384,17 +333,20 @@ double TerrainGenerator::SimplexSwiss(int x, int y, double freq, int octaves,
 
 
 // Jordan-style terrain
-static auto JORDAN_FREQ = 0.008; static auto JORDAN_OCTAVES = 7; // This is a slow terrain function because of high octaves
-static auto JORDAN_LACUNARITY = 3.0; static auto JORDAN_GAIN = 1.5;
+
+// Variables specific to jordan.
 static auto warp0 = 0.4, warp1 = 0.35;
 static auto damp0 = 1.0, damp1 = 0.8;
 
-auto TerrainGenerator::SimplexJordan(int x, int y, double freq, int octaves, float lac, float gain) {
+
+double TerrainGenerator::SimplexJordan(int x, int y, double freq, int octaves, float lac, float gain) {
 	double* dx1 = new double; double* dy1 = new double;
 	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
 	auto n = simplex(f.x, f.y, dx1, dy1);
 	glm::dvec3 nSq = glm::dvec3(n*n, *dx1*n, *dy1*n);
 	glm::dvec2 dWarp = glm::dvec2(*dx1*warp0, *dy1*warp0);
 	glm::dvec2 dDamp = glm::dvec2(*dx1*damp0, *dy1*warp1);
+	// Placeholder return to make compiler shut up
+	return 0.0;
 }
 

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "Mesh.h"
 #include "glm/gtx/vector_angle.hpp"
 
@@ -6,8 +7,6 @@ __inline float maptosphere(float const &a, float const &b, float const &c) {
 	result = a * sqrt(1 - (b*b / 2.0f) - (c*c / 2.0f) + ((b*b)*(c*c) / 3.0f));
 	return result;
 }
-
-
 
 void Mesh::Clear() {
 	Vertices.clear(); Indices.clear();
