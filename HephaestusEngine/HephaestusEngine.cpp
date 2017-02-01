@@ -126,21 +126,21 @@ int main() {
 	std::fstream chunkWriter;
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
-			glm::ivec3 grid = glm::ivec3(i, 0, j);
+			glm::ivec2 grid = glm::ivec2(i, j);
 			LinearChunk NewChunk(grid);
 			NewChunk.BuildTerrain(gen, terrainType);
 			NewChunk.BuildMesh();
 			NewChunk.mesh.BuildRenderData(mainProgram);
 			//NewChunk->CleanChunkBlocks();
-			chunkList.push_back(NewChunk);
+			chunkList.push_back(std::move(NewChunk));
 			sprintf(fname, "./chunks/chunk%zd.txt", chunkList.size());
-			NewChunk.EncodeBlocks();
-			chunkWriter.open(fname, std::ios::out);
+			//NewChunk.EncodeBlocks();
+			//chunkWriter.open(fname, std::ios::out);
 			if (chunkList.size() % 10 == 0) {
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 			}
-			chunkWriter << NewChunk.encodedBlocks.data();
-			chunkWriter.close();
+			//chunkWriter << NewChunk.encodedBlocks.data();
+			//chunkWriter.close();
 		}
 	}
 	auto duration = (std::clock() - time) / CLOCKS_PER_SEC;

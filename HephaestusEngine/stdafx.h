@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <array>
+#include <future>
+#include <algorithm>
 
 // Import glew for OpenGl pointers and handlers
 // GLFW uses this, so include this before GLFW
@@ -20,6 +22,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+// Include boost components here to reduce compiliation time
+#include "ext\include\boost\circular_buffer.hpp"
 
 
 // Chunk vars

@@ -201,26 +201,26 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 
 }
 
-LinearChunk::LinearChunk(glm::ivec3 gridpos) {
+LinearChunk::LinearChunk(glm::ivec2 gridpos) {
 	this->GridPosition = gridpos;
 	float x_pos, y_pos, z_pos;
 	std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
 	this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks, blockTypes::AIR);
 	// The gridpos is simply "normalized" world coords to be integral values.
 	// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
-	x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-	y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
-	z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
+	x_pos = this->GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+	y_pos =  static_cast<float>(CHUNK_SIZE_Z) / 2.0f;
+	z_pos = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 	mesh.Position = glm::vec3(x_pos, y_pos, z_pos);
 	this->Position = glm::vec3(x_pos, y_pos, z_pos);
 	mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
 }
 
-glm::vec3 LinearChunk::GetPosFromGrid(glm::ivec3 gridpos) {
+glm::vec3 LinearChunk::GetPosFromGrid(glm::ivec2 gridpos) {
 	glm::vec3 res;
 	res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-	res.y = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f));
-	res.z = this->GridPosition.z * ((CHUNK_SIZE / 2.0f));
+	res.y = static_cast<float>(CHUNK_SIZE_Z) / 2.0f;
+	res.z = this->GridPosition.y * (CHUNK_SIZE / 2.0f);
 	return res;
 }
 

@@ -6,16 +6,18 @@
 #include "..\mesh\mesh.h"
 
 class LinearChunk{
+	// Chunk manager is allowed to access internal details.
+	friend class ChunkManager;
 public:
 
 	// Position in homogenous integer grid defining chunk layout (used for logic, mostly)
-	glm::ivec3 GridPosition;
+	glm::ivec2 GridPosition;
 
 	// Floating-point position used for rendering 
 	glm::vec3 Position;
 
 	// Default Ctor
-	LinearChunk(glm::ivec3 gridpos);
+	LinearChunk(glm::ivec2 grid_position);
 
 	// Delete copy operator: We don't want to copy whole chunks!
 	LinearChunk(const LinearChunk& other) = delete;
@@ -42,7 +44,7 @@ public:
 	}
 
 	// Get position of this chunk in the overall grid.
-	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos);
+	glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
 
 	~LinearChunk() = default;
 
