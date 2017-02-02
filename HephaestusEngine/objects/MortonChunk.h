@@ -7,6 +7,9 @@
 #include "../util/Shader.h"
 #include "..\util\TerrainGen.h"
 
+// TODO: Revisit this using dynamic bitset from boost, to make storing blocks as uints easier.
+// TODO: Also reinvestigate morton-encoding, once I integrate the ability to actually place/remove blocks.
+
 // First 32 bits of a block give its morton code and pos
 const uint32_t codeBits(0x0000FFFF);
 // Bits 33-48 give the blocks type
@@ -47,21 +50,21 @@ public:
 	MortonChunk(glm::ivec3 gridpos) {
 		this->GridPosition = gridpos;
 		float x_pos, y_pos, z_pos;
-		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
+		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Y;
 		this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks,blockTypes::AIR);
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
-		x_pos = this->GridPosition.x * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
-		y_pos = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
-		z_pos = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
+		x_pos = this->GridPosition.x * (CHUNK_SIZE / 2.0f);
+		y_pos = this->GridPosition.y * (CHUNK_SIZE_Y / 2.0f);
+		z_pos = this->GridPosition.z * (CHUNK_SIZE / 2.0f);
 		mesh.Position = GetPosFromGrid(GridPosition);
 	}
 
 	glm::vec3 GetPosFromGrid(glm::ivec3 gridpos) {
 		glm::vec3 res;
-		res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
-		res.y = this->GridPosition.y * ((CHUNK_SIZE_Z / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
-		res.z = this->GridPosition.z * ((CHUNK_SIZE / 2.0f) * BLOCK_RENDER_SIZE * 2.0f);
+		res.x = this->GridPosition.x * (CHUNK_SIZE / 2.0f);
+		res.y = this->GridPosition.y * (CHUNK_SIZE_Y / 2.0f);
+		res.z = this->GridPosition.z * (CHUNK_SIZE / 2.0f);
 		return res;
 	}
 	~MortonChunk() = default;

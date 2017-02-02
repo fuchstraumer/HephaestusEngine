@@ -25,6 +25,7 @@ struct ivecHash {
 		}
 		return seed;
 	}
+
 };
 
 // The main container of chunks in this object, used for all chunks regardless of status

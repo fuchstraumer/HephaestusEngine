@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include "LinearChunk.h"
 #include "../util/rle.h"
-// Face normals
-static const std::vector<glm::ivec3> normals = {
+
+// Face normals. Don't change and can be reused. Yay for cubes!
+static const std::array<glm::ivec3, 6> normals = {
 	glm::ivec3(0, 0, 1),   // (front)
 	glm::ivec3(1, 0, 0),   // (right)
 	glm::ivec3(0, 1, 0),   // (top)
@@ -11,7 +12,21 @@ static const std::vector<glm::ivec3> normals = {
 	glm::ivec3(0, 0,-1),   // (back)
 };
 
-// Texture indices
+/*
+
+	Texture indices array:
+
+	Each block will always use the same UV coordinates: recall that texture coordinates
+	are usually 2D coordinates, (u, v). The only component that will change is the third component:
+	our UV coords are unconventially 3D because our 3rd component is how we select different textures.
+	Instead of binding a different texture for each block, we use a texture array. We index through
+	this array using this 3rd component, like it was the index into a regular ol array or vector.
+
+	Note that even among blocks there is variation in these indices. This is because some blocks have
+	different textures on each face: grass blocks, for example, use the pure grass texture only on
+	the upper face, and actually re-use the dirt texture on their bottom face.
+
+*/
 static const float blocks[256][6] = {
 	// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
 	// Loading order:: Grass_Top, Grass_Sides, dirt, sand, stone, bedrock
@@ -27,8 +42,25 @@ static const float blocks[256][6] = {
 	{ 9,9,9,9,9,9 }, // Diamond Ore
 };
 
-using aoLookup = struct aolookup {
+
+/*
+
+	Struct - AO Lookup
+
+	This is an ambient-occlusion lookup table. Ambient occlusion is used to slightly darken the interior edges and corners of objects,
+	giving them a more realistic look and increasing the amount of perceived depth in an image.
+
+	We call this struct once for each block, and calling its constructor with the position of the current block we're getting AO 
+	values for automatically sets up the lookup table for us
+
+*/
+struct aoLookup {
+
 	/*
+	Old comment used to make this table: first entry is vertex position on the unit cube, second is the offsets of the spots we 
+	need to check for occlusion values. 
+
+	(vertex)   (spots to check)
 	0, 0, 0 - (-1, -1, -1), (-1, -1, 0), (0, -1, -1)
 	1, 0, 0 - (1, -1, -1), (0, -1, -1), (1, -1, 0)
 	0, 1, 0 - (-1, 1, -1), (-1, 1, 0), (0, 1, -1)
@@ -37,8 +69,10 @@ using aoLookup = struct aolookup {
 	0, 1, 1 - (-1, 1, 1), (-1, 1, 0), (0, 1, 1)
 	1, 0, 1 - (1, -1, 1), (1, -1, 0), (0, -1, 1)
 	1, 1, 1 - (1, 1, 1), (1, 1, 0), (0, 1, 1)
+
 	*/
-	aolookup(int x, int y, int z) : LUT {
+
+	aoLookup(int x, int y, int z) : LUT {
 		// Vertex 0, 0, 1
 		{ GetBlockIndex(x - 1, y - 1, z + 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
 		// Vertex 1, 0, 1
@@ -61,31 +95,38 @@ using aoLookup = struct aolookup {
 		this->Y = y;
 		this->Z = z;
 	}
-	aolookup() : LUT() {
 
-	}
+	// Defaulted destructor.
+	~aoLookup() = default;
+
+	// XYZ coords of this lookup object
 	int X, Y, Z;
+	
+	// Array that makes up this lookup object (i.e this is the LUT itself)
 	int LUT[8][3];
+
 };
 
-
+// Build the mesh data for a cube at position XYZ, building the faces specified by each boolean if that boolean is false (false = there isn't another block in this location)
 inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
 	// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 	// This setup means that the xyz of a given block is actually the center of the block's mesh
 	std::array<glm::vec3, 8> vertices{
-	{   glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front UV{0,0}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1, right lower front UV{1,0}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 2, right upper front UV{1,1}
-		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 3, left upper front UV{0,1}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 4, right lower rear
-		glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 5, left lower rear
-		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
-		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 7, right upper rear
+	{   glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
+		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
+		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
+		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
+		glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
+		glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
+		glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
+		glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f), // Point 7, right upper rear
 	} 
 	};
 
-	// Gets occlusion value for each vertex in a cube 
-	auto AOVal = [this](int index, aoLookup& in)->float {
+	// Gets occlusion value for a vertex, given by "index" in a cube
+	// Val sets the occlusion level, and we use it in the fragment shader to decide 
+	// how much to darken a vertex. A higher value = more occluded vertex = darker vertex.
+	auto AOVal = [this](int index, aoLookup& in)->int {
 		int val = 0;
 		if (this->Blocks[in.LUT[index][0]] != blockTypes::AIR) {
 			val++;
@@ -108,29 +149,39 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 		p1 = vertices[i01];
 		p2 = vertices[i02];
 		p3 = vertices[i03];
+
 		// We'll need four indices and four vertices for the two tris defining a face.
 		index_t i0, i1, i2, i3;
 		vertex_t v0, v1, v2, v3;
+
 		// Assign each vertex it's appropriate UV coords based on the blocks type
 		glm::vec3 uv0 = glm::ivec3(0.0, 0.0, blocks[uv_type][face]);
 		glm::vec3 uv1 = glm::ivec3(1.0, 0.0, blocks[uv_type][face]);
 		glm::vec3 uv3 = glm::ivec3(0.0, 1.0, blocks[uv_type][face]);
 		glm::vec3 uv2 = glm::ivec3(1.0, 1.0, blocks[uv_type][face]);
-		v0.UV = uv0; v1.UV = uv1; v2.UV = uv2; v3.UV = uv3;
+		v0.UV = uv0; 
+		v1.UV = uv1; 
+		v2.UV = uv2; 
+		v3.UV = uv3;
+
 		// Set the vertex positions.
 		v0.Position.xyz = p0;
 		v1.Position.xyz = p1;
 		v2.Position.xyz = p2;
 		v3.Position.xyz = p3;
+
 		// Set vertex normals.
 		v0.Normal = normals[norm];
 		v1.Normal = normals[norm];
 		v2.Normal = normals[norm];
 		v3.Normal = normals[norm];
+
 		// Set ambient occlusion values. (if this block isn't at the extrema of a chunk)
 		if (blockPosition.x > 0 && blockPosition.y > 0 && blockPosition.z > 0 &&
 			blockPosition.x < CHUNK_SIZE && blockPosition.y < CHUNK_SIZE && blockPosition.z < CHUNK_SIZE) {
-			aoLookup offsets(blockPosition.x, blockPosition.y, blockPosition.z);
+
+			// TODO: AO Lookup is broken for certain directions, and along chunk edges. How to fix this?
+			aoLookup offsets(static_cast<int>(blockPosition.x), static_cast<int>(blockPosition.y), static_cast<int>(blockPosition.z));
 			float ao0, ao1, ao2, ao3;
 			ao0 = AOVal(i00, offsets);
 			ao1 = AOVal(i01, offsets);
@@ -140,6 +191,9 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 			v1.ao = ao1;
 			v2.ao = ao2;
 			v3.ao = ao3;
+
+			// This next conditional is due to how triangle winding in our cubes works:
+			// If we don't do this, we get artifacting in the AO values that looks angular and unnatural.
 			if (v0.ao + v1.ao > v2.ao + v3.ao) {
 				// Add the verts to the Mesh's vertex container. Returns index to added vert.
 				i0 = this->mesh.AddVert(v3);
@@ -161,6 +215,7 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 				this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
 			}
 		}
+		// TODO: Note that this is why AO values are broken on chunk edges, since we can't look up adjacent chunks at the moment.
 		else {
 			v0.ao = 0.0f;
 			v1.ao = 0.0f;
@@ -176,7 +231,9 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 			this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
 		}
 	};
-	// If the frontface of this cube will be visible, build the tris needed for that face
+
+	// The following statements build a face based on the boolean value given to this method,
+	// using the lambda (inline) function above.
 	if (frontFace == false) {
 		buildface(0, 1, 2, 3, 0, 0); // Using Points 0, 1, 2, 3 and Normal 0
 	}
@@ -202,24 +259,33 @@ inline void LinearChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 }
 
 LinearChunk::LinearChunk(glm::ivec2 gridpos) {
+	// Set grid position.
 	this->GridPosition = gridpos;
-	float x_pos, y_pos, z_pos;
-	std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Z;
+
+	// Reserve space in our blocks container.
+	std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Y;
 	this->Blocks.resize(totalBlocks); this->Blocks.assign(totalBlocks, blockTypes::AIR);
+
 	// The gridpos is simply "normalized" world coords to be integral values.
 	// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
-	x_pos = this->GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
-	y_pos =  static_cast<float>(CHUNK_SIZE_Z) / 2.0f;
-	z_pos = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
-	mesh.Position = glm::vec3(x_pos, y_pos, z_pos);
-	this->Position = glm::vec3(x_pos, y_pos, z_pos);
+	glm::vec3 float_position;
+	float_position.x = this->GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+	float_position.y =  static_cast<float>(CHUNK_SIZE_Y) / 2.0f;
+	float_position.z = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+
+	// Set the updated positions in the mesh (most important), and this chunk (good for reference)
+	mesh.Position = float_position;
+	this->Position = float_position;
+
+	// Now use the floating point position to build the model matrix for this chunk, so that it renders in the correct location.
 	mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
+
 }
 
 glm::vec3 LinearChunk::GetPosFromGrid(glm::ivec2 gridpos) {
 	glm::vec3 res;
 	res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-	res.y = static_cast<float>(CHUNK_SIZE_Z) / 2.0f;
+	res.y = static_cast<float>(CHUNK_SIZE_Y) / 2.0f;
 	res.z = this->GridPosition.y * (CHUNK_SIZE / 2.0f);
 	return res;
 }
@@ -294,7 +360,7 @@ void LinearChunk::BuildMesh(){
 	mesh.Vertices.reserve(80000);
 
 	// Iterate through every block in this chunk one-by-one to decide how/if to render it.
-	for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
+	for (int j = 0; j < CHUNK_SIZE_Y - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
 				// Get index of the current block we're at.
@@ -339,7 +405,7 @@ void LinearChunk::BuildMesh(){
 						}
 
 						bool yNeg = def; // top
-						if (j < CHUNK_SIZE_Z - 1) {
+						if (j < CHUNK_SIZE_Y - 1) {
 							//std::cerr << GetBlockIndex(i, j - 1, k);
 							if (this->Blocks[GetBlockIndex(i, j + 1, k)] == blockTypes::AIR) {
 								yNeg = false;

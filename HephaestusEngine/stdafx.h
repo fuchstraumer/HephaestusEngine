@@ -1,4 +1,5 @@
-// stdafx.h 
+// stdafx.h - precompiled header to increase compiliation speed.
+// Especially helpful with highly templated libraries, and libraries used nearly everywhere.
 #pragma once
 #include <vector>
 #include <iostream>
@@ -6,14 +7,16 @@
 #include <array>
 #include <future>
 #include <algorithm>
+#include <ctime>
 
 // Import glew for OpenGl pointers and handlers
 // GLFW uses this, so include this before GLFW
+// Define GLEW_STATIC because we're using the static library.
 #define GLEW_STATIC
 #include <GL/glew.h>
 
-
 // GLFW, used for Windowing and context handling.
+// TODO: Move to GLFW static, including the DLL kinda sucks
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
 
@@ -24,18 +27,26 @@
 #include <glm/gtc/type_ptr.hpp>
 
 // Chunk vars
-// Type of blocks - can be safely changed, but shouldn't be.
+
+// Type of blocks - can be safely changed, but shouldn't be. Expands size of data everywhere and doesn't offer any advantages currently.
 using blockType = uint8_t;
-// Type of blocks for morton encoding. Need at least 32-bit unsigned 
-// integers
+
+// Type of blocks for morton encoding. Need at least 32-bit unsigned ints.
 using mortonBlockType = uint32_t;
-static const float BLOCK_RENDER_SIZE = 0.5f;
-static const int CHUNK_SIZE = 32;
-static const int CHUNK_SIZE_Z = 128;
-static const bool SIMPLE_CULLING_GLOBAL = true;
+
+// Sets XZ dimensions of chunk sizes
+static constexpr int CHUNK_SIZE = 32;
+
+// Sets Y dimensions - or height - of chunk sizes.
+static constexpr int CHUNK_SIZE_Y = 128;
+
+// Whether or not ot use the cheap/simple occlusion-based culling method when building the meshes.
+static constexpr bool SIMPLE_CULLING_GLOBAL = true;
 
 // Block types. Set here so that it can be globally accessed: this is probably unwise, and should be changed 
 // to a better solution when one is found.
+// Note that it automatically inherits a type from blockType. Usually a uint8, so maximum variety is 255 blocks
+// (or 127 blocks if we use RLE, but that's another problem)
 enum blockTypes : blockType {
 	AIR = 0,
 	GRASS,
@@ -97,6 +108,17 @@ enum blockTypes : blockType {
 	COLOR_30,
 	COLOR_31,
 };
+
+
+/*
+
+	These used to be macro's, but macros are bad for a number of reasons. A number of different 
+	methods and classes need this, so I'm leaving them here in stdafx.h for now. 
+
+	Takes a 3D cartesian coordinate and converts it into the 1D coordinate space of our block
+	storage containers. 
+
+*/
 
 // Converts 3D coordinates into 1D space used for storage in the vector
 inline int GetBlockIndex(const glm::vec3& pos) {

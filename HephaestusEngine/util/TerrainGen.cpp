@@ -251,8 +251,8 @@ double TerrainGenerator::SimplexFBM(int x, int y, double freq, int octaves, floa
 	double temp = (sum / amplitude) + 2;
 	//std::cerr << temp << std::endl;
 	temp = 32 * temp;
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
+	if (temp >= CHUNK_SIZE_Y - 4)
+		temp = CHUNK_SIZE_Y - 4;
 	if (temp <= 1)
 		temp = 1;
 	return temp;
@@ -273,8 +273,8 @@ double TerrainGenerator::SimplexBillow(int x, int y, double freq, int octaves, f
 	double temp = (sum / amplitude) + 1;
 	//std::cerr << temp << std::endl;
 	temp = 32 * temp;
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
+	if (temp >= CHUNK_SIZE_Y - 4)
+		temp = CHUNK_SIZE_Y - 4;
 	if (temp <= 1)
 		temp = 1;
 	return temp;
@@ -296,14 +296,14 @@ double TerrainGenerator::SimplexRidged(int x, int y, double freq, int octaves,
 	}
 	double temp = (sum / amplitude);
 	temp = 64 * temp;
-	if (temp >= CHUNK_SIZE_Z - 4)
-		temp = CHUNK_SIZE_Z - 4;
+	if (temp >= CHUNK_SIZE_Y - 4)
+		temp = CHUNK_SIZE_Y - 4;
 	if (temp <= 1)
 		temp = 1;
 	return temp;
 }
 
-// Simplex Swiss function. Currently broken.
+// Simplex Swiss function. Currently broken. Like, super broken.
 double TerrainGenerator::SimplexSwiss(int x, int y, double freq, int octaves,
 	float lac, float gain) {
 	glm::dvec2 f; f.x = x * freq; f.y = y * freq;
@@ -322,8 +322,8 @@ double TerrainGenerator::SimplexSwiss(int x, int y, double freq, int octaves,
 	}
 	auto temp = sum / amplitude;
 	temp = temp * 16;
-	if (temp >= CHUNK_SIZE_Z - 4) {
-		temp = CHUNK_SIZE_Z - 4;
+	if (temp >= CHUNK_SIZE_Y - 4) {
+		temp = CHUNK_SIZE_Y - 4;
 	}
 	if (temp <= 1) {
 		temp = 1;

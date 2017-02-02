@@ -3,20 +3,20 @@
 
 #include "stdafx.h"
 #include "util\lodeTexture.h"
-#include "util/shader.h"
-#include "util/camera.h"
+#include "util\shader.h"
+#include "util\camera.h"
 #include "objects\LinearChunk.h"
-#include <ctime>
-#include <fstream>
-static GLuint WIDTH = 1440, HEIGHT = 900;
 
-// Function declarations
+
+
+// Used to set width/height of screen rendered.
+static constexpr GLuint WIDTH = 1440, HEIGHT = 900;
+
+// Method declarations
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void Do_Movement();
-
-// RenderDoc Manager
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -28,31 +28,35 @@ GLfloat deltaTime = 0.0f;
 GLfloat lastFrame = 0.0f;
 
 int main() {
+	// Get the seed to use for the terrain generator. Use a stringstream to convert it to an int value.
 	std::string stringSeed;
 	std::cout << "Enter a string of characters to use as the terrain gen seed value: " << std::endl;
 	std::cin >> stringSeed;
-	int chunks;
-	std::cout << "Enter an integer number from 2 through 48 to specify the amount of chunks to generate: " << std::endl;
-	std::cout << "Warning: Using values greater than 16 may cause memory allocation crashes. " << std::endl;
-	std::cin >> chunks;
-	std::cout << "What terrain generator would you like to use?" << std::endl;
-	std::cout << "Options: 0 = FBM, 1 = Billow, 2 = RidgedMulti, 3 = SwissNoise" << std::endl;
-	int terrainType; std::cin >> terrainType;
-	if (terrainType < 0 || terrainType > 3) {
-		std::cout << "Erronenous terrain generator value chosen. Defaulting to FBM..." << std::endl;
-		terrainType = 0;
-	}
 	int intSeed;
 	std::stringstream(stringSeed) >> intSeed;
-	// Build and seed our terrain generator
-	TerrainGenerator gen(intSeed);
+
+	// Get number of chunks to render/build in this run
+	int chunks;
+	std::cout << "The world is rendered as a square of chunks. Enter the side length of this square (number of chunks rendered = side_length * sidelength): " << std::endl;
+	std::cout << "Warning: Using values greater than 16 is unsupported, as it causes excessive memory use (256 chunks are a bit much!)" << std::endl;
+	std::cin >> chunks;
 	if (chunks > 16) {
 		chunks = 16;
 	}
 
-
-
-	//glm::vec3 pos = test1.Blocks[6].GetPosition();
+	// Allow selection of which terrain generator function to use.
+	std::cout << "What terrain generator would you like to use?" << std::endl;
+	std::cout << "Options: 0 = FBM, 1 = Billow, 2 = RidgedMulti, 3 = SwissNoise" << std::endl;
+	int terrainType; std::cin >> terrainType;
+	// Make sure valid value was chosen.
+	if (terrainType < 0 || terrainType > 3) {
+		std::cout << "Erronenous terrain generator value chosen. Defaulting to FBM..." << std::endl;
+		terrainType = 0;
+	}
+	
+	// Build and seed our terrain generator
+	TerrainGenerator gen(intSeed);
+	
 	// Init GLFW to get OpenGL functions and pointers
 	glfwInit();
 	// Set all the required options for GLFW
@@ -102,6 +106,8 @@ int main() {
 	// Setup some OpenGL options
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+
+	// Set up the list of files to read from when building our texture array.
 	std::vector<std::string> filelist = {
 		{ "./textures/blocks/grass_top.png" },
 		{ "./textures/blocks/grass_side.png" },
@@ -115,15 +121,18 @@ int main() {
 		{ "./textures/blocks/diamond_ore.png" },
 	};
 
+	// Instantiate and build our texture array.
 	TextureArray textures(filelist, 16);
 	textures.BuildTexture();
+
+	// Start a timer as we prepare to build the chunks.
 	std::clock_t time;
-	std::vector<LinearChunk> chunkList; chunkList.reserve(chunks*chunks);
 	time = std::clock();
-	// Array that will hold the name of each chunk
-	char fname[100];
-	// File object used to write chunks
-	std::fstream chunkWriter;
+
+	// Reserve space in our chunk container
+	std::vector<LinearChunk> chunkList; 
+	chunkList.reserve(chunks*chunks);
+
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec2 grid = glm::ivec2(i, j);
@@ -131,46 +140,49 @@ int main() {
 			NewChunk.BuildTerrain(gen, terrainType);
 			NewChunk.BuildMesh();
 			NewChunk.mesh.BuildRenderData(mainProgram);
-			//NewChunk->CleanChunkBlocks();
+			// Use std::move to avoid a costly (and pointless) copy.
 			chunkList.push_back(std::move(NewChunk));
-			sprintf(fname, "./chunks/chunk%zd.txt", chunkList.size());
-			//NewChunk.EncodeBlocks();
-			//chunkWriter.open(fname, std::ios::out);
-			if (chunkList.size() % 10 == 0) {
+			if (chunkList.size() % 5 == 0) {
 				std::cerr << "Chunk number " << chunkList.size() << " built. " << std::endl;
 			}
-			//chunkWriter << NewChunk.encodedBlocks.data();
-			//chunkWriter.close();
 		}
 	}
+
+	// I think duration defaults to a clock_t?
 	auto duration = (std::clock() - time) / CLOCKS_PER_SEC;
 	std::cerr << "Total time to generate all chunks was: " << duration << " seconds." << std::endl;
-	chunkList.shrink_to_fit();
 
+	// Bind our texture array and set its location.
 	textures.BindTexture();
 	GLint textureLoc = mainProgram.GetUniformLocation("textureAtlas");
 	glUniform1i(textureLoc, 0);
 
 
-	// Set the global light position
+	// Set the global light position in the shader.
 	glm::vec3 lightPos(320.0f, 300.0f, 320.0f);
 	GLint lightPosLoc = mainProgram.GetUniformLocation("lightPos");
 	glUniform3f(lightPosLoc, lightPos.x, lightPos.y, lightPos.z);
+
+	// Set the global light color in the shader.
 	GLint lightColorLoc = mainProgram.GetUniformLocation("lightColor");
 	glUniform3f(lightColorLoc, 219.0f / 255.0f, 255.0f / 255.0f, 240.0f / 255.0f);
 	GLint viewPosLoc = mainProgram.GetUniformLocation("cameraPos");
 
+	// Setup the projection matrix and set its value in the shader.
 	glm::mat4 projection;
 	projection = glm::perspective(camera.Zoom, (GLfloat)WIDTH / (GLfloat)HEIGHT, 1.0f, 10000.0f);
-	GLint viewLoc = mainProgram.GetUniformLocation("view");
 	GLint projLoc = mainProgram.GetUniformLocation("projection");
-
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+
+	// Get the location of the view matrix.
+	GLint viewLoc = mainProgram.GetUniformLocation("view");
+
+	// Get the location of the model matrix.
+	GLuint modelLoc = mainProgram.GetUniformLocation("model");
 
 	// GLFW main loop
 	while (!glfwWindowShouldClose(window)) {
 
-		
 		// Set frame time to avoid slowdowns and speedups etc
 		GLfloat currentFrame = (GLfloat)glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -183,13 +195,11 @@ int main() {
 		// Clear the buffers, set clear color
 		glClearColor(160.0f / 255.0f, 239.0f / 255.0f, 255.0f / 255.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Textures 
 		
-		// Do lighting stuff
+		// Pass camera position so we can properly calculate diffuse and specular components of the lighting.
 		glUniform3f(viewPosLoc, camera.Position.x, camera.Position.y, camera.Position.z);
 
-		// Prepare to draw objects
+		// Get the view matrix from the camera.
 		glm::mat4 view;
 		view = camera.GetViewMatrix();
 		
@@ -198,10 +208,13 @@ int main() {
 		
 		// Render all chunks
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
-			GLuint modelLoc = mainProgram.GetUniformLocation("model");
+			// Set model matrix. Will be different for each chunk, so we need to re-set this value in each iteration.
+			// Note: I set this in the chunk ctor. Why re-set it here?
 			glm::mat4 model(1.0f);
 			model = glm::translate(model, chunkList[i].Position);
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+			
+			// Call the rendering method of the actual mesh now, passing a ref to the shader in as well. 
 			chunkList[i].mesh.Render(mainProgram);
 		}
 
@@ -215,6 +228,7 @@ int main() {
 
 
 // Moves/alters the camera positions based on user input
+// This implementation avoids lockup or odd behavior when more than one key is pressed.
 void Do_Movement() {
 	// Camera controls
 	if (keys[GLFW_KEY_W]) {
@@ -233,24 +247,30 @@ void Do_Movement() {
 
 // Is called whenever a key is pressed/released via GLFW
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
-	//cout << key << endl;
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		glfwSetWindowShouldClose(window, GL_TRUE);
-	}
+
+	// Set key flag in "keys", which is used to update movement.
 	if (key >= 0 && key < 1024) {
-		if (action == GLFW_PRESS)
+		if (action == GLFW_PRESS) {
 			keys[key] = true;
-		else if (action == GLFW_RELEASE)
+		}
+		else if (action == GLFW_RELEASE) {
 			keys[key] = false;
+		}
 	}
+
+	// TODO: Migrate these keys to do_movement()
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_PRESS) {
 		camera.MovementSpeed += 60;
 	}
 	if (key == GLFW_KEY_LEFT_SHIFT && action == GLFW_RELEASE) {
 		camera.MovementSpeed -= 60;
 	}
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
 }
 
+// Updates mouse position in camera.
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	if (firstMouse)
 	{
@@ -268,7 +288,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
-
+// Updates zoom amount in camera.
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 	camera.ProcessMouseScroll((GLfloat)yoffset);
 }

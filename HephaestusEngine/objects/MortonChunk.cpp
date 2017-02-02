@@ -33,14 +33,14 @@ inline void MortonChunk::createCube(int x, int y, int z, bool frontFace, bool ri
 	// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 	// This setup means that the xyz of a given block is actually the center of the block's mesh
 	std::array<glm::vec3, 8> vertices{
-		{ glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 0, left lower front UV{0,0}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 1, right lower front UV{1,0}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 2, right upper front UV{1,1}
-		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z + BLOCK_RENDER_SIZE), // Point 3, left upper front UV{0,1}
-		glm::vec3(x + BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 4, right lower rear
-		glm::vec3(x - BLOCK_RENDER_SIZE,y - BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 5, left lower rear
-		glm::vec3(x - BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE), // Point 6, left upper rear
-		glm::vec3(x + BLOCK_RENDER_SIZE,y + BLOCK_RENDER_SIZE,z - BLOCK_RENDER_SIZE) } // Point 7, right upper rear
+		{ glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
+		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
+		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
+		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
+		glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
+		glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
+		glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
+		glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f) } // Point 7, right upper rear
 	};
 	auto buildface = [this, uv_type](glm::vec3 p0, glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, int norm, int face) {
 		// We'll need four indices and four vertices for the two tris defining a face.
@@ -150,7 +150,7 @@ void MortonChunk::BuildMesh() {
 	// Iterate over each block in the volume via intervals
 	// If an interval has a value
 	mesh.Indices.reserve(std::numeric_limits<uint16_t>::max()); mesh.Vertices.reserve(400000);
-	for (int j = 0; j < CHUNK_SIZE_Z - 1; j++) {
+	for (int j = 0; j < CHUNK_SIZE_Y - 1; j++) {
 		for (int i = 0; i < CHUNK_SIZE - 1; i++) {
 			for (int k = 0; k < CHUNK_SIZE - 1; k++) {
 				uint32_t currBlock = MortonEncodeLUT<uint32_t,uint32_t>(i,j,k);
@@ -186,7 +186,7 @@ void MortonChunk::BuildMesh() {
 							}
 						}
 						bool yNeg = def; // top
-						if (j < CHUNK_SIZE_Z - 1) {
+						if (j < CHUNK_SIZE_Y - 1) {
 							//std::cerr << GetBlockIndex(i, j - 1, k);
 							if (this->Blocks[currBlock + posYDelta(j)] == blockTypes::AIR) {
 								yNeg = false;
