@@ -11,7 +11,7 @@ inline auto createEntry(size_t i, size_t j) {
 	return std::make_pair<glm::ivec2, LinearChunk>(glm::ivec2(i, j), LinearChunk(glm::ivec2(i, j)));
 }
 
-std::shared_ptr<LinearChunk> ChunkManager::GetChunk(const glm::ivec2 & pos) const{
+std::shared_ptr<LinearChunk> ChunkManager::GetChunk(const glm::ivec2 & pos) {
 	return std::shared_ptr<LinearChunk>(&chunkData.at(pos));
 }
 
@@ -19,17 +19,6 @@ void ChunkManager::Init(const glm::vec3& initial_position, const unsigned int& v
 	// Gauss circle problem: how many integer lattice points in a circle of radius R?
 	// Since our view distance is in integer units of chunks, we can assume we're working with unit squares.
 	chunkData.reserve(view_distance * view_distance);
-	// Generate chunks at set of points. Add to load list since we're not ready for them yet.
-	for (size_t i = 0; i < view_distance; ++i) {
-		for (size_t j = 0; j < view_distance; ++j) {
-			if (i*i + j*j <= (view_distance * view_distance)) {
-				chunkData.insert(createEntry(i,j));
-			}
-			else {
-				continue;
-			}
-		}
-	}
 
 	// Generate data for each entry in map.
 	for (auto iter = chunkData.begin(); iter != chunkData.end(); ++iter) {

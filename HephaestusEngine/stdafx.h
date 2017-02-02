@@ -23,10 +23,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-// Include boost components here to reduce compiliation time
-#include "ext\include\boost\circular_buffer.hpp"
-
-
 // Chunk vars
 // Type of blocks - can be safely changed, but shouldn't be.
 using blockType = uint8_t;

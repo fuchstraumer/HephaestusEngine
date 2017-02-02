@@ -13,7 +13,7 @@ using mapEntry = std::pair<glm::ivec2,LinearChunk>;
 // Callable hashing object for an ivec3
 struct ivecHash {
 	
-	size_t operator()(const glm::ivec2& vec) {
+	size_t operator()(const glm::ivec2& vec) const {
 		// Starting size/seed of the input vector, 3 in this case
 		size_t seed = 3;
 		// throw vector members into an initializer list so we can
@@ -41,7 +41,7 @@ public:
 
 	void AddChunk(LinearChunk& chk);
 
-	std::shared_ptr<LinearChunk> GetChunk(const glm::ivec2& pos) const;
+	std::shared_ptr<LinearChunk> GetChunk(const glm::ivec2& pos);
 
 	// Initialize the chunk manager by starting at an initial position and using the input
 	// view distance (given in terms of a radius of chunks to render)
