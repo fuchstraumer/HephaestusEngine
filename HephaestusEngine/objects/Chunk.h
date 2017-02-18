@@ -31,20 +31,10 @@ namespace objects {
 		// Move operators okay: just make sure to explicitly define them.
 
 		// Move constructor.
-		Chunk(Chunk&& other) : mesh(other.mesh), terrainBlocks(other.terrainBlocks), encodedBlocks(other.encodedBlocks), Neighbors[other.Neighbors] {
-			other.clear();
-		}
+		Chunk(Chunk&& other);
 
 		// Move assignment.
-		Chunk& operator=(Chunk&& other) {
-			if (this != &other) {
-				this->mesh = std::move(other.mesh);
-				this->terrainBlocks = std::move(other.terrainBlocks);
-				this->encodedBlocks = std::move(other.encodedBlocks);
-				other.clear();
-			}
-			return *this;
-		}
+		Chunk& operator=(Chunk&& other);
 
 		// Get position of this chunk in the overall grid.
 		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);

@@ -110,7 +110,7 @@ namespace objects {
 	};
 
 	// Build the mesh data for a cube at position XYZ, building the faces specified by each boolean if that boolean is false (false = there isn't another block in this location)
-	inline void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
+	void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
 		// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 		// This setup means that the xyz of a given block is actually the center of the block's mesh
 		std::array<glm::vec3, 8> vertices{
@@ -282,6 +282,21 @@ namespace objects {
 		// Now use the floating point position to build the model matrix for this chunk, so that it renders in the correct location.
 		//mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
 
+	}
+
+	Chunk::Chunk(Chunk&& other) : mesh(other.mesh), terrainBlocks(other.terrainBlocks), encodedBlocks(other.encodedBlocks), blocks(other.blocks) {
+		other.clear();
+	}
+
+	Chunk& Chunk::operator=(Chunk && other) {
+		if (this != &other) {
+			this->mesh = std::move(other.mesh);
+			this->terrainBlocks = std::move(other.terrainBlocks);
+			this->encodedBlocks = std::move(other.encodedBlocks);
+			this->blocks = std::move(other.blocks);
+			other.clear();
+		}
+		return *this;
 	}
 
 	glm::vec3 Chunk::GetPosFromGrid(glm::ivec2 gridpos) {
