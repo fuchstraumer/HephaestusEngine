@@ -102,7 +102,8 @@ namespace objects {
 
 	// If type is set, return it, otherwise return value "air"
 	const blockType& Block::GetType() const {
-		return (type != nullptr) ? *type : blockTypes::AIR;
+		// TODO: Why do I get a returning address of local var/temp warning?
+		return (type != nullptr) ? blockType(*type) : blockType(blockTypes::AIR);
 	}
 
 }

@@ -63,7 +63,7 @@ namespace objects {
 		bool Neighbors[4];
 
 		// Mesh object for this chunk.
-		Mesh mesh;
+		Mesh<vertex_t> mesh;
 
 	private:
 

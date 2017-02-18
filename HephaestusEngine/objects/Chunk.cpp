@@ -178,60 +178,6 @@ namespace objects {
 			v2.Normal = normals[norm];
 			v3.Normal = normals[norm];
 
-			// Set ambient occlusion values. (if this block isn't at the extrema of a chunk)
-			if (blockPosition.x > 0 && blockPosition.y > 0 && blockPosition.z > 0 &&
-				blockPosition.x < CHUNK_SIZE && blockPosition.y < CHUNK_SIZE && blockPosition.z < CHUNK_SIZE) {
-
-				// TODO: AO Lookup is broken for certain directions, and along chunk edges. How to fix this?
-				aoLookup offsets(static_cast<int>(blockPosition.x), static_cast<int>(blockPosition.y), static_cast<int>(blockPosition.z));
-				GLuint ao0, ao1, ao2, ao3;
-				ao0 = AOVal(i00, offsets);
-				ao1 = AOVal(i01, offsets);
-				ao2 = AOVal(i02, offsets);
-				ao3 = AOVal(i03, offsets);
-				v0.ao = ao0;
-				v1.ao = ao1;
-				v2.ao = ao2;
-				v3.ao = ao3;
-
-				// This next conditional is due to how triangle winding in our cubes works:
-				// If we don't do this, we get artifacting in the AO values that looks angular and unnatural.
-				if (v0.ao + v1.ao > v2.ao + v3.ao) {
-					// Add the verts to the Mesh's vertex container. Returns index to added vert.
-					i0 = this->mesh.AddVert(v3);
-					i1 = this->mesh.AddVert(v2);
-					i2 = this->mesh.AddVert(v1);
-					i3 = this->mesh.AddVert(v0);
-					// Add the triangles to the mesh, via indices
-					this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
-					this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
-				}
-				else {
-					// Add the verts to the Mesh's vertex container. Returns index to added vert.
-					i0 = this->mesh.AddVert(v0);
-					i1 = this->mesh.AddVert(v1);
-					i2 = this->mesh.AddVert(v2);
-					i3 = this->mesh.AddVert(v3);
-					// Add the triangles to the mesh, via indices
-					this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
-					this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
-				}
-			}
-			// TODO: Note that this is why AO values are broken on chunk edges, since we can't look up adjacent chunks at the moment.
-			else {
-				v0.ao = static_cast<GLuint>(0);
-				v1.ao = static_cast<GLuint>(0);
-				v2.ao = static_cast<GLuint>(0);
-				v3.ao = static_cast<GLuint>(0);
-				// Add the verts to the Mesh's vertex container. Returns index to added vert.
-				i0 = this->mesh.AddVert(v0);
-				i1 = this->mesh.AddVert(v1);
-				i2 = this->mesh.AddVert(v2);
-				i3 = this->mesh.AddVert(v3);
-				// Add the triangles to the mesh, via indices
-				this->mesh.AddTriangle(i0, i1, i2); // Needs UVs {0,0}{1,0}{0,1}
-				this->mesh.AddTriangle(i0, i2, i3); // Needs UVs {1,0}{0,1}{1,1}
-			}
 		};
 
 		// The following statements build a face based on the boolean value given to this method,
@@ -372,10 +318,6 @@ namespace objects {
 		// Default block adjacency value assumes true
 		bool def = true;
 
-		// Reserve some space in our containers, hopefully cutting down on costly re-allocations.
-		mesh.Indices.reserve(60000);
-		mesh.Vertices.reserve(80000);
-
 		// Iterate through every block in this chunk one-by-one to decide how/if to render it.
 		for (int j = 0; j < CHUNK_SIZE_Y - 1; j++) {
 			for (int i = 0; i < CHUNK_SIZE - 1; i++) {
@@ -456,8 +398,6 @@ namespace objects {
 				}
 			}
 		}
-		mesh.Indices.shrink_to_fit();
-		mesh.Vertices.shrink_to_fit();
 	}
 
 	void Chunk::EncodeBlocks() {
