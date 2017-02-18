@@ -2,87 +2,94 @@
 #ifndef CHUNK_MANAGER_H
 #define CHUNK_MANAGER_H
 #include "stdafx.h"
-#include "LinearChunk.h"
+#include "Chunk.h"
 #include <unordered_map>
 #include <memory>
 
+namespace objects {
 
-// Simple alias for the type that will be inserted into the unordered map container
-using mapEntry = std::pair<glm::ivec2,LinearChunk>;
+	// Simple alias for the type that will be inserted into the unordered map container
+	using mapEntry = std::pair<glm::ivec2, Chunk>;
 
-// Callable hashing object for an ivec3
-struct ivecHash {
-	
-	size_t operator()(const glm::ivec2& vec) const {
-		// Starting size/seed of the input vector, 3 in this case
-		size_t seed = 3;
-		// throw vector members into an initializer list so we can
-		// iterate really easily
-		auto nums = { vec.x, vec.y };
-		// Build the hash
-		for (auto i : nums) {
-			seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+	// Callable hashing object for an ivec3
+	struct ivecHash {
+
+		size_t operator()(const glm::ivec2& vec) const {
+			// Starting size/seed of the input vector, 3 in this case
+			size_t seed = 3;
+			// throw vector members into an initializer list so we can
+			// iterate really easily
+			auto nums = { vec.x, vec.y };
+			// Build the hash
+			for (auto i : nums) {
+				seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			}
+			return seed;
 		}
-		return seed;
-	}
 
-};
+	};
 
-// The main container of chunks in this object, used for all chunks regardless of status
-using chunkMap = std::unordered_map<glm::ivec2, LinearChunk, ivecHash>;
+	// The main container of chunks in this object, used for all chunks regardless of status
+	using chunkMap = std::unordered_map<glm::ivec2, Chunk, ivecHash>;
 
-// Just a vector containing pointers to the underlying chunks: used for updating, pruning
-using chunkContainer = std::vector<std::shared_ptr<LinearChunk>>;
+	// Just a vector containing pointers to the underlying chunks: used for updating, pruning
+	using chunkContainer = std::vector<std::shared_ptr<Chunk>>;
 
-class ChunkManager {
-public:
+	class ChunkManager {
+	public:
 
-	ChunkManager() = default;
-	~ChunkManager() = default;
+		ChunkManager(TerrainGenerator& gen, unsigned int terrain_type) : terrainGen(gen), terrainType(terrain_type) {}
+		~ChunkManager() = default;
 
-	void AddChunk(LinearChunk& chk);
+		void AddChunk(Chunk& chk);
 
-	std::shared_ptr<LinearChunk> GetChunk(const glm::ivec2& pos);
+		std::shared_ptr<Chunk> GetChunk(const glm::ivec2& pos);
 
-	// Initialize the chunk manager by starting at an initial position and using the input
-	// view distance (given in terms of a radius of chunks to render)
-	void Init(const glm::vec3 & initial_position, const unsigned int& view_distance);
+		// Initialize the chunk manager by starting at an initial position and using the input
+		// view distance (given in terms of a radius of chunks to render)
+		void Init(const glm::vec3 & initial_position, const unsigned int& view_distance);
 
-	void Update(const glm::vec3& update_position);
+		void Update(const glm::vec3& update_position);
 
-	// Renders chunks in the 
-	void Render();
+		// Renders chunks in the 
+		void Render();
 
-	// Cleans up inactive chunks in "pruneChunks" by compressing and then saving their data.
-	void Prune();
-private:
+		// Cleans up inactive chunks in "pruneChunks" by compressing and then saving their data.
+		void Prune();
+	private:
 
-	// Tracks player position, for keeping chunks updated around player
-	glm::vec3 playerPosition;
+		// TODO: Vary this somehow! Uniform terrain is boring.
+		unsigned int terrainType;
 
-	// Keeps track of grid center.
-	glm::vec2 gridCenter;
+		TerrainGenerator& terrainGen;
 
-	// Radius, in chunks, to render
-	int renderRadius;
+		// Tracks player position, for keeping chunks updated around player
+		glm::vec3 playerPosition;
 
-	// Container of chunks that need to have their contents updated, outside of
-	// the standard activation/deactivation of rendering.
-	chunkContainer updateChunks;
+		// Keeps track of grid center.
+		glm::vec2 gridCenter;
 
-	// Container of chunks to be pruned/cleared in this mesh, meaning compressed + written to a file
-	// then deallocated.
-	chunkContainer pruneChunks;
+		// Radius, in chunks, to render
+		int renderRadius;
 
-	/*
-	
-		How to implement std::async for generating terrain and mesh data for chunks?
-		Mesh data relies on terrain data. How to use futures with this system?
-	
-	*/
+		// Container of chunks that need to have their contents updated, outside of
+		// the standard activation/deactivation of rendering.
+		chunkContainer updateChunks;
 
-	// Main container of chunk data, map allows for searching based on the chunks position.
-	chunkMap chunkData;
+		// Container of chunks to be pruned/cleared in this mesh, meaning compressed + written to a file
+		// then deallocated.
+		chunkContainer pruneChunks;
 
-};
+		/*
+
+			How to implement std::async for generating terrain and mesh data for chunks?
+			Mesh data relies on terrain data. How to use futures with this system?
+
+		*/
+
+		// Main container of chunk data, map allows for searching based on the chunks position.
+		chunkMap chunkData;
+
+	};
+}
 #endif // !CHUNK_MANAGER_H

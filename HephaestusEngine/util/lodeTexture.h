@@ -1,8 +1,8 @@
 #pragma once
 #ifndef LODE_TEXTURE_H
 #define LODE_TEXTURE_H
-#include "lodepng.h"
-#include "../stdafx.h"
+#include "LodePNG\lodepng.h"
+#include "stdafx.h"
 #include "shader.h"
 #include <unordered_map>
 

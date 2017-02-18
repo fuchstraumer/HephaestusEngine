@@ -47,7 +47,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -105,11 +105,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)ext\include;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>"opengl32.lib";"$(ProjectDir)ext\lib\x64\glfw3dll.lib";"$(ProjectDir)ext\lib\x64\glew32s.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"opengl32.lib";"$(ProjectDir)ext\lib\x64\glfw3dll.lib";"$(ProjectDir)ext\lib\x64\glew32s.lib";"$(ProjectDir)ext\lib\x64\LodePNG_GD.lib";%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -152,7 +153,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\MSVC\OpenGL\lib;C:\MSVC\FastNoise-SIMD\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>"opengl32.lib";"$(ProjectDir)ext\lib\x64\glfw3dll.lib";"$(ProjectDir)ext\lib\x64\glew32s.lib";%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>"opengl32.lib";"$(ProjectDir)ext\lib\x64\glfw3dll.lib";"$(ProjectDir)ext\lib\x64\glew32s.lib";"$(ProjectDir)ext\lib\x64\LodePNG.lib";%(AdditionalDependencies)</AdditionalDependencies>
       <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
@@ -160,12 +161,14 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="objects\Block.h" />
+    <ClInclude Include="objects\Chunk.h" />
     <ClInclude Include="objects\ChunkManager.h" />
     <ClInclude Include="objects\LinearChunk.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="util\Camera.h" />
     <ClInclude Include="util\Context.h" />
-    <ClInclude Include="util\lodepng.h" />
+    <ClInclude Include="ext\include\LodePNG\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="mesh\mesh.h" />
     <ClInclude Include="mesh\MeshComponents.h" />
@@ -178,6 +181,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HephaestusEngine.cpp" />
+    <ClCompile Include="objects\Block.cpp" />
+    <ClCompile Include="objects\Chunk.cpp" />
     <ClCompile Include="objects\ChunkManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -210,10 +215,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="util\lodepng.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="objects\MortonChunk.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>

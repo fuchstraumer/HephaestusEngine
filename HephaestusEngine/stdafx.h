@@ -8,6 +8,8 @@
 #include <future>
 #include <algorithm>
 #include <ctime>
+#include <bitset>
+#include <unordered_map>
 
 // Import glew for OpenGl pointers and handlers
 // GLFW uses this, so include this before GLFW
@@ -109,6 +111,25 @@ enum blockTypes : blockType {
 	COLOR_31,
 };
 
+
+
+// Hashing object for ivec3's
+// Callable hashing object for an ivec3
+struct ivec3Hash {
+	size_t operator()(const glm::ivec3& vec) const {
+		// Starting size/seed of the input vector, 3 in this case
+		size_t seed = 3;
+		// throw vector members into an initializer list so we can
+		// iterate really easily
+		auto nums = { vec.x, vec.y, vec.z };
+		// Build the hash
+		for (auto i : nums) {
+			seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+		}
+		return seed;
+	}
+
+};
 
 /*
 

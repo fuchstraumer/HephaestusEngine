@@ -5,7 +5,7 @@
 #include "util\lodeTexture.h"
 #include "util\shader.h"
 #include "util\camera.h"
-#include "objects\LinearChunk.h"
+#include "objects\Chunk.h"
 
 
 
@@ -128,17 +128,18 @@ int main() {
 	// Start a timer as we prepare to build the chunks.
 	std::clock_t time;
 	time = std::clock();
-
+	using objects::Chunk;
 	// Reserve space in our chunk container
-	std::vector<LinearChunk> chunkList; 
+	std::vector<Chunk> chunkList; 
 	chunkList.reserve(chunks*chunks);
 
 	for (int i = 0; i < chunks; ++i) {
 		for (int j = 0; j < chunks; ++j) {
 			glm::ivec2 grid = glm::ivec2(i, j);
-			LinearChunk NewChunk(grid);
+			Chunk NewChunk(grid);
 			NewChunk.BuildTerrain(gen, terrainType);
 			NewChunk.BuildMesh();
+			NewChunk.mesh.Position = NewChunk.Position;
 			NewChunk.mesh.BuildRenderData(mainProgram);
 			// Use std::move to avoid a costly (and pointless) copy.
 			chunkList.push_back(std::move(NewChunk));
@@ -208,12 +209,8 @@ int main() {
 		
 		// Render all chunks
 		for (unsigned int i = 0; i < chunkList.size(); ++i) {
-			// Set model matrix. Will be different for each chunk, so we need to re-set this value in each iteration.
-			// Note: I set this in the chunk ctor. Why re-set it here?
-			glm::mat4 model(1.0f);
-			model = glm::translate(model, chunkList[i].Position);
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), chunkList[i].mesh.Position);
 			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-			
 			// Call the rendering method of the actual mesh now, passing a ref to the shader in as well. 
 			chunkList[i].mesh.Render(mainProgram);
 		}

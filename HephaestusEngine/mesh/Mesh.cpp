@@ -111,9 +111,9 @@ void Mesh::BuildRenderData(ShaderProgram& shader){
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (GLvoid*)offsetof(vertex_t, UV));
 	// Pointer to AO attribute of a vertex
 	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(vertex_t), (GLvoid*)offsetof(vertex_t, ao));
+	glVertexAttribPointer(3, 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(vertex_t), (GLvoid*)offsetof(vertex_t, ao));
 	// Set model
-	Model = glm::translate(Model, Position);
+	Model = glm::translate(glm::mat4(1.0f), Position);
 	NormTransform = glm::transpose(glm::inverse(Model));
 	modelLoc = shader.GetUniformLocation("model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(Model));
