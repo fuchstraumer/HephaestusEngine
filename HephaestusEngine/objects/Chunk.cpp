@@ -125,6 +125,21 @@ namespace objects {
 		}
 		};
 
+		// Following method for generating lighting data from:
+		// https://github.com/fogleman/Craft/blob/master/src/main.c#L1077
+		std::array<blockType, 27> neighbors;
+		std::array<blockType, 27> lights;
+		std::array<float, 27> shades;
+		size_t idx = 0;
+		for (int dx = -1; dx <= 1; ++dx) {
+			for (int dy = -1; dy <= 1; ++dy) {
+				for (int dz = -1; dz <= 1; ++dz) {
+
+				}
+			}
+			idx++;
+		}
+
 		// Gets occlusion value for a vertex, given by "index" in a cube
 		// Val sets the occlusion level, and we use it in the fragment shader to decide 
 		// how much to darken a vertex. A higher value = more occluded vertex = darker vertex.

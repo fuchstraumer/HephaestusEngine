@@ -70,9 +70,6 @@ public:
 	// Angle of this object relative to world axis
 	glm::vec3 Angle = glm::vec3(0.0f, 0.0f, 0.0f);
 
-	// Tells us whether or not this object is ready to render
-	bool meshBuilt = false;
-
 private:
 	// Private members.
 
@@ -250,11 +247,11 @@ void Mesh<vertex_type, index_type>::BuildRenderData(const ShaderProgram& shader)
 
 	// Unbind the VAO since we're done with it.
 	glBindVertexArray(0);
-	meshBuilt = true;
+
 }
 
-template<typename _vertex_type, typename _index_type>
-inline void Mesh<_vertex_type, _index_type>::Render(ShaderProgram& shader){
+template<typename vertex_type, typename index_type>
+inline void Mesh<vertex_type, index_type>::Render(ShaderProgram& shader){
 
 	// Activate shader passed in.
 	shader.Use();

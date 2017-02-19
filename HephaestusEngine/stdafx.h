@@ -142,11 +142,11 @@ struct ivec3Hash {
 */
 
 // Converts 3D coordinates into 1D space used for storage in the vector
-inline int GetBlockIndex(const glm::vec3& pos) {
+inline int GetBlockIndex(const glm::vec3 pos) {
 	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
 }
 // Same as above, with individual positions
-inline int GetBlockIndex(const int& x, const int& y, const int& z) {
+inline int GetBlockIndex(const int x, const int y, const int z) {
 	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
 }
 

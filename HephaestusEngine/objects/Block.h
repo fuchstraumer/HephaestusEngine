@@ -81,8 +81,10 @@ namespace objects {
 
 	private:
 
-		std::bitset<4> data;
-		blockType* type;
+		bool active : 1;
+		bool opaque : 1;
+		bool physics : 1;
+		blockType type;
 	};
 
 }

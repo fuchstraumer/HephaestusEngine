@@ -3,107 +3,85 @@
 
 namespace objects {
 
-	Block::Block() : type(nullptr) {}
+	Block::Block() : type(blockTypes::AIR) {}
 
 	Block::Block(blockType _type) {
 		if (_type != blockTypes::AIR) {
-			data[1] = true;
-			type = new blockType;
-			*type = _type;
+			active = true;
+			type =  _type;
+			if (type != blockTypes::GLASS && type != blockTypes::GRASS && type != blockTypes::TALL_GRASS) {
+				opaque = false;
+			}
+			physics = false;
 		}
 		else {
-			data.reset();
+			type = _type;
+			active = false;
+			opaque = true;
+			physics = false;
 		}
 	}
 
-	Block::~Block() {
-		delete type;
-	}
-
-	Block::Block(const Block & other) {
-		// Copy data.
-		data = other.data;
-		// Check type of other and either copy value
-		// appropriately, or set type = nullptr
-		if (other.type != nullptr) {
-			type = new blockType;
-			*type = *other.type;
-		}
-		else {
-			type = nullptr;
-		}
-	}
+	Block::Block(const Block & other) : active(other.active), opaque(other.opaque), physics(other.physics), type(other.type) {}
 
 	Block& Block::operator=(const Block & other) {
-		// Copy data
-		data = other.data;
-		// Check existence of other's type and 
-		// continue appropriately.
-		if (other.type != nullptr) {
-			type = new blockType;
-			*type = *other.type;
-		}
-		else {
-			type = nullptr;
-		}
+		active = other.active;
+		opaque = other.opaque;
+		physics = other.physics;
+		type = other.type;
 		return *this;
 	}
 
 	// Just move data from other.
-	Block::Block(Block && other) : data(std::move(other.data)), type(std::move(other.type)) {}
+	Block::Block(Block && other) : active(other.active), opaque(other.opaque), physics(other.physics), type(std::move(other.type)) {}
 
 	Block& Block::operator=(Block && other) {
-		// Move data
-		data = std::move(other.data);
-		// Move type
+		active = other.active;
+		opaque = other.opaque;
+		physics = other.physics;
 		type = std::move(other.type);
 		return *this;
 	}
 
-	void Block::SetActive(bool active) {
-		data[0] = active;
+	void Block::SetActive(bool _active) {
+		active = _active;
 	}
 
-	void Block::SetOpaque(bool opaque) {
-		data[1] = opaque;
+	void Block::SetOpaque(bool _opaque) {
+		opaque = _opaque;
 	}
 
-	void Block::SetPhysics(bool physics) {
-		data[2] = physics;
+	void Block::SetPhysics(bool _physics) {
+		physics = _physics;
 	}
 
 	void Block::Reset() {
-		data.reset();
-		delete type;
-		type = nullptr;
+		active = false;
+		opaque = false;
+		physics = false;
+		type = blockTypes::AIR;
 	}
 
 	void Block::SetType(blockType _type) {
-		if (type != nullptr) {
-			*type = _type;
-		}
-		else {
-			type = new blockType;
-			*type = _type;
-		}
+		type = _type;
 	}
 
 	const bool Block::Active() const {
-		return data[0];
+		return active;
 	}
 
 	const bool Block::Opaque() const {
-		return data[1];
+		return opaque;
 	}
 
 	const bool Block::Physics() const {
-		return data[2];
+		return physics;
 	}
 
 	// If type is set, return it, otherwise return value "air"
 	const blockType& Block::GetType() const {
 		// TODO: Why do I get a returning address of local var/temp warning?
-		return (type != nullptr) ? blockType(*type) : blockType(blockTypes::AIR);
+		return type;
 	}
 
 }
