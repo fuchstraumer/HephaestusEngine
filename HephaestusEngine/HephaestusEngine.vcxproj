@@ -162,20 +162,23 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common\CommonUtil.h" />
+    <ClInclude Include="common\Constants.h" />
     <ClInclude Include="objects\Block.h" />
     <ClInclude Include="objects\ChunkManager.h" />
     <ClInclude Include="objects\Chunk.h" />
+    <ClInclude Include="objects\Light.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="util\Camera.h" />
+    <ClInclude Include="rendering\Camera.h" />
     <ClInclude Include="util\Context.h" />
     <ClInclude Include="ext\include\LodePNG\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
-    <ClInclude Include="mesh\mesh.h" />
     <ClInclude Include="mesh\MeshComponents.h" />
+    <ClInclude Include="mesh\Mesh.h"/>
     <ClInclude Include="util\Morton.h" />
     <ClInclude Include="util\rle.h" />
-    <ClInclude Include="util\Shader.h" />
-    <ClInclude Include="util\TerrainGen.h" />
+    <ClInclude Include="rendering\Shader.h" />
+    <ClInclude Include="util\terrain\TerrainGen.h" />
     <ClInclude Include="util\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
@@ -199,13 +202,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\Shader.cpp">
+    <ClCompile Include="rendering\Shader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\TerrainGen.cpp">
+    <ClCompile Include="util\terrain\TerrainGen.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
@@ -329,8 +332,8 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\vertex.glsl" />
+    <None Include="rendering\shaders\fragment.glsl" />
+    <None Include="rendering\shaders\vertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

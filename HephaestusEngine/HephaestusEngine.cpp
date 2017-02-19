@@ -1,16 +1,18 @@
 // HephaestusEngine.cpp : Defines the entry point for the console application.
 //
-
+// Precompiled headers
 #include "stdafx.h"
+
+// Common includes
+#include "common\Constants.h"
+#include "common\CommonUtil.h"
+
+// Other includes.
 #include "util\lodeTexture.h"
-#include "util\shader.h"
-#include "util\camera.h"
+#include "rendering\shader.h"
+#include "rendering\camera.h"
 #include "objects\Chunk.h"
 
-
-
-// Used to set width/height of screen rendered.
-static constexpr GLuint WIDTH = 1440, HEIGHT = 900;
 
 // Method declarations
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);

@@ -5,29 +5,32 @@
 
 namespace objects {
 
+	// Range of potential rotations a block can experience.
+	enum class BlockRotation {
+		R0,
+		R90,
+		R180,
+		R270,
+		// Random rotation. Useful for rendering things like grass/decorative gameworld elements.
+		R_RAND,
+	};
+
 	struct Block {
 
 		/*
 
 			Struct - Block
 
-			Uses a bitset to store 4 attributes
-			we care about for rendering/working with
-			blocks in this engine.
+			Represents a single rendered block in the game world. The main item loaded in chunks.
 
-			Stores type of block.
+			There are other renderable objects, but those are encompassed by other classes/structs,
+			as this struct makes up the predominant object type in a game world.
 
-			4 attributes:
+			We use large ints/uints to hold a variety of data on these objects, and then use
+			masking operations to access seperate attributes or set seperate attributes. This 
+			lets us enjoy space-efficient storage of a number of diverse attributes. 
 
-			Data[0] = Active/Inactive. Whether this block is even rendered: if inactive, the block is obscured
-					  by other blocks and shouldn't be visible.
-			Data[1] = transparent/opaque object. Used to set correct rendering order for alpha blending, and
-			          used in lighting tests.
-			Data[2] = physics object - specifies we need to simulate the physics of this object.
-			Data[3] = unused, for now.
-
-			Position of a block is based on its position in the unordered map of special blocks (first part of entry
-			defining a block, second part is this class).
+			Original source: https://github.com/minetest/minetest/blob/master/src/mapnode.h
 
 		*/
 
@@ -38,7 +41,6 @@ namespace objects {
 		// type is just air.
 		Block();
 
-		// Destructor
 		~Block();
 
 		// Copy ctor
@@ -52,12 +54,6 @@ namespace objects {
 
 		// Move operator
 		Block& operator=(Block&& other);
-
-		// Sets active status
-		void SetActive(bool active);
-
-		// Sets opaque status
-		void SetOpaque(bool opaque);
 
 		// Sets physical status
 		void SetPhysics(bool physics);
@@ -81,11 +77,18 @@ namespace objects {
 
 	private:
 
-		bool active : 1;
-		bool opaque : 1;
-		bool physics : 1;
-		blockType type;
+		// main data. Does not vary in content across block types.
+		uint16_t data0;
+
+		// dataset 1. Stores light values, usually. Currently nothing else here,
+		// but could be used for other things I guess.
+		uint8_t data1;
+
+		// dataset 2. 
+
 	};
+
+	// Following are utility algorithms. Things like flood fills for light, ambient occlusion calculators, and so on.
 
 }
 #endif // !BLOCK_H

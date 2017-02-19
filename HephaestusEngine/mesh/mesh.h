@@ -3,7 +3,7 @@
 #define MESH_H
 #include "stdafx.h"
 #include "MeshComponents.h"
-#include "..\util\shader.h"
+#include "..\rendering\shader.h"
 
 template<typename _vertex_type, typename _index_type = index_t>
 class Mesh {

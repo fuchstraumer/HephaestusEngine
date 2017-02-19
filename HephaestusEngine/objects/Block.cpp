@@ -3,6 +3,8 @@
 
 namespace objects {
 
+	Block::~Block(){}
+
 	Block::Block() : type(blockTypes::AIR) {}
 
 	Block::Block(blockType _type) {
