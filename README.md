@@ -16,8 +16,7 @@ noise is unimplemented entirely: don't try to call this.
 
 This project draws inspiration and code from several sources. I try to 
 avoid directly copy-and-pasting code, and usually prefer to (at least)
-re-type it in my own files and words. I've drawn heavily from the foll-
--owing projects:
+re-type it in my own files and words. I've drawn heavily from the following projects:
 
 https://github.com/minetest/minetest
 
