@@ -14,6 +14,20 @@ Swiss noise generator is pretty broken, but creates interesting results.
 Just how broken it is what makes it so fascinating, it seems. Jordan
 noise is unimplemented entirely: don't try to call this.
 
+This project draws inspiration and code from several sources. I try to 
+avoid directly copy-and-pasting code, and usually prefer to (at least)
+re-type it in my own files and words. I've drawn heavily from the following projects:
+
+https://github.com/minetest/minetest
+
+https://bitbucket.org/volumesoffun/polyvox/
+
+https://github.com/fogleman/Craft
+
+I have been trying to get better at giving specific links to the exact
+source of code snippets/sections/files, but some of my older code isn't
+as good about this. Sorry!
+
 TODO:
 ========================================================================
 
