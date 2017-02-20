@@ -3,7 +3,7 @@
 #define LODE_TEXTURE_H
 #include "LodePNG\lodepng.h"
 #include "stdafx.h"
-#include "shader.h"
+#include "rendering\Shader.h"
 #include <unordered_map>
 
 using uint = unsigned int;

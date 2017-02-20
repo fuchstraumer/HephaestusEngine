@@ -10,7 +10,6 @@
 #include <ctime>
 #include <bitset>
 #include <unordered_map>
-#include <cstdalign>
 
 // Import glew for OpenGl pointers and handlers
 // GLFW uses this, so include this before GLFW
