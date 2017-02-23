@@ -28,6 +28,16 @@ namespace objects {
 
 	*/
 
+	// Range of potential rotations a block can experience.
+	enum class BlockRotation : uint8_t {
+		R0,
+		R90,
+		R180,
+		R270,
+		// Random rotation. Useful for rendering things like grass/decorative gameworld elements.
+		R_RAND,
+	};
+
 	class Block {
 
 		// Constructors / operators
@@ -51,10 +61,10 @@ namespace objects {
 		bool operator==(const Block& other) const;
 
 		// Returns main data
-		uint16_t GetData() const;
+		uint8_t GetType() const;
 
 		// Sets main data
-		void SetData(const uint16_t& new_data);
+		void SetType(const uint8_t& new_data);
 
 		// Returns param data
 		uint8_t GetParam() const;
@@ -62,14 +72,19 @@ namespace objects {
 		// Sets param data
 		void SetParam(const uint8_t& new_param);
 
+		// Rotates the block along the Y axis.
+
 	private:
 
 		// main data. Does not vary in content across block types.
-		uint16_t data;
+		uint8_t type;
 
 		// Parameter dataset. 
 		// Used for special blocks, like torches and flowing water.
 		uint8_t param;
+
+		// Tracks rotation of this block. important for types of blocks that need to have a certain face in one direction.
+		BlockRotation rotation;
 
 	};
 
@@ -106,16 +121,6 @@ namespace objects {
 		FACE_DIRECTION, // Used to set proper direction: important for blocks like chests
 		DIRECTION, // Not like face direction: sets more granular direction. used for plants.
 		MESH_OPTIONS, // Used with plant rendering, leave rendering, etc
-	};
-
-	// Range of potential rotations a block can experience.
-	enum class BlockRotation : uint8_t {
-		R0,
-		R90,
-		R180,
-		R270,
-		// Random rotation. Useful for rendering things like grass/decorative gameworld elements.
-		R_RAND,
 	};
 
 	/*
@@ -166,9 +171,6 @@ namespace objects {
 
 		// How to render this type of block
 		BlockDrawMode DrawMode;
-
-		// How is this block rotated?
-		BlockRotation Rotation;
 		
 		/*
 			Information used by the terrain generator
@@ -180,8 +182,11 @@ namespace objects {
 		// Is this block a resource block?
 		bool Resource : 1;
 
-
 	};
+
+
+	// Ray-Intersection routine. Mainly used to check for collisions.
+
 
 }
 #endif // !BLOCK_H

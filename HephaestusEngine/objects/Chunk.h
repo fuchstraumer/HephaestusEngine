@@ -5,7 +5,7 @@
 #include "common\Constants.h"
 #include "common\CommonUtil.h"
 #include "Block.h"
-#include "..\util\terrain\TerrainGen.h"
+#include "util\terrain\GeneratorBase.h"
 #include "..\mesh\mesh.h"
 
 namespace objects {
@@ -68,7 +68,7 @@ namespace objects {
 		~Chunk() = default;
 
 		// Calls noise function to build terrain
-		void BuildTerrain(TerrainGenerator& gen, int terraintype);
+		void BuildTerrain(terrain::GeneratorBase& gen, int terraintype);
 
 		// Builds the mesh and populates the buffers
 		void BuildMesh();
@@ -78,6 +78,17 @@ namespace objects {
 
 		// Clears chunk of data and frees up memory.
 		void clear();
+
+		// Gets block at position xyz
+		inline BlockType GetBlock(glm::vec3 pos) const;
+		inline BlockType GetBlock(float x, float y, float z) const;
+
+		// Sets block at position to be of provided type
+		inline void SetBlock(glm::vec3 pos, BlockType type);
+		inline void SetBlock(float x, float y, float z, BlockType type);
+
+		// Attempts to find "ground" level at point in XZ plane
+		size_t GetGroundLevel(const glm::vec2& point) const;
 
 		// Keeps list of neighbors of this chunk, ordered as such:
 		/*
@@ -92,6 +103,17 @@ namespace objects {
 		Mesh<vertex_t> mesh;
 
 	private:
+
+		// Used to get references to internal nodes
+		inline BlockType& GetNodeRef(const glm::vec3& pos);
+		inline BlockType& GetNodeRef(const float& x, const float& y, const float& z);
+
+		// Stride of blocks along Y axis
+		static constexpr size_t Y_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
+		static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
+
+		// Whether or not this object has had it's terrain generated.
+		bool generated;
 
 		// Container for uncompressed block data
 		std::vector<Block> terrainBlocks;

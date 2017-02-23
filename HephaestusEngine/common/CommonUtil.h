@@ -2,6 +2,7 @@
 #ifndef COMMON_UTIL_H
 #define COMMON_UTIL_H
 #include "stdafx.h"
+#include "Constants.h"
 /*
 
 	Various common utility methods and using declarations
@@ -31,6 +32,9 @@ struct ivec3Hash {
 
 };
 
+using BlockUnorderedMap = std::unordered_map<glm::ivec3, uint8_t, ivec3Hash>;
+using BlockUnorderedSet = std::unordered_set<glm::ivec3, ivec3Hash>;
+
 /*
 
 These used to be macro's, but macros are bad for a number of reasons. A number of different
@@ -45,8 +49,10 @@ storage containers.
 inline int GetBlockIndex(const glm::vec3 pos) {
 	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
 }
+
 // Same as above, with individual positions
 inline int GetBlockIndex(const int x, const int y, const int z) {
 	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
 }
+
 #endif // !COMMON_UTIL_H

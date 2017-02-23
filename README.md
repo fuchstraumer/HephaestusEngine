@@ -16,7 +16,7 @@ noise is unimplemented entirely: don't try to call this.
 
 This project draws inspiration and code from several sources. I try to 
 avoid directly copy-and-pasting code, and usually prefer to (at least)
-re-type it in my own files and words. I've drawn heavily from the following projects:
+re-type it in my own words. I've drawn heavily from the following projects:
 
 https://github.com/minetest/minetest
 
@@ -26,30 +26,19 @@ https://github.com/fogleman/Craft
 
 I have been trying to get better at giving specific links to the exact
 source of code snippets/sections/files, but some of my older code isn't
-as good about this. Sorry!
+as good about this. LearnOpenGL.com provided the majority of my rendering code,
+especially the shader class. PolyVox is the origin of my mesh code, although
+its diverged considerably from their implementation at this point in time.
 
 TODO:
 ========================================================================
 
-- Expanding procedural terrain, generated as "player" object moves throu-
-  ogh world.
-- ChunkManager class for paging chunks in and out of memory based on
-  position of player. Also manages building new chunks, and saving data. 
-  Outline of this is complete, needs actual implementation.
-- Fix rendering issues on chunk borders and see about how to get SSAO
-  working on chunk edges (querying data here can be risky)
+- Primary task right now: Rewriting the vast majority of the core code using minetest. Most credit for my project has to go to them! I try to embed links to the relevant sections in my code, but have only been doing this recently. I may have missed it in spots. Sorry! :c
+- Expanding procedural terrain, generated as "player" object moves through world.
+- ChunkManager class for paging chunks in and out of memory based on position of player. Also manages building new chunks, and saving data. Outline of this is complete, needs actual implementation.
+- Fix rendering issues on chunk borders and see about how to get SSAO working on chunk edges (querying data here can be risky)
 - Some way to save chunk data
-- Make textures into a fileformat that works better with OpenGL and 
-  loads onto the GPU faster. Not a bottleneck currently, but could be.
+- Make textures into a fileformat that works better with OpenGL and loads onto the GPU faster. Not a bottleneck currently, but could be.
 - Add a skybox using the method I applied to DiamondDogs.
-- Integrate proper world and local lighting scheme, including SSAO. Some 
-  sort of fog would be nice. Use previous skybox and a timer to shift
-  time and create day/night cycle.
-  NOTE: There was some sort of SSAO implemented, but a botched pull+commit
-  overwrote the files I had for this. May be able to rescue these, somehow.
-- Better investigation into the performance of linearly-encoded vs Z-order
-  curve encoded chunks. Currently using linearly encoded chunks for their
-  simplicity, and because I don't query blocks after initialization. 
-  Frequent block queries during runtime would probably make Z-order enc-
-  -oding worth any initial setup cost.
-
+- Integrate proper world and local lighting scheme, including SSAO. Some sort of fog would be nice. Use previous skybox and a timer to shift time and create day/night cycle.
+- Optimizing rendering resource usage, by experimenting with greedy meshing and compressing the mesh data. PolyVox has a nice example of a way to compress simplistic voxel mesh data.

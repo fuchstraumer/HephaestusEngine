@@ -5,8 +5,29 @@
 #include "Chunk.h"
 #include <unordered_map>
 #include <memory>
-
+#include <set>
 namespace objects {
+
+	// Type of events/flags that require us to update an individual chunk
+	enum class EditEventType {
+		ADD_BLOCK, // New block added
+		REMOVE_BLOCK, // Block removed
+		SWAP_BLOCK, // Blocks swapped
+		EDIT_NODE, // Block data edited
+	};
+
+	// Struct used to encapsulate an event.
+	struct EditEvent {
+		// Type of this event.
+		EditEventType Type;
+		// Position of this event
+		glm::vec3 Position;
+		// Block that was edited
+		Block B;
+		// Positions of other affected blocks
+		std::set<glm::vec3> ModifiedBlocks;
+		// TODO: Some way of propagating change/update status between server/client.
+	};
 
 	// Simple alias for the type that will be inserted into the unordered map container
 	using mapEntry = std::pair<glm::ivec2, Chunk>;

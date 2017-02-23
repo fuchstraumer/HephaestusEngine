@@ -5,7 +5,7 @@
 
 // Chunk size constants. 32x32 in XZ, and 128 in Y.
 static constexpr int CHUNK_SIZE = 32;
-static constexpr int CHUNK_SIZE_Z = 128;
+static constexpr int CHUNK_SIZE_Y = 128;
 
 // Just pi lol
 static constexpr float pi = 3.14159265359f;
@@ -21,13 +21,13 @@ static constexpr GLuint WIDTH = 1440, HEIGHT = 900;
 // Alias declarations for various constants.
 
 // Base block data type - 
-using BlockDataType = uint16_t;
+using BlockType = uint8_t;
 
 // Block types. Set here so that it can be globally accessed: this is probably unwise, and should be changed 
 // to a better solution when one is found.
 // Note that it automatically inherits a type from blockType. Usually a uint8, so maximum variety is 255 blocks
 // (or 127 blocks if we use RLE, but that's another problem)
-enum BlockTypes : uint8_t {
+enum BlockTypes : BlockType {
 	EMPTY = -1,
 	AIR = 0,
 	GRASS,
@@ -90,5 +90,7 @@ enum BlockTypes : uint8_t {
 	COLOR_31,
 };
 
+// Texture files to import
+// TODO: That ^
 
 #endif // !CONSTANTS_H

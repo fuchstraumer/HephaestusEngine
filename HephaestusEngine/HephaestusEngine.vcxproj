@@ -170,15 +170,18 @@
     <ClInclude Include="objects\Light.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="rendering\Camera.h" />
+    <ClInclude Include="util\AABB.h" />
     <ClInclude Include="util\Context.h" />
     <ClInclude Include="ext\include\LodePNG\lodepng.h" />
     <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="mesh\MeshComponents.h" />
-    <ClInclude Include="mesh\Mesh.h"/>
+    <ClInclude Include="mesh\Mesh.h" />
     <ClInclude Include="util\Morton.h" />
     <ClInclude Include="util\rle.h" />
     <ClInclude Include="rendering\Shader.h" />
-    <ClInclude Include="util\terrain\TerrainGen.h" />
+    <ClInclude Include="util\terrain\BiomeGenerator.h" />
+    <ClInclude Include="util\terrain\TerrainCommon.h" />
+    <ClInclude Include="util\terrain\GeneratorBase.h" />
     <ClInclude Include="util\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
@@ -208,7 +211,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="util\terrain\TerrainGen.cpp">
+    <ClCompile Include="util\terrain\GeneratorBase.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Release|x64'">MaxSpeed</Optimization>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
