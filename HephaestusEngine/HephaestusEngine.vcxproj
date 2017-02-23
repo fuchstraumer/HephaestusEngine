@@ -168,6 +168,9 @@
     <ClInclude Include="objects\ChunkManager.h" />
     <ClInclude Include="objects\Chunk.h" />
     <ClInclude Include="objects\Light.h" />
+    <ClInclude Include="objects\Player.h" />
+    <ClInclude Include="objects\Region.h" />
+    <ClInclude Include="objects\util\Inventory.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="rendering\Camera.h" />
     <ClInclude Include="util\AABB.h" />
