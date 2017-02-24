@@ -223,6 +223,9 @@ namespace objects {
 		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Y;
 		terrainBlocks.assign(totalBlocks, blockTypes::AIR);
 
+		// Assign initial zeroed values in our lighting container.
+		lightMap.assign(totalBlocks, 0);
+
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
 		glm::vec3 float_position;
@@ -422,6 +425,26 @@ namespace objects {
 		// Then call shrink to fit to actually free up memory.
 		terrainBlocks.shrink_to_fit();
 		encodedBlocks.shrink_to_fit();
+	}
+
+	int Chunk::GetSunlightLevel(const glm::ivec3 & p) const{
+		size_t idx = GetBlockIndex(p);
+		return GetFront4(lightMap[idx]);
+	}
+
+	int Chunk::GetTorchlightLevel(const glm::ivec3 & p) const{
+		size_t idx = GetBlockIndex(p);
+		return GetBack4(lightMap[idx]);
+	}
+
+	void Chunk::SetSunlightLevel(const glm::ivec3 & p, uint8_t level){
+		size_t idx = GetBlockIndex(p);
+		lightMap[idx] = SetFront4(lightMap[idx], level);
+	}
+
+	void Chunk::SetTorchlightLevel(const glm::ivec3 & p, uint8_t level){
+		size_t idx = GetBlockIndex(p);
+		lightMap[idx] = SetBack4(lightMap[idx], level);
 	}
 
 }

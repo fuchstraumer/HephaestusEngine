@@ -23,6 +23,18 @@ namespace objects {
 
 	*/
 
+
+	/*
+	
+		Struct - LightNode.
+
+		Holds an index corresponding to the position of the block that is a light node,
+		in the parent chunks container object. The parent chunk is stored as a std::weak_ptr.
+	
+	*/
+
+
+
 	// Light intensity data is stored using 4 bits alone, so the absolute max
 	// is 15. We want the sun to be the brightest though, so we cap our non-sunlight
 	// sources at having a max intensity of 14 and reserve 15 for the sun alone.

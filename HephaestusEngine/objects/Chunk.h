@@ -90,6 +90,19 @@ namespace objects {
 		// Attempts to find "ground" level at point in XZ plane
 		size_t GetGroundLevel(const glm::vec2& point) const;
 
+		// Get sunlight level of block at point p
+		int GetSunlightLevel(const glm::ivec3& p) const;
+
+		// Get torchlight (artifical light) value at point p
+		int GetTorchlightLevel(const glm::ivec3& p) const;
+
+		// Set sunlight level of block at point p to be level
+		void SetSunlightLevel(const glm::ivec3& p, uint8_t level);
+
+		// Set torchlight level at point p to level
+		void SetTorchlightLevel(const glm::ivec3& p, uint8_t level);
+
+
 		// Keeps list of neighbors of this chunk, ordered as such:
 		/*
 		0: Top Left
@@ -114,6 +127,9 @@ namespace objects {
 
 		// Whether or not this object has had it's terrain generated.
 		bool generated;
+
+		// Lightmap for a chunk: stores light values from 0-15 for each block in a chunk.
+		std::vector<uint8_t> lightMap;
 
 		// Container for uncompressed block data
 		std::vector<Block> terrainBlocks;
