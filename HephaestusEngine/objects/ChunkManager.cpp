@@ -41,4 +41,12 @@ namespace objects {
 
 	}
 
+	void ChunkManager::UpdateLighting(){
+		// For each block in update list, update lighting.
+		lightingQueue bfsQueue;
+		
+		// iterator of all chunks that need lighting updated.
+		
+	}
+
 }

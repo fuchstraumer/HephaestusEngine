@@ -17,6 +17,10 @@ namespace objects {
 
 	namespace util {
 
+		// Declaring classes needed for function definitions (mainly for the lighting algorithms).
+		class Region;
+		class Chunk;
+
 		class BlockArea {
 		public:
 
@@ -31,18 +35,6 @@ namespace objects {
 
 			// Grabs the singular block at p
 			BlockArea(const glm::ivec3& p);
-
-			// Copy ctor.
-			BlockArea(const BlockArea& other);
-
-			// Copy operator.
-			BlockArea& operator=(const BlockArea& other);
-
-			// Move ctor
-			BlockArea(BlockArea&& other);
-
-			// Move operator
-			BlockArea& operator=(BlockArea&& other);
 
 			// Unary operators for shifting (for +/-) and scaling (for */"/") operations
 
@@ -78,7 +70,7 @@ namespace objects {
 			glm::ivec3 GetSize() const;
 
 			// Returns whether or not this area is empty
-			bool IsEmpty() const;
+			bool Empty() const;
 
 			// Returns volume in quantity of blocks
 			size_t GetVolume() const;
@@ -201,6 +193,16 @@ namespace objects {
 		// Clears light sources, but collects them together into "light_sources"
 		static void ClearAndCollectLightSrcs(BlockManipulator& manip, BlockArea& area, bool day, std::set<glm::ivec3>& light_sources,
 			std::map<glm::ivec3, uint8_t>& unlight_from);
+
+		// Propagate sunlight in area given by BlockManipulator and BlockArea. Returns true for success.
+		// active_sunlight tells us whether or not we should assume that a non-existent node at the highest Y-level of our currently
+		// active area generates sunlight or not (kinda i.e assume a "hole" in the ceiling is a skylight, I guess)
+		static bool PropagateSunlight(BlockManipulator& manip, BlockArea& area, bool active_sunlight, std::set<glm::ivec3>& light_sources);
+
+		// Updates lighting in the given region. All new nodes in the region must have zero light level.
+		// old_blocks contains the blocks (and the positions of said blocks) that were replaced by new blocks.
+		// modified_chunks specifies the chunks to be updated.
+		void UpdateLighting(Region& region, std::vector<std::pair<glm::ivec3, Block>>& old_blocks, std::map<glm::ivec3, Chunk>& modified_chunks);
 	}
 
 }
