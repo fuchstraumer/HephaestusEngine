@@ -57,10 +57,10 @@ namespace objects {
 		// Move operators okay: just make sure to explicitly define them.
 
 		// Move constructor.
-		Chunk(Chunk&& other);
+		Chunk(Chunk&& other) noexcept;
 
 		// Move assignment.
-		Chunk& operator=(Chunk&& other);
+		Chunk& operator=(Chunk&& other) noexcept;
 
 		// Get position of this chunk in the overall grid.
 		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
