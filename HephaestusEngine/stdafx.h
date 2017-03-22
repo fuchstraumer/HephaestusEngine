@@ -5,14 +5,15 @@
 #include <iostream>
 #include <string>
 #include <array>
-#include <future>
 #include <algorithm>
 #include <ctime>
-#include <bitset>
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
 #include <map>
+#include <queue>
+#include <memory>
+
 // Import glew for OpenGl pointers and handlers
 // GLFW uses this, so include this before GLFW
 // Define GLEW_STATIC because we're using the static library.

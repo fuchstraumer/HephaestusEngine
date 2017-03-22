@@ -13,7 +13,9 @@ namespace objects {
 		ADD_BLOCK, // New block added
 		REMOVE_BLOCK, // Block removed
 		SWAP_BLOCK, // Blocks swapped
-		EDIT_NODE, // Block data edited
+		EDIT_BLOCK, // Block data edited
+		ADD_LIGHT_BLOCK, // Light block added. Update lighting.
+		LIGHT_UPDATE, // Just update lighting.
 	};
 
 	// Struct used to encapsulate an event.
@@ -50,16 +52,28 @@ namespace objects {
 
 	};
 
+	// Used in lighting update.
+	struct LightNode {
+		short Idx; // Index into container.
+		std::weak_ptr<Chunk> Parent;
+		LightNode(const glm::ivec3& p, Chunk* parent) : Parent(std::shared_ptr<Chunk>(parent)) {
+			Idx = p.y * CHUNK_SIZE * CHUNK_SIZE + p.x * CHUNK_SIZE + p.z;
+		}
+	};
+
 	// The main container of chunks in this object, used for all chunks regardless of status
 	using chunkMap = std::unordered_map<glm::ivec2, Chunk, ivecHash>;
 
 	// Just a vector containing pointers to the underlying chunks: used for updating, pruning
 	using chunkContainer = std::vector<std::shared_ptr<Chunk>>;
 
+	// Concurrent queue used to update lighting in a chunk
+	using lightingQueue = std::queue<LightNode>;
+
 	class ChunkManager {
 	public:
 
-		ChunkManager(TerrainGenerator& gen, unsigned int terrain_type) : terrainGen(gen), terrainType(terrain_type) {}
+		// ChunkManager(TerrainGenerator& gen, unsigned int terrain_type) : terrainGen(gen), terrainType(terrain_type) {}
 		~ChunkManager() = default;
 
 		void AddChunk(Chunk& chk);
@@ -82,8 +96,6 @@ namespace objects {
 		// TODO: Vary this somehow! Uniform terrain is boring.
 		unsigned int terrainType;
 
-		TerrainGenerator& terrainGen;
-
 		// Tracks player position, for keeping chunks updated around player
 		glm::vec3 playerPosition;
 
@@ -95,7 +107,7 @@ namespace objects {
 
 		// Container of chunks that need to have their contents updated, outside of
 		// the standard activation/deactivation of rendering.
-		chunkContainer updateChunks;
+		std::map<EditEvent, Chunk*> updateChunks;
 
 		// Container of chunks to be pruned/cleared in this mesh, meaning compressed + written to a file
 		// then deallocated.
@@ -110,6 +122,13 @@ namespace objects {
 
 		// Main container of chunk data, map allows for searching based on the chunks position.
 		chunkMap chunkData;
+
+		
+
+		// Update lighting.
+		void UpdateLighting();
+
+		
 
 	};
 }
