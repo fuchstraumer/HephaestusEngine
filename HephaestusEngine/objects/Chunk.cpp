@@ -3,6 +3,7 @@
 #include "../util/rle.h"
 
 namespace objects {
+
 	// Face normals. Don't change and can be reused. Yay for cubes!
 	static const std::array<glm::ivec3, 6> normals = {
 		glm::ivec3(0, 0, 1),   // (front)
@@ -42,71 +43,6 @@ namespace objects {
 		{ 7,7,7,7,7,7 }, // Coal ore
 		{ 8,8,8,8,8,8 }, // Iron ore
 		{ 9,9,9,9,9,9 }, // Diamond Ore
-	};
-
-
-	/*
-
-		Struct - AO Lookup
-
-		This is an ambient-occlusion lookup table. Ambient occlusion is used to slightly darken the interior edges and corners of objects,
-		giving them a more realistic look and increasing the amount of perceived depth in an image.
-
-		We call this struct once for each block, and calling its constructor with the position of the current block we're getting AO
-		values for automatically sets up the lookup table for us
-
-	*/
-	struct aoLookup {
-
-		/*
-		Old comment used to make this table: first entry is vertex position on the unit cube, second is the offsets of the spots we
-		need to check for occlusion values.
-
-		(vertex)   (spots to check)
-		0, 0, 0 - (-1, -1, -1), (-1, -1, 0), (0, -1, -1)
-		1, 0, 0 - (1, -1, -1), (0, -1, -1), (1, -1, 0)
-		0, 1, 0 - (-1, 1, -1), (-1, 1, 0), (0, 1, -1)
-		0, 0, 1 - (-1, -1, 1), (-1, -1, 0), (0, -1, 1)
-		1, 1, 0 - (1, 1, -1), (0, 1, -1), (1, 1, 0)
-		0, 1, 1 - (-1, 1, 1), (-1, 1, 0), (0, 1, 1)
-		1, 0, 1 - (1, -1, 1), (1, -1, 0), (0, -1, 1)
-		1, 1, 1 - (1, 1, 1), (1, 1, 0), (0, 1, 1)
-
-		*/
-
-		aoLookup(int x, int y, int z) : LUT{
-			// Vertex 0, 0, 1
-			{ GetBlockIndex(x - 1, y - 1, z + 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
-			// Vertex 1, 0, 1
-			{ GetBlockIndex(x + 1, y - 1, z + 1), GetBlockIndex(x + 1, y - 1, z), GetBlockIndex(x, y - 1, z + 1), },
-			// Vertex 1, 1, 1
-			{ GetBlockIndex(x + 1, y + 1, z + 1), GetBlockIndex(x + 1, y + 1, z), GetBlockIndex(x, y + 1, z + 1), },
-			// Vertex 0, 1, 1
-			{ GetBlockIndex(x - 1, y + 1, z + 1), GetBlockIndex(x - 1, y + 1, z), GetBlockIndex(x, y + 1, z + 1), },
-			// Vertex 1, 0, 0
-			{ GetBlockIndex(x + 1, y - 1, z - 1), GetBlockIndex(x, y - 1, z - 1), GetBlockIndex(x + 1, y - 1, z), },
-			// Vertex 0, 0, 0
-			{ GetBlockIndex(x - 1, y - 1, z - 1), GetBlockIndex(x - 1, y - 1, z), GetBlockIndex(x, y - 1, z - 1), },
-			// Vertex 0, 1, 0
-			{ GetBlockIndex(x - 1, y + 1, z - 1), GetBlockIndex(x - 1, y + 1, z), GetBlockIndex(x, y + 1, z - 1), },
-			// Vertex 1, 1, 0
-			{ GetBlockIndex(x + 1, y + 1, z - 1), GetBlockIndex(x, y + 1, z - 1), GetBlockIndex(x + 1, y + 1, z), },
-
-		} {
-			this->X = x;
-			this->Y = y;
-			this->Z = z;
-		}
-
-		// Defaulted destructor.
-		~aoLookup() = default;
-
-		// XYZ coords of this lookup object
-		int X, Y, Z;
-
-		// Array that makes up this lookup object (i.e this is the LUT itself)
-		int LUT[8][3];
-
 	};
 
 	// Build the mesh data for a cube at position XYZ, building the faces specified by each boolean if that boolean is false (false = there isn't another block in this location)
@@ -237,18 +173,14 @@ namespace objects {
 		mesh.Position = float_position;
 		Position = float_position;
 
-		// Now use the floating point position to build the model matrix for this chunk, so that it renders in the correct location.
-		//mesh.Model = glm::translate(glm::mat4(1.0f), this->Position);
-
 	}
 
-	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), encodedBlocks(std::move(other.encodedBlocks)), blocks(std::move(other.blocks)) {}
+	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), blocks(std::move(other.blocks)) {}
 
 	Chunk& Chunk::operator=(Chunk && other) {
 		if (this != &other) {
 			this->mesh = std::move(other.mesh);
 			this->terrainBlocks = std::move(other.terrainBlocks);
-			this->encodedBlocks = std::move(other.encodedBlocks);
 			this->blocks = std::move(other.blocks);
 			other.clear();
 		}
@@ -419,10 +351,10 @@ namespace objects {
 		mesh.Clear();
 		// First call clear to empty containers
 		terrainBlocks.clear();
-		encodedBlocks.clear();
+		lightMap.clear();
 		// Then call shrink to fit to actually free up memory.
 		terrainBlocks.shrink_to_fit();
-		encodedBlocks.shrink_to_fit();
+		lightMap.shrink_to_fit();
 	}
 
 	int Chunk::GetSunlightLevel(const glm::ivec3 & p) const{
