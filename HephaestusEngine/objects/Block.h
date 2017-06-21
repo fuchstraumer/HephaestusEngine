@@ -39,11 +39,11 @@ namespace objects {
 	};
 
 	class Block {
-
+	public:
 		// Constructors / operators
 
 		// Constructs a block using a blocktype, optionally supplying parameter data
-		Block(uint8_t block_type, uint8_t parameter = 0);
+		Block(uint8_t block_type, uint8_t parameter = 0, BlockRotation rot = BlockRotation::R0);
 
 		// Copy ctor
 		Block(const Block& other);
@@ -52,10 +52,10 @@ namespace objects {
 		Block& operator=(const Block& other);
 
 		// Move ctor
-		Block(Block&& other);
+		Block(Block&& other) noexcept;
 
 		// Move operator
-		Block& operator=(Block&& other);
+		Block& operator=(Block&& other) noexcept;
 
 		// Comparison operator
 		bool operator==(const Block& other) const;
@@ -65,14 +65,24 @@ namespace objects {
 
 		// Sets main data
 		void SetType(const uint8_t& new_data);
+		void SetType(uint8_t&& new_data);
 
 		// Returns param data
 		uint8_t GetParam() const;
 
 		// Sets param data
 		void SetParam(const uint8_t& new_param);
+		void SetParam(uint8_t&& new_param);
 
-		// Rotates the block along the Y axis.
+		// Get rotation
+		BlockRotation GetRotation() const;
+
+		// Set rotation
+		void SetRotation(const BlockRotation& new_rot);
+		void SetRotation(BlockRotation&& new_rot);
+
+		// Whether or not this block is opaque
+		bool Opaque() const;
 
 	private:
 

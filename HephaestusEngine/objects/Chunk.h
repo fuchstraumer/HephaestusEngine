@@ -57,10 +57,10 @@ namespace objects {
 		// Move operators okay: just make sure to explicitly define them.
 
 		// Move constructor.
-		Chunk(Chunk&& other);
+		Chunk(Chunk&& other) noexcept;
 
 		// Move assignment.
-		Chunk& operator=(Chunk&& other);
+		Chunk& operator=(Chunk&& other) noexcept;
 
 		// Get position of this chunk in the overall grid.
 		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
@@ -80,12 +80,12 @@ namespace objects {
 		void clear();
 
 		// Gets block at position xyz
-		inline BlockType GetBlock(glm::vec3 pos) const;
-		inline BlockType GetBlock(float x, float y, float z) const;
+		Block GetBlock(glm::vec3 pos) const;
+		Block GetBlock(float x, float y, float z) const;
 
 		// Sets block at position to be of provided type
-		inline void SetBlock(glm::vec3 pos, BlockType type);
-		inline void SetBlock(float x, float y, float z, BlockType type);
+		void SetBlock(glm::vec3 pos, Block _new);
+		void SetBlock(float x, float y, float z, Block _new);
 
 		// Attempts to find "ground" level at point in XZ plane
 		size_t GetGroundLevel(const glm::vec2& point) const;
@@ -117,9 +117,9 @@ namespace objects {
 
 	private:
 
-		// Used to get references to internal nodes
-		inline BlockType& GetNodeRef(const glm::vec3& pos);
-		inline BlockType& GetNodeRef(const float& x, const float& y, const float& z);
+		// Used to get references to internal blocks
+		Block& GetBlockRef(const glm::vec3& pos);
+		Block& GetBlockRef(const float& x, const float& y, const float& z);
 
 		// Stride of blocks along Y axis
 		static constexpr size_t Y_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
@@ -133,10 +133,6 @@ namespace objects {
 
 		// Container for uncompressed block data
 		std::vector<Block> terrainBlocks;
-
-		// Container for compressed blocks: remove later, after integrating reading/writing
-		// to compressed blocks
-		std::vector<Block> encodedBlocks;
 
 		// Container for modified blocks.
 		std::unordered_map<glm::ivec3, Block, ivec3Hash> blocks;

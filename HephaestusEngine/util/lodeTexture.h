@@ -1,10 +1,10 @@
 #pragma once
 #ifndef LODE_TEXTURE_H
 #define LODE_TEXTURE_H
+#include <unordered_map>
 #include "LodePNG\lodepng.h"
 #include "stdafx.h"
 #include "rendering\Shader.h"
-#include <unordered_map>
 
 namespace lodetexture {
 
@@ -14,9 +14,12 @@ namespace lodetexture {
 
 	class Texture {
 	public:
-		Texture() = default;
 
-		~Texture() {
+		Texture(uint width, uint height) : Width(width), Height(height) {
+			glGenTextures(1, &gl_Handle);
+		}
+
+		virtual ~Texture() {
 			glDeleteTextures(1, &gl_Handle);
 		}
 
@@ -28,9 +31,9 @@ namespace lodetexture {
 		GLenum TextureUnit;
 
 		// Once this function is called the texture is ready for use
-		virtual void BuildTexture() { }
+		virtual void BuildTexture() = 0;
 		// Once this function is called the texture WILL be used/active
-		virtual void BindTexture() const { }
+		virtual void BindTexture() const = 0;
 
 	protected:
 		// List of files to import
@@ -45,12 +48,9 @@ namespace lodetexture {
 	public:
 
 		// The input vector contains the filenames to use for importing
-		TextureArray(std::vector<std::string> filelist, uint textureDims) {
-			glGenTextures(1, &this->gl_Handle);
+		TextureArray(std::vector<std::string> filelist, uint texture_dims) : Texture(texture_dims, texture_dims) {
 			this->depth = (GLsizei)filelist.size();
 			this->fileList = filelist;
-			Width = textureDims;
-			Height = textureDims;
 		}
 
 		// Builds the texture array: pass in an active texture unit for this 
@@ -96,9 +96,7 @@ namespace lodetexture {
 	public:
 
 		// The handle used to activate this texture
-		CubemapTexture(std::vector<std::string> filelist, uint texture_dims) : Texture() {
-			Width = texture_dims;
-			Height = texture_dims;
+		CubemapTexture(std::vector<std::string> filelist, uint texture_dims) : Texture(texture_dims, texture_dims) {
 			fileList = filelist;
 		}
 
@@ -108,7 +106,6 @@ namespace lodetexture {
 				lodepng_decode32_file(&data, &Width, &Height, str.data());
 				textureData.push_back(data);
 			}
-			glGenTextures(1, &this->gl_Handle);
 			glBindTexture(GL_TEXTURE_CUBE_MAP, gl_Handle);
 
 			for (uint i = 0; i < 6; ++i) {
@@ -131,8 +128,7 @@ namespace lodetexture {
 
 	class Texture1D : public Texture {
 	public:
-		Texture1D(const char* file, uint texture_size) : Texture() {
-			Width = texture_size;
+		Texture1D(const char* file, uint texture_size) : Texture(texture_size, 1) {
 			fileList.push_back(file);
 		}
 
@@ -141,7 +137,6 @@ namespace lodetexture {
 			uint height = 1;
 			lodepng_decode32_file(&data, &Width, &height, fileList[0].data());
 			textureData.push_back(data);
-			glGenTextures(1, &gl_Handle);
 			glBindTexture(GL_TEXTURE_1D, gl_Handle);
 
 			glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, Width, 0, GL_RGBA, GL_UNSIGNED_BYTE, textureData[0]);
@@ -161,7 +156,7 @@ namespace lodetexture {
 
 	class Texture2D : public Texture {
 	public:
-		Texture2D(std::string filename, uint width, uint height) : Texture() {
+		Texture2D(std::string filename, uint width, uint height) : Texture(width, height) {
 			Width = width;
 			Height = height;
 			fileList.push_back(filename);
@@ -170,7 +165,6 @@ namespace lodetexture {
 		virtual void BuildTexture() override {
 			unsigned char* data;
 			lodepng_decode32_file(&data, &Width, &Height, fileList[0].data());
-			glGenTextures(1, &gl_Handle);
 			glBindTexture(GL_TEXTURE_2D, gl_Handle);
 
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -191,9 +185,7 @@ namespace lodetexture {
 	class FBO_Texture2D : public Texture {
 	public:
 
-		FBO_Texture2D() : Texture() { }
-
-		FBO_Texture2D(uint width, uint height) : Texture() {
+		FBO_Texture2D(uint width, uint height) : Texture(width, height) {
 			glGenTextures(1, &gl_Handle);
 			glBindTexture(GL_TEXTURE_2D, gl_Handle);
 
@@ -216,10 +208,7 @@ namespace lodetexture {
 	class FBO_DepthTexture2D : public Texture {
 	public:
 
-		FBO_DepthTexture2D() : Texture() {}
-
-		FBO_DepthTexture2D(uint width, uint height) : Texture() {
-			glGenTextures(1, &gl_Handle);
+		FBO_DepthTexture2D(uint width, uint height) : Texture(width, height) {
 			glBindTexture(GL_TEXTURE_2D, gl_Handle);
 			// Generate empty texture - this is an FBO, so we're going to write to it eventually
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height,

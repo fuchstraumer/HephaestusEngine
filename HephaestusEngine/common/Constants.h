@@ -18,6 +18,8 @@ static constexpr int MAX_LIGHT_INTENSITY = 14;
 // Used to set width/height of screen rendered. Should eventually be a config file value.
 static constexpr GLuint WIDTH = 1440, HEIGHT = 900;
 
+static constexpr bool SIMPLE_CULLING_GLOBAL = true;
+
 // Alias declarations for various constants.
 
 // Base block data type - 

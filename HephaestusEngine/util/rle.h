@@ -4,7 +4,7 @@
 #define RLE_H
 #include "../stdafx.h"
 
-using dataType = blockType;
+using dataType = BlockType;
 using dataContainer = std::vector<dataType>;
 using dataIterator = dataContainer::const_iterator;
 

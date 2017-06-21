@@ -55,6 +55,10 @@ inline int GetBlockIndex(const int x, const int y, const int z) {
 	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
 }
 
+inline glm::vec3 GetBlockPos(const size_t& idx) {
+	return glm::vec3(idx % CHUNK_SIZE, idx / (CHUNK_SIZE * CHUNK_SIZE), (idx % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE);
+}
+
 // Used for grabbing front 4 bits of a given uint8_t
 inline int GetFront4(const uint8_t val) {
 	return (val >> 4) & 0xF;

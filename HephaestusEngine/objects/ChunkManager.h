@@ -25,7 +25,7 @@ namespace objects {
 		// Position of this event
 		glm::vec3 Position;
 		// Block that was edited
-		Block B;
+		Block EditedBlock;
 		// Positions of other affected blocks
 		std::set<glm::vec3> ModifiedBlocks;
 		// TODO: Some way of propagating change/update status between server/client.
