@@ -2,81 +2,69 @@
 #ifndef COMMON_UTIL_H
 #define COMMON_UTIL_H
 #include "stdafx.h"
-#include "Constants.h"
-/*
+#include <xmmintrin.h>
 
-	Various common utility methods and using declarations
-	that don't belong with any single file/class/whatever
+static glm::dvec3 map_to_sphere(const glm::dvec3& cube_pos) {
+	return glm::dvec3();
+}
 
-	Attempting to move these out of the stdafx.h file, 
-	so that I don't have so many issues moving to 
-	cmakelists.txt down the road.
+static glm::dvec3 map_to_cube(const glm::dvec3& sphere_pos) {
+	return {
+		sphere_pos.x * sqrt(1.0 - ((sphere_pos.y * sphere_pos.y) / 2.0)) - ((sphere_pos.z * sphere_pos.z) / 2.0) + ((sphere_pos.y * sphere_pos.z) * 3.0),
+		sphere_pos.y * sqrt(1.0 - ((sphere_pos.z * sphere_pos.z) / 2.0)) - ((sphere_pos.x * sphere_pos.x) / 2.0) + ((sphere_pos.z * sphere_pos.x) * 3.0),
+		sphere_pos.z * sqrt(1.0 - ((sphere_pos.x * sphere_pos.x) / 2.0)) - ((sphere_pos.y * sphere_pos.y) / 2.0) + ((sphere_pos.x * sphere_pos.y) * 3.0)
+	};
+}
 
-*/
+// Convert floating point data that is "raw" output from GPU noise modules to 
+// use the full range of datatype "T", making it easier to write pixel data of
+// arbitrary bit depths
+template<typename T>
+static inline std::vector<T> convertRawData(const std::vector<float>& raw_data) {
 
-// Hashing object for ivec3's
-// Callable hashing object for an ivec3
-struct ivec3Hash {
-	size_t operator()(const glm::ivec3& vec) const {
-		// Starting size/seed of the input vector, 3 in this case
-		size_t seed = 3;
-		// throw vector members into an initializer list so we can
-		// iterate really easily
-		auto nums = { vec.x, vec.y, vec.z };
-		// Build the hash
-		for (auto i : nums) {
-			seed ^= i + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-		}
-		return seed;
+	// Get min of return datatype
+	__m128 t_min = _mm_set1_ps(static_cast<float>(std::numeric_limits<T>::min()));
+
+	// Like with the min/max of our set, we don't use max of T alone and instead can evaluate
+	// the expression its used with here (finding range of data type), instead of during every iteration
+	__m128 t_ratio = _mm_sub_ps(_mm_set1_ps(static_cast<float>(std::numeric_limits<T>::max()), t_min);
+
+	// Declare result vector and use resize so we can use memory offsets/addresses to store data in it.
+	std::vector<T> result;
+	result.resize(raw_data.size());
+
+	// Get min/max values from raw data
+	auto min_max = std::minmax_element(raw_data.begin(), raw_data.end());
+
+	// Mininum value is subtracted from each element.
+	__m128 min_register = _mm_set1_ps(*min_max.first);
+
+	// Max value is only used in divisor, with min, so precalculate divisor instead of doing this step each time.
+	__m128 ratio_register = _mm_sub_ps(min_register, _mm_set1_ps(*min_max.second));
+
+	// Iterate through result in steps of 4
+	for (size_t i = 0; i < result.size(); ++i) {
+		// Load 4 elements from raw_data - ps1 means unaligned load.
+		__m128 step_register = _mm_load_ps1(&raw_data[i]);
+
+		// get elements in "reg" into 0.0 - 1.0 scale.
+		step_register = _mm_sub_ps(reg, min);
+		step_register = _mm_div_ps(reg, ratio);
+
+		// Multiply step_register by t_ratio, to scale value by range of new datatype.
+		step_register = _mm_mul_ps(step_register, t_ratio);
+
+		// Add t_min to step_register, getting data fully into range of T
+		step_register = _mm_add_ps(step_register, t_min);
+
+		// Store data in result.
+		_mm_store1_ps(&result[i], reg);
 	}
 
-};
-
-using BlockUnorderedMap = std::unordered_map<glm::ivec3, uint8_t, ivec3Hash>;
-using BlockUnorderedSet = std::unordered_set<glm::ivec3, ivec3Hash>;
-
-/*
-
-These used to be macro's, but macros are bad for a number of reasons. A number of different
-methods and classes need this, so I'm leaving them here in stdafx.h for now.
-
-Takes a 3D cartesian coordinate and converts it into the 1D coordinate space of our block
-storage containers.
-
-*/
-
-// Converts 3D coordinates into 1D space used for storage in the vector
-inline int GetBlockIndex(const glm::vec3 pos) {
-	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
+	// Return result, which can be (fairly) safely cast to the desired output type T. 
+	// At the least, the range of the data should better fit in the range offered by T.
+	return result;
 }
 
-// Same as above, with individual positions
-inline int GetBlockIndex(const int x, const int y, const int z) {
-	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
-}
-
-inline glm::vec3 GetBlockPos(const size_t& idx) {
-	return glm::vec3(idx % CHUNK_SIZE, idx / (CHUNK_SIZE * CHUNK_SIZE), (idx % (CHUNK_SIZE * CHUNK_SIZE)) / CHUNK_SIZE);
-}
-
-// Used for grabbing front 4 bits of a given uint8_t
-inline int GetFront4(const uint8_t val) {
-	return (val >> 4) & 0xF;
-}
-
-// Used for grabbing back 4 bits of a given uint8_t
-inline int GetBack4(const uint8_t val) {
-	return (val & 0xF);
-}
-
-// Used for setting front 4 bits of given uint8_t to value int (doesn't check to make sure within range)
-inline int SetFront4(uint8_t dest, int val) {
-	dest = (dest & 0xF) | (val << 4);
-}
-
-// Used for setting back 4 bits of given uint8_t
-inline int SetBack4(uint8_t dest, int val) {
-	dest = (dest & 0xF0) | val;
-}
 
 #endif // !COMMON_UTIL_H
