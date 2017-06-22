@@ -1,14 +1,12 @@
 // stdafx.h - precompiled header to increase compiliation speed.
 // Especially helpful with highly templated libraries, and libraries used nearly everywhere.
 #pragma once
-#include <stdio.h>
+
 #include <string>
 #include <vector>
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include <algorithm>
-#include <cmath>
 #include <numeric>
 #include <array>
 #include <memory>
@@ -16,8 +14,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
-#include <set>
-#include <stdlib.h>  
+#include <set>  
 #include <iostream>
 #include <chrono>
 #include <forward_list>

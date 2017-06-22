@@ -24,5 +24,8 @@ namespace vulpes {
 	class TransferPool;
 	class GraphicsPipeline;
 	class PipelineCache;
+	class Allocator;
+	class Allocation;
+	struct Suballocation;
 }
 #endif // !VULPES_VK_FORWARD_DECL_H
