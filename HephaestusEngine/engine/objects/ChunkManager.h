@@ -52,6 +52,8 @@ namespace objects {
 
 		~ChunkManager();
 
+		void CreatePipeline(const VkRenderPass& renderpass, const Swapchain* swapchain, const glm::mat4& projection);
+
 		void CreateChunk(const glm::ivec2& grid_position);
 
 		// Initialize the chunk manager by starting at an initial position and using the input

@@ -58,6 +58,21 @@ namespace objects {
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
 	}
 
+	void ChunkManager::CreatePipeline(const VkRenderPass & renderpass, const Swapchain * swapchain, const glm::mat4 & projection) {
+		uboData.projection = projection;
+
+		const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{
+			vert->PipelineInfo(),
+			frag->PipelineInfo(),
+		};
+
+		VkPipelineVertexInputStateCreateInfo vert_info = mesh::BlockVertices::PipelineInfo();
+
+		GraphicsPipelineInfo pipeline_info;
+
+		static const VkDynamicState dynamic_states[2] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	}
+
 	void ChunkManager::Update(const glm::vec3& update_position) {
 		// For each chunk in the list of active chunks, check them for any blocks that have changed.
 
