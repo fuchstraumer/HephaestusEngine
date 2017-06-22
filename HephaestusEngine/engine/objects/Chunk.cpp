@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "Chunk.h"
-#include "../util/rle.h"
 
 namespace objects {
 
@@ -50,7 +49,7 @@ namespace objects {
 		// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
 		// This setup means that the xyz of a given block is actually the center of the block's mesh
 		std::array<glm::vec3, 8> vertices{
-		{   glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
+		    glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
 			glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
 			glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
 			glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
@@ -58,7 +57,6 @@ namespace objects {
 			glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
 			glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
 			glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f), // Point 7, right upper rear
-		}
 		};
 
 		// Following method for generating lighting data from:
@@ -99,7 +97,7 @@ namespace objects {
 
 			// We'll need four indices and four vertices for the two tris defining a face.
 			index_t i0, i1, i2, i3;
-			vertex_t v0, v1, v2, v3;
+			block_vertex_t v0, v1, v2, v3;
 
 			// Assign each vertex it's appropriate UV coords based on the blocks type
 			glm::vec3 uv0 = glm::ivec3(0.0, 0.0, textures[uv_type][face]);
@@ -170,7 +168,7 @@ namespace objects {
 		float_position.z = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 
 		// Set the updated positions in the mesh (most important), and this chunk (good for reference)
-		mesh.Position = float_position;
+		mesh.position = float_position;
 		Position = float_position;
 
 	}
@@ -348,7 +346,7 @@ namespace objects {
 
 	void Chunk::clear() {
 		// Mesh clear method clears data and calls shrink_to_fit()
-		mesh.Clear();
+		mesh.cleanup();
 		// First call clear to empty containers
 		terrainBlocks.clear();
 		lightMap.clear();

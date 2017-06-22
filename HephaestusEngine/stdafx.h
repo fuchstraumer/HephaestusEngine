@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <set>
 #include <stdlib.h>  
 #include <iostream>
 #include <chrono>
@@ -46,7 +47,7 @@
 // Both of these have silly errors we can ignore.
 #pragma warning(push, 0)
 #include "gli\gli.hpp"
-#include "engine\util\lodepng.h"
+#include "util\lodepng.h"
 #pragma warning(pop)
 
 // Forces assert even in release mode: convienient for catching
@@ -56,5 +57,5 @@
 #include "common/CreateInfoBase.h"
 #include "common/vkAssert.h"
 #include "common/vk_constants.h"
-#include "common\CommonDef.h"
+#include "common/Constants.h"
 

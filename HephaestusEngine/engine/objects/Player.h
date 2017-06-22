@@ -9,9 +9,14 @@
 	
 	PLAYER_H
 
-	Defines a player class. 
-
-
 */
+
+
+struct Player {
+
+	glm::vec3 Position;
+	size_t ViewRadius;
+
+};
 
 #endif // !PLAYER_H

@@ -2,6 +2,7 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 #include "stdafx.h"
+
 #include "common\Constants.h"
 #include "common\CommonUtil.h"
 #include "Block.h"
@@ -110,19 +111,19 @@ namespace objects {
 		2: Bottom Left
 		3: Bottom Right
 		*/
-		bool Neighbors[4];
+		std::array<std::weak_ptr<Chunk>, 4> Neighbors;
 
 		// Mesh object for this chunk.
-		Mesh<vertex_t> mesh;
+		std::unique_ptr<mesh::Mesh<mesh::BlockVertices>> mesh;
 
 	private:
 
 		// Used to get references to internal blocks
-		Block& GetBlockRef(const glm::vec3& pos);
-		Block& GetBlockRef(const float& x, const float& y, const float& z);
+		Block& getBlockRef(const glm::vec3& pos);
+		Block& getBlockRef(const float& x, const float& y, const float& z);
 
 		// Stride of blocks along Y axis
-		static constexpr size_t Y_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
+		static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
 		static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
 
 		// Whether or not this object has had it's terrain generated.
@@ -135,11 +136,12 @@ namespace objects {
 		std::vector<Block> terrainBlocks;
 
 		// Container for modified blocks.
-		std::unordered_map<glm::ivec3, Block, ivec3Hash> blocks;
+		std::unordered_map<glm::ivec3, Block> blocks;
 
 		// Creates the mesh data for a cube at xyz using the given opacity values at each face and the specified texture coord.
 		void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
 
+		ChunkStatus status;
 	};
 
 }

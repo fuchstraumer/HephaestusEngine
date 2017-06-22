@@ -8,7 +8,7 @@ static constexpr int CHUNK_SIZE = 32;
 static constexpr int CHUNK_SIZE_Y = 128;
 
 // Just pi lol
-static constexpr float pi = 3.14159265359f;
+static constexpr float FLOAT_PI = 3.14159265359f;
 
 // Light has a range from 0-15. 15 is absolute highest, equivalent to sunlight.
 // 14 is highest we allow for all non-sunlight sources.
@@ -16,7 +16,7 @@ static constexpr int SUNLIGHT_LEVEL = 15;
 static constexpr int MAX_LIGHT_INTENSITY = 14;
 
 // Used to set width/height of screen rendered. Should eventually be a config file value.
-static constexpr GLuint WIDTH = 1440, HEIGHT = 900;
+static constexpr size_t WIDTH = 1440, HEIGHT = 900;
 
 static constexpr bool SIMPLE_CULLING_GLOBAL = true;
 
@@ -92,7 +92,12 @@ enum BlockTypes : BlockType {
 	COLOR_31,
 };
 
-// Texture files to import
-// TODO: That ^
+enum class ChunkStatus : uint8_t {
+	NEEDS_UPDATE,
+	NEEDS_TRANSFER,
+	READY,
+	NEEDS_DELETE,
+	REMOVED,
+};
 
 #endif // !CONSTANTS_H

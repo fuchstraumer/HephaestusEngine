@@ -4,7 +4,6 @@
 
 #include "stdafx.h"
 
-namespace vulpes {
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VkBaseDebugCallbackPFN(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData) {
 
@@ -147,6 +146,5 @@ namespace vulpes {
 		VkAssert(err);
 	}
 
-}
 
 #endif // !VULPES_VK_DEBUG_H

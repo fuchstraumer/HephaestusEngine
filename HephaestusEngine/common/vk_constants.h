@@ -4,14 +4,12 @@
 
 #include "vulkan\vulkan.h"
 #include <iostream>
-
+#include <array>
 /*
 
 	Debug callback stuff.
 
 */
-namespace vulpes {
-	
 
 	constexpr char* standard_validation_layer = "VK_LAYER_LUNARG_standard_validation";
 
@@ -52,5 +50,5 @@ namespace vulpes {
 		LEFT,
 		RIGHT,
 	};
-}
+
 #endif // !VULPES_VK_CONSTANTS_H

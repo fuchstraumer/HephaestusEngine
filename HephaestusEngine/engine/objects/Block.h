@@ -91,7 +91,7 @@ namespace objects {
 
 		// Parameter dataset. 
 		// Used for special blocks, like torches and flowing water.
-		uint8_t param;
+		uint8_t parameters;
 
 		// Tracks rotation of this block. important for types of blocks that need to have a certain face in one direction.
 		BlockRotation rotation;
