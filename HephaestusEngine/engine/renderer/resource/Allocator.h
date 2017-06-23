@@ -18,6 +18,10 @@ namespace vulpes {
 	// mininum size of suballoction objects to bother registering in our allocation's list's
 	constexpr static VkDeviceSize MinSuballocationSizeToRegister = 16;
 
+	constexpr static VkDeviceSize SmallHeapMaxSize = 512 * 1024 * 1024;
+	constexpr static VkDeviceSize DefaultLargeHeapBlockSize = 256 * 1024 * 1024;
+	constexpr static VkDeviceSize DefaultSmallHeapBlockSize = 64 * 1024 * 1024;
+
 	enum class SuballocationType : uint8_t {
 		Free = 0, // unused entry
 		Unknown, // could be various cpu storage objects, or extension objects
@@ -151,6 +155,22 @@ namespace vulpes {
 		}
 	};
 
+	/*
+		super-simple mutex helper struct that automatically locks-unlocks a mutex
+		when it enters/exists scope.
+	*/
+	struct mutexWrapper {
+		mutexWrapper(std::mutex& _mutex) : mutex(_mutex) {
+			mutex.lock();
+		}
+
+		~mutexWrapper() {
+			mutex.unlock();
+		}
+	private:
+		std::mutex& mutex;
+	};
+
 
 	/*
 	
@@ -176,10 +196,14 @@ namespace vulpes {
 		// cleans up resources and prepares object to be safely destroyed.
 		void Destroy(Allocator* alloc);
 
-		VkDeviceMemory Memory;
+		// Used when sorting AllocationCollection
+		bool operator<(const Allocation& other);
+
+		VkDeviceSize AvailableMemory() const noexcept;
+		const VkDeviceMemory& Memory() const noexcept;
+
 		VkDeviceSize Size;
-		uint32_t freeCount;
-		VkDeviceSize availSize; // total available size among all sub-allocations.
+		
 		suballocationList Suballocations;
 		Allocator* allocator;
 
@@ -202,6 +226,10 @@ namespace vulpes {
 
 	protected:
 
+		VkDeviceSize availSize; // total available size among all sub-allocations.
+		uint32_t freeCount;
+		VkDeviceMemory memory;
+
 		// given a free suballocation, this method merges it with the one immediately after it in the list
 		// the second item must also be free: this is a method used to collect disparate regions together.
 		void mergeFreeWithNext(const suballocationList::iterator& item_to_merge);
@@ -222,7 +250,7 @@ namespace vulpes {
 	};
 
 	struct AllocationCollection {
-		std::vector<Allocation*> allocations;
+		std::set<Allocation*> allocations;
 
 		AllocationCollection(Allocator* allocator);
 
@@ -234,13 +262,12 @@ namespace vulpes {
 
 		// performs single sort step, to order "allocations" so that it is sorted
 		// by total available free memory.
-		void AllocationSortStep();
+		void SortAllocations();
 
-		// adds statistics about "allocations" to static stats obj
-		void AddStats(); // TODO: Implement this in a cleaner fashion.
-
+		
 	private:
 		Allocator* allocator;
+		size_t availSize;
 	};
 
 	class Allocator : public NonMovable {
@@ -249,7 +276,7 @@ namespace vulpes {
 		Allocator();
 		~Allocator();
 
-		VkDeviceSize GetPreferredBlockSize() const noexcept;
+		VkDeviceSize GetPreferredBlockSize(const uint32_t& memory_type_idx) const noexcept;
 		VkDeviceSize GetBufferImageGranularity() const noexcept;
 
 		uint32_t GetMemoryHeapCount() const noexcept;
@@ -265,7 +292,8 @@ namespace vulpes {
 
 		void allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
 
-		std::array<AllocationCollection, vkMaxMemoryTypes> allocationCollections;
+		std::array<AllocationCollection, vkMaxMemoryTypes> allocations;
+		std::array<bool, vkMaxMemoryTypes> emptyAllocations;
 		std::array<std::mutex, vkMaxMemoryTypes> allocationMutexes;
 
 		std::array<privateSuballocation, vkMaxMemoryTypes> privateAllocations;

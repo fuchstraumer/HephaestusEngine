@@ -1,16 +1,18 @@
 #include "stdafx.h"
 #include "Allocator.h"
+#include "util\easylogging++.h"
+#include "../core/LogicalDevice.h"
 
 namespace vulpes {
 
 	// padding to inject at end of allocations ot test allocation system
 	static constexpr size_t DEBUG_PADDING = 0;
 
-	Allocation::Allocation(Allocator * alloc) : allocator(alloc), availSize(0), freeCount(0), Memory(VK_NULL_HANDLE), Size(0) {}
+	Allocation::Allocation(Allocator * alloc) : allocator(alloc), availSize(0), freeCount(0), memory(VK_NULL_HANDLE), Size(0) {}
 
 	void Allocation::Init(VkDeviceMemory & new_memory, const VkDeviceSize & new_size) {
-		assert(Memory == VK_NULL_HANDLE);
-		Memory = new_memory;
+		assert(memory == VK_NULL_HANDLE);
+		memory = new_memory;
 		Size = new_size;
 		freeCount = 1;
 		availSize = new_size;
@@ -28,9 +30,21 @@ namespace vulpes {
 
 	}
 
+	bool Allocation::operator<(const Allocation & other) {
+		return (availSize < other.availSize);
+	}
+
+	VkDeviceSize Allocation::AvailableMemory() const noexcept {
+		return availSize;
+	}
+
+	const VkDeviceMemory& Allocation::Memory() const noexcept {
+		return memory;
+	}
+
 	ValidationCode Allocation::Validate() const {
 
-		if (Memory == VK_NULL_HANDLE) {
+		if (memory == VK_NULL_HANDLE) {
 			return ValidationCode::NULL_MEMORY_HANDLE;
 		}
 
@@ -231,7 +245,8 @@ namespace vulpes {
 		const VkDeviceSize padding_end = suballoc.size - padding_begin - allocation_size;
 
 		removeFreeSuballocation(request.freeSuballocation);
-
+		--freeCount;
+		availSize -= allocation_size;
 		suballoc.offset = request.offset;
 		suballoc.size = allocation_size;
 		suballoc.type = allocation_type;
@@ -245,6 +260,9 @@ namespace vulpes {
 			const auto insert_iter = Suballocations.insert(next_iter, padding_suballoc);
 			// insert_iter returns iterator giving location of inserted item
 			insertFreeSuballocation(insert_iter);
+			++freeCount;
+			// TODO: Verify that we should be doing this
+			availSize += padding_end;
 		}
 
 		// if there's any remaining memory before the allocation, register it.
@@ -254,8 +272,33 @@ namespace vulpes {
 			++next_iter;
 			const auto insert_iter = Suballocations.insert(next_iter, padding_suballoc);
 			insertFreeSuballocation(insert_iter);
+			++freeCount;
+			availSize += padding_begin;
 		}
 
+	}
+
+	void Allocation::Free(const VkMappedMemoryRange * memory_to_free) {
+		// Choose search direction based based on size of object to free
+		const bool forward_direction = (memory_to_free->offset) < (Size / 2);
+		if (forward_direction) {
+			for (auto iter = Suballocations.begin(); iter != Suballocations.end(); ++iter) {
+				auto& suballoc = *iter;
+				if (suballoc.offset == memory_to_free->offset) {
+					freeSuballocation(iter);
+					return;
+				}
+			}
+		}
+		else {
+			for (auto iter = Suballocations.rbegin(); iter != Suballocations.rend(); ++iter) {
+				auto& suballoc = *iter;
+				if (suballoc.offset == memory_to_free->offset) {
+					freeSuballocation((iter + 1).base());
+					return;
+				}
+			}
+		}
 	}
 
 	void Allocation::mergeFreeWithNext(const suballocationList::iterator & item_to_merge) {
@@ -271,6 +314,9 @@ namespace vulpes {
 	void Allocation::freeSuballocation(const suballocationList::iterator & item_to_free) {
 		Suballocation& suballoc = *item_to_free;
 		suballoc.type = SuballocationType::Free;
+
+		++freeCount;
+		availSize += suballoc.size;
 
 		bool merge_next = false, merge_prev = false;
 
@@ -288,6 +334,20 @@ namespace vulpes {
 				merge_prev = true;
 			}
 		}
+
+		if (merge_next) {
+			removeFreeSuballocation(next_iter);
+			mergeFreeWithNext(item_to_free);
+		}
+
+		if (merge_prev) {
+			removeFreeSuballocation(prev_iter);
+			mergeFreeWithNext(prev_iter);
+			insertFreeSuballocation(prev_iter);
+		}
+		else {
+			insertFreeSuballocation(item_to_free);
+		}
 	}
 
 	void Allocation::insertFreeSuballocation(const suballocationList::iterator & item_to_insert) {
@@ -301,8 +361,7 @@ namespace vulpes {
 				availSuballocations.insert(insert_iter, item_to_insert);
 			}
 		}
-		++freeCount;
-		availSize += item_to_insert->size;
+
 	}
 
 	void Allocation::removeFreeSuballocation(const suballocationList::iterator & item_to_remove) {
@@ -310,9 +369,87 @@ namespace vulpes {
 			auto remove_iter = std::remove(availSuballocations.begin(), availSuballocations.end(), item_to_remove);
 			availSuballocations.erase(remove_iter, availSuballocations.end());
 		}
-		--freeCount;
-		availSize -= item_to_remove->size;
+
 	}
 
+	size_t AllocationCollection::Free(const VkMappedMemoryRange * memory_to_free) {
+		bool forward_direction = memory_to_free->size >= availSize / 2;
+		if (forward_direction) {
+			for (auto iter = allocations.begin(); iter != allocations.end(); ++iter) {
+				if ((*iter)->Memory() == memory_to_free->memory) {
+					(*iter)->Free(memory_to_free);
+					availSize -= memory_to_free->size;
+					return;
+				}
+			}
+		}
+		else {
+			for (auto iter = allocations.rbegin(); iter != allocations.rend(); ++iter) {
+				if ((*iter)->Memory() == memory_to_free->memory) {
+					(*iter)->Free(memory_to_free);
+					availSize -= memory_to_free->size;
+					return;
+				}
+			}
+		}
+	}
+
+	void AllocationCollection::SortAllocations() {
+		// sorts collection so that allocation with most free space is first.
+		std::sort(allocations.begin(), allocations.end());
+		// update total avail size
+		availSize = 0;
+		for (auto iter = allocations.begin(); iter != allocations.end(); ++iter) {
+			availSize += (*iter)->AvailableMemory();
+		}
+	}
+
+	VkDeviceSize Allocator::GetPreferredBlockSize(const uint32_t& memory_type_idx) const noexcept {
+		VkDeviceSize heapSize = deviceMemoryProperties.memoryHeaps[deviceMemoryProperties.memoryTypes[memory_type_idx].heapIndex].size;
+		return (heapSize <= SmallHeapMaxSize) ? preferredSmallHeapBlockSize : preferredLargeHeapBlockSize;
+	}
+
+	void Allocator::allocateMemoryType(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const uint32_t & memory_type_idx, const SuballocationType & type, VkMappedMemoryRange * dest_memory_range) {
+		*dest_memory_range = VkMappedMemoryRange{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, nullptr, VK_NULL_HANDLE, 0, memory_reqs.size };
+		
+		const VkDeviceSize preferredBlockSize = GetPreferredBlockSize(memory_type_idx);
+
+		const bool private_memory = alloc_details.privateMemory || memory_reqs.size > preferredBlockSize / 2;
+
+		if (private_memory) {
+
+		}
+		else {
+			mutexWrapper lock(allocationMutexes[memory_type_idx]);
+			const auto& alloc_collection = allocations[memory_type_idx];
+
+			// first, check existing allocations
+			for (auto iter = alloc_collection.allocations.cbegin(); iter != alloc_collection.allocations.cend(); ++iter) {
+				SuballocationRequest request;
+				const auto& alloc = *iter;
+				if (alloc->RequestSuballocation(GetBufferImageGranularity(), memory_reqs.size, memory_reqs.alignment, type, &request)) {
+					if (alloc->Empty()) {
+						emptyAllocations[memory_type_idx] = false;
+					}
+
+					alloc->Allocate(request, type, memory_reqs.size);
+					dest_memory_range->memory = alloc->Memory();
+					dest_memory_range->offset = request.offset;
+				}
+			}
+
+			// search didn't pass: create new allocation.
+			if (!alloc_details.privateMemory) {
+				LOG(WARNING) << "All available allocations full or invalid, and requested allocation not allowed to be private!";
+				return;
+			}
+			else {
+				VkMemoryAllocateInfo alloc_info{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, nullptr, preferredBlockSize, memory_type_idx };
+				VkDeviceMemory new_memory = VK_NULL_HANDLE;
+				VkResult result = vkAllocateMemory(parent->vkHandle(), &alloc_info, nullptr, &new_memory);
+			}
+		}
+
+	}
 
 }
