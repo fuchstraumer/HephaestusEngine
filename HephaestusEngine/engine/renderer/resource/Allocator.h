@@ -8,15 +8,21 @@
 
 namespace vulpes {
 
+	/*
+	
+		Constants and enums used by allocation system
+	
+	*/
+
 	constexpr static size_t vkMaxMemoryTypes = 32;
 	// mininum size of suballoction objects to bother registering in our allocation's list's
 	constexpr static VkDeviceSize MinSuballocationSizeToRegister = 16;
 
 	enum class SuballocationType : uint8_t {
 		Free = 0, // unused entry
-		Unknown, // invalid - how did this get set?
+		Unknown, // could be various cpu storage objects, or extension objects
 		Buffer,
-		ImageUnknown, // image memory without defined tiling (??)
+		ImageUnknown, // image memory without defined tiling - possibly related to extensions
 		ImageLinear,
 		ImageOptimal,
 	};
@@ -40,6 +46,68 @@ namespace vulpes {
 		FINAL_SIZE_MISMATCH, // calculated offset as sum of all suballoc sizes is not equal to allocations total size
 		FINAL_FREE_SIZE_MISMATCH, // calculated total available size doesn't match stored available size
 	};
+
+	/*
+	
+		Utility functions for performing various allocation tasks.
+		
+	*/
+
+	template<typename T>
+	constexpr static T AlignUp(const T& offset, const T& alignment) {
+		return (offset + alignment - 1) / (alignment * alignment)
+	}
+
+	/*
+		taken from spec section 11.6
+		Essentially, we need to insure that linear and non-linear resources are properly placed in adjacent memory so that
+		they avoid any accidental aliasing.
+
+		item_a = non-linaer object. item_b = linear object. page_size tends to be the bufferImageGranularity value retrieved by the allocators.
+	*/
+	constexpr static inline bool CheckBlocksOnSamePage(const VkDeviceSize& item_a_offset, const VkDeviceSize& item_a_size, const VkDeviceSize& item_b_offset, const VkDeviceSize& page_size) {
+		assert(item_a_offset + item_a_size <= item_b_offset && item_a_size > 0 && page_size > 0);
+		VkDeviceSize item_a_end = item_a_offset + item_a_size - 1;
+		VkDeviceSize item_a_end_page = item_a_end & ~(page_size - 1);
+		VkDeviceSize item_b_start_Page = item_b_offset & ~(page_size - 1);
+		return item_a_end_page == item_b_start_Page;
+	}
+
+	/*
+		Checks to make sure the two objects of type "type_a" and "type_b" wouldn't cause a conflict with the buffer-image granularity values. Returns true if
+		conflict, false if no conflict.
+
+		BufferImageGranularity specifies interactions between linear and non-linear resources, so we check based on those.
+	*/
+	constexpr static inline bool CheckBufferImageGranularityConflict(SuballocationType type_a, SuballocationType type_b) {
+		if (type_a > type_b) {
+			std::swap(type_a, type_b);
+		}
+
+		switch (type_a) {
+		case SuballocationType::Free:
+			return false;
+		case SuballocationType::Unknown:
+			// best be conservative and play it safe: return true
+			return true;
+		case SuballocationType::Buffer:
+			// unkown return is playing it safe again, optimal return is because optimal tiling and linear buffers don't mix
+			return type_b == SuballocationType::ImageUnknown || type_b == SuballocationType::ImageOptimal;
+		case SuballocationType::ImageUnknown:
+			return type_b == SuballocationType::ImageUnknown || type_b == SuballocationType::ImageOptimal || type_b == SuballocationType::ImageLinear;
+		case SuballocationType::ImageLinear:
+			return type_b == SuballocationType::ImageOptimal;
+		case SuballocationType::ImageOptimal:
+			return false;
+		}
+	}
+
+
+	/*
+	
+		Small mostly POD-like structs used in allocation
+		
+	*/
 
 	struct AllocationDetails {
 		// true if whatever allocation this belongs to should be in its own device memory object
@@ -76,6 +144,21 @@ namespace vulpes {
 		VkDeviceSize offset;
 	};
 
+
+	struct suballocIterCompare {
+		bool operator()(const suballocationList::iterator& iter0, const suballocationList::iterator& iter1) const {
+			return iter0->size < iter1->size;
+		}
+	};
+
+
+	/*
+	
+		Main allocation classes and objects
+	
+	*/
+
+
 	/*
 		Allocation class contains singular VkDeviceMemory object.
 		Should only have a handful of these at any one time.
@@ -106,8 +189,8 @@ namespace vulpes {
 		bool RequestSuballocation(const VkDeviceSize& buffer_image_granularity, const VkDeviceSize& allocation_size, const VkDeviceSize& allocation_alignment, SuballocationType allocation_type, SuballocationRequest* dest_request);
 
 		// Verifies that requested suballocation can be added to this object, and sets dest_offset to reflect offset of this now-inserted suballocation.
-		bool VerifySuballocation(const VkDeviceSize& buffer_image_granularity, const VkDeviceSize& allocation_size, const VkDeviceSize& allocation_alignment, SuballocationType allocation_type,
-			suballocationList::const_iterator& dest_suballocation_location, VkDeviceSize* dest_offset);
+		bool VerifySuballocation(const VkDeviceSize& buffer_image_granularity, const VkDeviceSize& allocation_size, const VkDeviceSize& allocation_alignment,
+ SuballocationType allocation_type, const suballocationList::const_iterator & dest_suballocation_location, VkDeviceSize* dest_offset) const;
 
 		bool Empty() const;
 
