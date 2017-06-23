@@ -9,19 +9,58 @@
 namespace vulpes {
 
 	constexpr static size_t vkMaxMemoryTypes = 32;
+	// mininum size of suballoction objects to bother registering in our allocation's list's
+	constexpr static VkDeviceSize MinSuballocationSizeToRegister = 16;
 
 	enum class SuballocationType : uint8_t {
-		Free = 0,
-		Unknown,
+		Free = 0, // unused entry
+		Unknown, // invalid - how did this get set?
 		Buffer,
-		ImageUnknown,
+		ImageUnknown, // image memory without defined tiling (??)
 		ImageLinear,
 		ImageOptimal,
+	};
+
+	enum class MemoryUsage : uint8_t {
+		GPU_ONLY,
+		CPU_ONLY, // staging buffers, usually
+		CPU_TO_GPU, // dynamic objects
+		GPU_TO_CPU, // query/compute return data
+	};
+
+	enum class ValidationCode : uint8_t {
+		VALIDATION_PASSED = 0,
+		NULL_MEMORY_HANDLE, // allocation's memory handle is invalid
+		ZERO_MEMORY_SIZE, // allocation's memory size is zero
+		INCORRECT_SUBALLOC_OFFSET, // Offset of suballocation is incorrect: it may overlap with another, or it may 
+		NEED_MERGE_SUBALLOCS, // two adjacent free suballoctions: merge them into one bigger suballocation
+		FREE_SUBALLOC_COUNT_MISMATCH, // we found more free suballocations while validating than there are in the free suballoc list
+		USED_SUBALLOC_IN_FREE_LIST, // non-free suballocation in free suballoc list
+		FREE_SUBALLOC_SORT_INCORRECT, // free suballocation list is sorted by size ascending: sorting is incorrect, re-sort
+		FINAL_SIZE_MISMATCH, // calculated offset as sum of all suballoc sizes is not equal to allocations total size
+		FINAL_FREE_SIZE_MISMATCH, // calculated total available size doesn't match stored available size
+	};
+
+	struct AllocationDetails {
+		// true if whatever allocation this belongs to should be in its own device memory object
+		VkBool32 privateMemory;
+		// when using this, don't set flags. when using flags, don't use this.
+		MemoryUsage usage;
+		// leave to 0 if using "usage" instead
+		VkMemoryPropertyFlags requiredFlags;
+		// acts as additional flags over above.
+		VkMemoryPropertyFlags preferredFlags;
 	};
 
 	struct Suballocation {
 		VkDeviceSize offset, size;
 		SuballocationType type;
+	};
+
+	struct suballocOffsetCompare {
+		bool operator()(const Suballocation& s0, const Suballocation& s1) {
+			return s0.offset < s1.offset; // true when s0 is before s1
+		}
 	};
 
 	struct privateSuballocation {
@@ -48,7 +87,8 @@ namespace vulpes {
 		Allocation(Allocator* alloc);
 		~Allocation(); // just assert that memory has been free'd
 
-		void Init(VkDeviceMemory& dest_memory, const VkDeviceSize& dest_size);
+		// new_memory is a fresh device memory object, new_size is size of this device memory object.
+		void Init(VkDeviceMemory& new_memory, const VkDeviceSize& new_size);
 
 		// cleans up resources and prepares object to be safely destroyed.
 		void Destroy(Allocator* alloc);
@@ -58,9 +98,10 @@ namespace vulpes {
 		uint32_t freeCount;
 		VkDeviceSize availSize; // total available size among all sub-allocations.
 		suballocationList Suballocations;
+		Allocator* allocator;
 
 		// Verifies integrity of memory by checking all contained structs/objects.
-		bool Validate() const;
+		ValidationCode Validate() const;
 
 		bool RequestSuballocation(const VkDeviceSize& buffer_image_granularity, const VkDeviceSize& allocation_size, const VkDeviceSize& allocation_alignment, SuballocationType allocation_type, SuballocationRequest* dest_request);
 
@@ -121,11 +162,25 @@ namespace vulpes {
 
 	class Allocator : public NonMovable {
 	public:
+
 		Allocator();
 		~Allocator();
 
+		VkDeviceSize GetPreferredBlockSize() const noexcept;
+		VkDeviceSize GetBufferImageGranularity() const noexcept;
+
+		uint32_t GetMemoryHeapCount() const noexcept;
+		uint32_t GetMemoryTypeCount() const noexcept;
+
+		void AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx);
+
+		void FreeMemory(VkMappedMemoryRange* memory_to_free);
 
 	private:
+
+		void allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
+
+		void allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
 
 		std::array<AllocationCollection, vkMaxMemoryTypes> allocationCollections;
 		std::array<std::mutex, vkMaxMemoryTypes> allocationMutexes;
@@ -151,7 +206,6 @@ namespace vulpes {
 		VkDeviceSize preferredLargeHeapBlockSize;
 		VkDeviceSize preferredSmallHeapBlockSize;
 		const VkAllocationCallbacks* pAllocationCallbacks = nullptr;
-
 		
 	};
 
