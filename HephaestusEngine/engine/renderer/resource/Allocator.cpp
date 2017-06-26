@@ -2,6 +2,7 @@
 #include "Allocator.h"
 #include "util\easylogging++.h"
 #include "../core/LogicalDevice.h"
+#include "../core/PhysicalDevice.h"
 
 namespace vulpes {
 
@@ -30,6 +31,11 @@ namespace vulpes {
 		auto suballoc_iter = Suballocations.end();
 		availSuballocations.push_back(suballoc_iter);
 
+	}
+
+	void Allocation::Destroy(Allocator * alloc) {
+		vkFreeMemory(alloc->DeviceHandle(), memory, nullptr);
+		memory = VK_NULL_HANDLE;
 	}
 
 	bool Allocation::operator<(const Allocation & other) {
@@ -303,6 +309,10 @@ namespace vulpes {
 		}
 	}
 
+	VkDeviceSize Allocation::LargestAvailRegion() const noexcept {
+		return (*availSuballocations.front()).size;
+	}
+
 	suballocation_iterator_t Allocation::begin() {
 		return Suballocations.begin();
 	}
@@ -422,26 +432,53 @@ namespace vulpes {
 
 	}
 
+	AllocationCollection::AllocationCollection(Allocator * _allocator) : allocator(_allocator) {}
+
+	AllocationCollection::~AllocationCollection() {
+		for (size_t i = 0; i < allocations.size(); ++i) {
+			allocations[i]->Destroy(allocator);
+			delete allocations[i];
+		}
+	}
+
+	Allocation * AllocationCollection::operator[](const size_t & idx) {
+		return allocations[idx];
+	}
+
+	const Allocation * AllocationCollection::operator[](const size_t & idx) const {
+		return allocations[idx];
+	}
+
+	bool AllocationCollection::Empty() const {
+		return allocations.empty();
+	}
+
 	size_t AllocationCollection::Free(const VkMappedMemoryRange * memory_to_free) {
 		bool forward_direction = memory_to_free->size >= availSize / 2;
+		size_t allocation_index = 0;
 		if (forward_direction) {
 			for (auto iter = allocations.begin(); iter != allocations.end(); ++iter) {
 				if ((*iter)->Memory() == memory_to_free->memory) {
 					(*iter)->Free(memory_to_free);
 					availSize -= memory_to_free->size;
-					return;
+					return allocation_index;
 				}
+				++allocation_index;
 			}
 		}
 		else {
+			allocation_index = allocations.size() - 1;
 			for (auto iter = allocations.rbegin(); iter != allocations.rend(); ++iter) {
 				if ((*iter)->Memory() == memory_to_free->memory) {
 					(*iter)->Free(memory_to_free);
 					availSize -= memory_to_free->size;
-					return;
+					return allocation_index;
 				}
+				--allocation_index;
 			}
 		}
+
+		return std::numeric_limits<size_t>::max();
 	}
 
 	void AllocationCollection::SortAllocations() {
@@ -451,6 +488,39 @@ namespace vulpes {
 		availSize = 0;
 		for (auto iter = allocations.begin(); iter != allocations.end(); ++iter) {
 			availSize += (*iter)->AvailableMemory();
+		}
+	}
+
+	Allocator::Allocator(const Device * parent_dvc) : parent(parent_dvc) {
+		deviceProperties = parent->GetPhysicalDevice().Properties;
+		deviceMemoryProperties = parent->GetPhysicalDevice().MemoryProperties;
+
+		// initialize base pools, one per memory type.
+		for (size_t i = 0; i < GetMemoryTypeCount(); ++i) {
+			allocations[i] = new AllocationCollection(this);
+		}
+	}
+
+	Allocator::~Allocator() {
+
+		/*
+			Delete images and buffers.
+		*/
+
+		for (auto iter = imageToMemoryMap.begin(); iter != imageToMemoryMap.end(); ++iter) {
+			vkDestroyImage(parent->vkHandle(), iter->first, nullptr);
+		}
+
+		for (auto iter = bufferToMemoryMap.begin(); iter != bufferToMemoryMap.end(); ++iter) {
+			vkDestroyBuffer(parent->vkHandle(), iter->first, nullptr);
+		}
+
+		/*
+			Delete collections: destructors of these should take care of the rest.
+		*/
+
+		for (size_t i = 0; i < GetMemoryTypeCount(); ++i) {
+			delete allocations[i];
 		}
 	}
 
@@ -471,6 +541,10 @@ namespace vulpes {
 		return deviceMemoryProperties.memoryTypeCount;
 	}
 
+	const VkDevice & Allocator::DeviceHandle() const noexcept {
+		return parent->vkHandle();
+	}
+
 	void Allocator::AllocateMemory(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const SuballocationType & suballoc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * dest_memory_type_idx) {
 		
 		// find memory type (i.e idx) required for this allocation
@@ -482,10 +556,54 @@ namespace vulpes {
 
 	void Allocator::FreeMemory(const VkMappedMemoryRange * memory_to_free) {
 		
+		Allocation* alloc_to_delete = nullptr;
 		bool found = false; // searching for given memory range.
 		for (uint32_t type_idx = 0; type_idx = GetMemoryTypeCount(); ++type_idx) {
-
+			auto& allocation_collection = allocations[type_idx];
+			const size_t alloc_idx = allocation_collection->Free(memory_to_free);
+			if (alloc_idx != std::numeric_limits<size_t>::max()) {
+				LOG(INFO) << "Memory freed successfully.";
+				found = true;
+				auto& alloc = allocation_collection->allocations[alloc_idx];
+				// did freeing the given memory made "alloc" empty?
+				if (alloc->Empty()) {
+					// alloc is now empty: but, we already have an empty allocation instance
+					// for this memory type index, so remove it from the vector and specify 
+					// that we'll fully delete it.
+					if (emptyAllocations[type_idx]) {
+						// remove allocation.
+						alloc_to_delete = alloc;
+						allocation_collection->allocations.erase(allocation_collection->allocations.begin() + alloc_idx);
+						break;
+					}
+					else {
+						// alloc is now the empty allocation at that index.
+						emptyAllocations[type_idx] = true;
+					}
+				}
+				// re-sort the collection.
+				allocation_collection->SortAllocations();
+				break;
+			}
 		}
+
+		if (found) {
+			if (alloc_to_delete != nullptr) {
+				LOG(INFO) << "Deleted an allocation.";
+				// need to cleanup resources first, before deleting the actual object.
+				alloc_to_delete->Destroy(this);
+				delete alloc_to_delete;
+				return;
+			}
+		}
+
+		// memory_to_free not found, possible a privately/singularly allocated memory object
+		if (freePrivateMemory(memory_to_free)) {
+			return;
+		}
+
+		LOG(ERROR) << "Failed to free memory.";
+		return;
 	}
 
 	uint32_t Allocator::findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationDetails & details) const noexcept {
@@ -545,7 +663,7 @@ namespace vulpes {
 			auto& alloc_collection = allocations[memory_type_idx];
 
 			// first, check existing allocations
-			for (auto iter = alloc_collection.allocations.cbegin(); iter != alloc_collection.allocations.cend(); ++iter) {
+			for (auto iter = alloc_collection->allocations.cbegin(); iter != alloc_collection->allocations.cend(); ++iter) {
 				SuballocationRequest request;
 				const auto& alloc = *iter;
 				if (alloc->RequestSuballocation(GetBufferImageGranularity(), memory_reqs.size, memory_reqs.alignment, type, &request)) {
@@ -605,7 +723,7 @@ namespace vulpes {
 				Allocation* alloc = new Allocation(this);
 				// allocation size is more up-to-date than mem reqs size
 				alloc->Init(new_memory, alloc_info.allocationSize);
-				alloc_collection.allocations.insert(alloc);
+				alloc_collection->allocations.push_back(alloc);
 
 				SuballocationRequest request{ *alloc->avail_begin(), 0 };
 				alloc->Allocate(request, type, memory_reqs.size);

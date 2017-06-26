@@ -294,6 +294,8 @@ namespace vulpes {
 		// Frees memory in region specified (i.e frees/destroys a suballocation)
 		void Free(const VkMappedMemoryRange* memory_to_free);
 
+		VkDeviceSize LargestAvailRegion() const noexcept;
+
 		suballocation_iterator_t begin();
 		suballocation_iterator_t end();
 
@@ -323,28 +325,37 @@ namespace vulpes {
 		VkDeviceMemory memory;
 
 		// given a free suballocation, this method merges it with the one immediately after it in the list
-		// the second item must also be free: this is a method used to collect disparate regions together.
+		// the second item must also be free: this is a method used to pool smaller adjacent regions together.
+		// (which reduces fragmentation and increases the max available size)
 		void mergeFreeWithNext(const suballocationList::iterator& item_to_merge);
 
 		// releases given suballocation, and then merges it with any adjacent blocks if possible.
 		void freeSuballocation(const suballocationList::iterator& item_to_free);
 
-		// given a free suballocation, place it in the correct location of our suballocation list.
+		// given a free suballocation, place it in the correct location of our suballocation list (based on avail size)
 		void insertFreeSuballocation(const suballocationList::iterator& item_to_insert);
 
 		// given a free suballocation, remove it from the list (if possible)
 		void removeFreeSuballocation(const suballocationList::iterator& item_to_remove);
-
 
 		// Suballocations sorted by available size, only in this vector
 		// if available size is greater than a threshold we set shortly.
 		std::vector<suballocationList::iterator> availSuballocations;
 	};
 
-	struct AllocationCollection {
-		std::set<Allocation*> allocations;
+	typedef std::vector<Allocation*>::iterator allocation_iterator_t;
+	typedef std::vector<Allocation*>::const_iterator const_allocation_iterator_t;
 
+	struct AllocationCollection {
+		std::vector<Allocation*> allocations;
+
+		AllocationCollection() = default;
 		AllocationCollection(Allocator* allocator);
+
+		~AllocationCollection();
+
+		Allocation* operator[](const size_t& idx);
+		const Allocation* operator[](const size_t& idx) const;
 
 		bool Empty() const;
 
@@ -374,6 +385,8 @@ namespace vulpes {
 		uint32_t GetMemoryHeapCount() const noexcept;
 		uint32_t GetMemoryTypeCount() const noexcept;
 
+		const VkDevice& DeviceHandle() const noexcept;
+
 		void AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx);
 
 		void FreeMemory(const VkMappedMemoryRange * memory_to_free);
@@ -387,7 +400,10 @@ namespace vulpes {
 		VkResult allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
 		VkResult allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
 
-		std::array<AllocationCollection, vkMaxMemoryTypes> allocations;
+		// called from "FreeMemory" if memory to free isn't found in the allocation vectors for any of our active memory types.
+		bool freePrivateMemory(const VkMappedMemoryRange* memory_to_free);
+
+		std::array<AllocationCollection*, vkMaxMemoryTypes> allocations;
 		std::array<bool, vkMaxMemoryTypes> emptyAllocations;
 
 		std::array<privateSuballocation, vkMaxMemoryTypes> privateAllocations;
