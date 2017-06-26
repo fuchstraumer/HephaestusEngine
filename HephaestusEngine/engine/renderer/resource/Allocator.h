@@ -6,6 +6,19 @@
 #include "../ForwardDecl.h"
 #include "../NonCopyable.h"
 
+/*
+	
+	TODO:
+	- Thread safety: GPU-Open uses mutexes. Would using/specializing std::atomic be possible?
+	- Further dividing allocation among three size pools, and then still dividing among type in those pools
+	- Measure costliness of Validate(), possibly use return codes to fix errors when possible.
+	- Some kind of fragmentation check/routine: at least a check to make sure it isn't happening
+	- Possibly use above to remove MinSuballocationSizeToRegister, instead shuffling dest ranges up/down
+	  the needed amount to avoid gaps or fragmentation
+	- in turn, will buffer-image granularity + alignment increase fragmentation? Couldn't find data on this.
+
+*/
+
 namespace vulpes {
 
 	/*
@@ -13,6 +26,25 @@ namespace vulpes {
 		Constants and enums used by allocation system
 	
 	*/
+
+
+	/*
+		This sets the calling/usage of the memory validation routine.
+		This can be costly, but it also returns the error present
+		and could be used  (in some cases) to fix the error instead 
+		of reporting a likely critical failure
+	*/
+
+#ifndef NDEBUG
+	constexpr bool VALIDATE_MEMORY = true;
+#else 
+	constexpr bool VALIDATE_MEMORY = false;
+#endif // !NDEBUG
+
+	// below was removed until i verify it's needed and if other options are possible.
+	// if true, mutexes are used to protect allocation from threading issues.
+	// different threads can allocate/request from different types of memory, but not same type.
+	// constexpr bool THREAD_SAFE_ALLOCATIONS = true;
 
 	constexpr static size_t vkMaxMemoryTypes = 32;
 	// mininum size of suballoction objects to bother registering in our allocation's list's
@@ -31,13 +63,6 @@ namespace vulpes {
 		ImageOptimal,
 	};
 
-	enum class MemoryUsage : uint8_t {
-		GPU_ONLY,
-		CPU_ONLY, // staging buffers, usually
-		CPU_TO_GPU, // dynamic objects
-		GPU_TO_CPU, // query/compute return data
-	};
-
 	enum class ValidationCode : uint8_t {
 		VALIDATION_PASSED = 0,
 		NULL_MEMORY_HANDLE, // allocation's memory handle is invalid
@@ -50,6 +75,41 @@ namespace vulpes {
 		FINAL_SIZE_MISMATCH, // calculated offset as sum of all suballoc sizes is not equal to allocations total size
 		FINAL_FREE_SIZE_MISMATCH, // calculated total available size doesn't match stored available size
 	};
+
+	static std::ostream& operator<<(std::ostream& os, const ValidationCode& code) {
+		switch (code) {
+		case ValidationCode::NULL_MEMORY_HANDLE:
+			os << "Null memory handle.";
+			break;
+		case ValidationCode::ZERO_MEMORY_SIZE:
+			os << "Zero memory size.";
+			break;
+		case ValidationCode::INCORRECT_SUBALLOC_OFFSET:
+			os << "Incorrect suballocation offset.";
+			break;
+		case ValidationCode::NEED_MERGE_SUBALLOCS:
+			os << "Adjacent free suballocations not merged.";
+			break;
+		case ValidationCode::FREE_SUBALLOC_COUNT_MISMATCH:
+			os << "Mismatch between counted and caculated quantity of free suballocations.";
+			break;
+		case ValidationCode::USED_SUBALLOC_IN_FREE_LIST:
+			os << "Used suballocation in free/available suballocation list.";
+			break;
+		case ValidationCode::FREE_SUBALLOC_SORT_INCORRECT:
+			os << "Sorting of available suballocations not correct.";
+			break;
+		case ValidationCode::FINAL_SIZE_MISMATCH:
+			os << "Declared total size of allocation doesn't match calculated total size.";
+			break;
+		case ValidationCode::FINAL_FREE_SIZE_MISMATCH:
+			os << "Declared total free size doesn't match caculated total free size.";
+			break;
+		default:
+			break;
+		}
+		return os;
+	}
 
 	/*
 	
@@ -106,6 +166,15 @@ namespace vulpes {
 		}
 	}
 
+	constexpr static inline uint32_t countBitsSet(const uint32_t& val) {
+		uint32_t count = val - ((val >> 1) & 0x55555555);
+		count = ((count >> 2) & 0x33333333) + (count & 0x33333333);
+		count = ((count >> 4) + count) & 0x0F0F0F0F;
+		count = ((count >> 8) + count) & 0x00FF00FF;
+		count = ((count >> 16) + count) & 0x0000FFFF;
+		return count;
+	}
+
 
 	/*
 	
@@ -114,11 +183,13 @@ namespace vulpes {
 	*/
 
 	struct AllocationDetails {
+		// Defaults to false. If true, no new allocations are created beyond
+		// the set created upon initilization of the allocator system.
+		static VkBool32 noNewAllocations;
+
 		// true if whatever allocation this belongs to should be in its own device memory object
 		VkBool32 privateMemory;
-		// when using this, don't set flags. when using flags, don't use this.
-		MemoryUsage usage;
-		// leave to 0 if using "usage" instead
+
 		VkMemoryPropertyFlags requiredFlags;
 		// acts as additional flags over above.
 		VkMemoryPropertyFlags preferredFlags;
@@ -178,6 +249,10 @@ namespace vulpes {
 	
 	*/
 
+	typedef std::vector<suballocationList::iterator>::iterator avail_suballocation_iterator_t;
+	typedef std::vector<suballocationList::iterator>::const_iterator const_avail_suballocation_iterator_t;
+	typedef suballocationList::iterator suballocation_iterator_t;
+	typedef suballocationList::const_iterator const_suballocation_iterator_t;
 
 	/*
 		Allocation class contains singular VkDeviceMemory object.
@@ -202,11 +277,6 @@ namespace vulpes {
 		VkDeviceSize AvailableMemory() const noexcept;
 		const VkDeviceMemory& Memory() const noexcept;
 
-		VkDeviceSize Size;
-		
-		suballocationList Suballocations;
-		Allocator* allocator;
-
 		// Verifies integrity of memory by checking all contained structs/objects.
 		ValidationCode Validate() const;
 
@@ -214,7 +284,7 @@ namespace vulpes {
 
 		// Verifies that requested suballocation can be added to this object, and sets dest_offset to reflect offset of this now-inserted suballocation.
 		bool VerifySuballocation(const VkDeviceSize& buffer_image_granularity, const VkDeviceSize& allocation_size, const VkDeviceSize& allocation_alignment,
- SuballocationType allocation_type, const suballocationList::const_iterator & dest_suballocation_location, VkDeviceSize* dest_offset) const;
+			SuballocationType allocation_type, const suballocationList::const_iterator & dest_suballocation_location, VkDeviceSize* dest_offset) const;
 
 		bool Empty() const;
 
@@ -223,6 +293,28 @@ namespace vulpes {
 
 		// Frees memory in region specified (i.e frees/destroys a suballocation)
 		void Free(const VkMappedMemoryRange* memory_to_free);
+
+		suballocation_iterator_t begin();
+		suballocation_iterator_t end();
+
+		const_suballocation_iterator_t begin() const;
+		const_suballocation_iterator_t end() const;
+
+		const_suballocation_iterator_t cbegin() const;
+		const_suballocation_iterator_t cend() const;
+
+		avail_suballocation_iterator_t avail_begin();
+		avail_suballocation_iterator_t avail_end();
+
+		const_avail_suballocation_iterator_t avail_begin() const;
+		const_avail_suballocation_iterator_t avail_end() const;
+
+		const_avail_suballocation_iterator_t avail_cbegin() const;
+		const_avail_suballocation_iterator_t avail_cend() const;
+
+		VkDeviceSize Size;
+		suballocationList Suballocations;
+		Allocator* allocator;
 
 	protected:
 
@@ -273,7 +365,7 @@ namespace vulpes {
 	class Allocator : public NonMovable {
 	public:
 
-		Allocator();
+		Allocator(const Device* parent_dvc);
 		~Allocator();
 
 		VkDeviceSize GetPreferredBlockSize(const uint32_t& memory_type_idx) const noexcept;
@@ -284,20 +376,21 @@ namespace vulpes {
 
 		void AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx);
 
-		void FreeMemory(VkMappedMemoryRange* memory_to_free);
+		void FreeMemory(const VkMappedMemoryRange * memory_to_free);
 
 	private:
 
-		void allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
+		// Won't throw: but can return invalid indices. Make sure to handle this.
+		uint32_t findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationDetails& details) const noexcept;
 
-		void allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
+		// These allocation methods return VkResult's so that we can try different parameters (based partially on return code) in main allocation method.
+		VkResult allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
+		VkResult allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
 
 		std::array<AllocationCollection, vkMaxMemoryTypes> allocations;
 		std::array<bool, vkMaxMemoryTypes> emptyAllocations;
-		std::array<std::mutex, vkMaxMemoryTypes> allocationMutexes;
 
 		std::array<privateSuballocation, vkMaxMemoryTypes> privateAllocations;
-		std::array<std::mutex, vkMaxMemoryTypes> privateAllocationMutexes;
 
 		/*
 		These maps tie an objects handle to its mapped memory range, so we
@@ -305,9 +398,7 @@ namespace vulpes {
 		the objects memory.
 		*/
 		std::unordered_map<VkBuffer, VkMappedMemoryRange> bufferToMemoryMap;
-		std::array<std::mutex, vkMaxMemoryTypes> buffToMemMapMutexes;
 		std::unordered_map<VkImage, VkMappedMemoryRange> imageToMemoryMap;
-		std::array<std::mutex, vkMaxMemoryTypes> imToMemMapMutexes;
 
 		const Device* parent;
 

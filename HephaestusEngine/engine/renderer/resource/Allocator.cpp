@@ -5,6 +5,8 @@
 
 namespace vulpes {
 
+	VkBool32 AllocationDetails::noNewAllocations = false;
+
 	// padding to inject at end of allocations ot test allocation system
 	static constexpr size_t DEBUG_PADDING = 0;
 
@@ -301,6 +303,54 @@ namespace vulpes {
 		}
 	}
 
+	suballocation_iterator_t Allocation::begin() {
+		return Suballocations.begin();
+	}
+
+	suballocation_iterator_t Allocation::end() {
+		return Suballocations.end();
+	}
+
+	const_suballocation_iterator_t Allocation::begin() const {
+		return Suballocations.begin();
+	}
+
+	const_suballocation_iterator_t Allocation::end() const {
+		return Suballocations.end();
+	}
+
+	const_suballocation_iterator_t Allocation::cbegin() const {
+		return Suballocations.cbegin();
+	}
+
+	const_suballocation_iterator_t Allocation::cend() const {
+		return Suballocations.cend();
+	}
+
+	avail_suballocation_iterator_t Allocation::avail_begin() {
+		return availSuballocations.begin();
+	}
+
+	avail_suballocation_iterator_t Allocation::avail_end() {
+		return availSuballocations.end();
+	}
+
+	const_avail_suballocation_iterator_t Allocation::avail_begin() const {
+		return availSuballocations.begin();
+	}
+
+	const_avail_suballocation_iterator_t Allocation::avail_end() const {
+		return availSuballocations.end();;
+	}
+
+	const_avail_suballocation_iterator_t Allocation::avail_cbegin() const {
+		return availSuballocations.cbegin();
+	}
+
+	const_avail_suballocation_iterator_t Allocation::avail_cend() const {
+		return availSuballocations.cend();;
+	}
+
 	void Allocation::mergeFreeWithNext(const suballocationList::iterator & item_to_merge) {
 		auto next_iter = item_to_merge;
 		++next_iter;
@@ -409,7 +459,74 @@ namespace vulpes {
 		return (heapSize <= SmallHeapMaxSize) ? preferredSmallHeapBlockSize : preferredLargeHeapBlockSize;
 	}
 
-	void Allocator::allocateMemoryType(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const uint32_t & memory_type_idx, const SuballocationType & type, VkMappedMemoryRange * dest_memory_range) {
+	VkDeviceSize Allocator::GetBufferImageGranularity() const noexcept {
+		return deviceProperties.limits.bufferImageGranularity;
+	}
+
+	uint32_t Allocator::GetMemoryHeapCount() const noexcept {
+		return deviceMemoryProperties.memoryHeapCount;
+	}
+
+	uint32_t Allocator::GetMemoryTypeCount() const noexcept {
+		return deviceMemoryProperties.memoryTypeCount;
+	}
+
+	void Allocator::AllocateMemory(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const SuballocationType & suballoc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * dest_memory_type_idx) {
+		
+		// find memory type (i.e idx) required for this allocation
+		uint32_t memory_type_idx = findMemoryTypeIdx(memory_reqs, alloc_details);
+		if (memory_type_idx != std::numeric_limits<uint32_t>::max()) {
+			allocateMemoryType(memory_reqs, alloc_details, memory_type_idx, suballoc_type, dest_memory_range);
+		}
+	}
+
+	void Allocator::FreeMemory(const VkMappedMemoryRange * memory_to_free) {
+		
+		bool found = false; // searching for given memory range.
+		for (uint32_t type_idx = 0; type_idx = GetMemoryTypeCount(); ++type_idx) {
+
+		}
+	}
+
+	uint32_t Allocator::findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationDetails & details) const noexcept {
+		auto req_flags = details.requiredFlags;
+		auto preferred_flags = details.preferredFlags;
+		if (req_flags == 0) {
+			assert(preferred_flags != VkMemoryPropertyFlagBits(0));
+			req_flags = preferred_flags;
+		}
+
+		uint32_t min_cost = std::numeric_limits<uint32_t>::max();
+		uint32_t result_idx = std::numeric_limits<uint32_t>::max();
+		// preferred_flags, if not zero, must be a subset of req_flags
+		for (uint32_t type_idx = 0, memory_type_bit = 1; type_idx < GetMemoryTypeCount(); ++type_idx) {
+			// memory type of idx is acceptable according to mem_reqs
+			if ((memory_type_bit & mem_reqs.memoryTypeBits) != 0) {
+				const VkMemoryPropertyFlags& curr_flags = deviceMemoryProperties.memoryTypes[type_idx].propertyFlags;
+				// current type contains required flags.
+				if ((req_flags & curr_flags) == 0) {
+					// calculate the cost of the memory type as the number of bits from preferred_flags
+					// not present in current type at type_idx.
+					uint32_t cost = countBitsSet(preferred_flags & ~req_flags);
+					if (cost < min_cost) {
+						result_idx = type_idx;
+						// ideal memory type, return it.
+						if (cost == 0) {
+							return result_idx;
+						}
+						min_cost = cost;
+					}
+				}
+
+			}
+		}
+		// didn't find zero "cost" idx, but return it.
+		// this means that any methods that call this particular type finding method should handle the "exception"
+		// of invalid indices themselves.
+		return result_idx;
+	}
+
+	VkResult Allocator::allocateMemoryType(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const uint32_t & memory_type_idx, const SuballocationType & type, VkMappedMemoryRange * dest_memory_range) {
 		*dest_memory_range = VkMappedMemoryRange{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, nullptr, VK_NULL_HANDLE, 0, memory_reqs.size };
 		
 		const VkDeviceSize preferredBlockSize = GetPreferredBlockSize(memory_type_idx);
@@ -417,11 +534,15 @@ namespace vulpes {
 		const bool private_memory = alloc_details.privateMemory || memory_reqs.size > preferredBlockSize / 2;
 
 		if (private_memory) {
-
+			if (AllocationDetails::noNewAllocations) {
+				return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+			}
+			else {
+				return allocatePrivateMemory(memory_reqs.size, type, memory_type_idx, dest_memory_range);
+			}
 		}
 		else {
-			mutexWrapper lock(allocationMutexes[memory_type_idx]);
-			const auto& alloc_collection = allocations[memory_type_idx];
+			auto& alloc_collection = allocations[memory_type_idx];
 
 			// first, check existing allocations
 			for (auto iter = alloc_collection.allocations.cbegin(); iter != alloc_collection.allocations.cend(); ++iter) {
@@ -435,18 +556,70 @@ namespace vulpes {
 					alloc->Allocate(request, type, memory_reqs.size);
 					dest_memory_range->memory = alloc->Memory();
 					dest_memory_range->offset = request.offset;
+					if (VALIDATE_MEMORY) {
+						ValidationCode result_code = alloc->Validate();
+						if (result_code != ValidationCode::VALIDATION_PASSED) {
+							LOG(ERROR) << "Validation of new allocation failed with reason: " << result_code;
+						}
+					}
+					return VK_SUCCESS;
 				}
 			}
 
 			// search didn't pass: create new allocation.
-			if (!alloc_details.privateMemory) {
-				LOG(WARNING) << "All available allocations full or invalid, and requested allocation not allowed to be private!";
-				return;
+			if (AllocationDetails::noNewAllocations) {
+				LOG(ERROR) << "All available allocations full or invalid, and requested allocation not allowed to be private!";
+				return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 			}
 			else {
 				VkMemoryAllocateInfo alloc_info{ VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, nullptr, preferredBlockSize, memory_type_idx };
 				VkDeviceMemory new_memory = VK_NULL_HANDLE;
 				VkResult result = vkAllocateMemory(parent->vkHandle(), &alloc_info, nullptr, &new_memory);
+				assert(result != VK_ERROR_OUT_OF_DEVICE_MEMORY); // make sure we're not over-allocating and using all device memory.
+				if (result != VK_SUCCESS) {
+					// halve allocation size
+					alloc_info.allocationSize /= 2;
+					if (alloc_info.allocationSize >= memory_reqs.size) {
+						result = vkAllocateMemory(parent->vkHandle(), &alloc_info, nullptr, &new_memory);
+						if (result != VK_SUCCESS) {
+							alloc_info.allocationSize /= 2;
+							if (alloc_info.allocationSize >= memory_reqs.size) {
+								result = vkAllocateMemory(parent->vkHandle(), &alloc_info, nullptr, &new_memory);
+							}
+						}
+					}
+				}
+				// if still not allocated, try allocating private memory (if allowed)
+				if (result != VK_SUCCESS && alloc_details.privateMemory) {
+					result = allocatePrivateMemory(memory_reqs.size, type, memory_type_idx, dest_memory_range);
+					if (result == VK_SUCCESS) {
+						LOG(INFO) << "Allocation of memory succeeded";
+						return VK_SUCCESS;
+					}
+					else {
+						LOG(WARNING) << "Allocation of memory failed, after multiple attempts.";
+						return result;
+					}
+				}
+
+				Allocation* alloc = new Allocation(this);
+				// allocation size is more up-to-date than mem reqs size
+				alloc->Init(new_memory, alloc_info.allocationSize);
+				alloc_collection.allocations.insert(alloc);
+
+				SuballocationRequest request{ *alloc->avail_begin(), 0 };
+				alloc->Allocate(request, type, memory_reqs.size);
+				dest_memory_range->memory = new_memory;
+				dest_memory_range->offset = request.offset;
+				if (VALIDATE_MEMORY) {
+					ValidationCode result_code = alloc->Validate();
+					if (result_code != ValidationCode::VALIDATION_PASSED) {
+						LOG(ERROR) << "Validation of new allocation failed with reason: " << result_code;
+					}
+				}
+
+				LOG(INFO) << "Created new allocation object w/ size of " << std::to_string(alloc_info.allocationSize);
+				return VK_SUCCESS;
 			}
 		}
 
