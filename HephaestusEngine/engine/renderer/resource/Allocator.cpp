@@ -6,7 +6,7 @@
 
 namespace vulpes {
 
-	VkBool32 AllocationDetails::noNewAllocations = false;
+	VkBool32 AllocationRequirements::noNewAllocations = false;
 
 	// padding to inject at end of allocations ot test allocation system
 	static constexpr size_t DEBUG_PADDING = 0;
@@ -545,7 +545,7 @@ namespace vulpes {
 		return parent->vkHandle();
 	}
 
-	void Allocator::AllocateMemory(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const SuballocationType & suballoc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * dest_memory_type_idx) {
+	void Allocator::AllocateMemory(const VkMemoryRequirements & memory_reqs, const AllocationRequirements & alloc_details, const SuballocationType & suballoc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * dest_memory_type_idx) {
 		
 		// find memory type (i.e idx) required for this allocation
 		uint32_t memory_type_idx = findMemoryTypeIdx(memory_reqs, alloc_details);
@@ -606,7 +606,7 @@ namespace vulpes {
 		return;
 	}
 
-	uint32_t Allocator::findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationDetails & details) const noexcept {
+	uint32_t Allocator::findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationRequirements & details) const noexcept {
 		auto req_flags = details.requiredFlags;
 		auto preferred_flags = details.preferredFlags;
 		if (req_flags == 0) {
@@ -644,7 +644,7 @@ namespace vulpes {
 		return result_idx;
 	}
 
-	VkResult Allocator::allocateMemoryType(const VkMemoryRequirements & memory_reqs, const AllocationDetails & alloc_details, const uint32_t & memory_type_idx, const SuballocationType & type, VkMappedMemoryRange * dest_memory_range) {
+	VkResult Allocator::allocateMemoryType(const VkMemoryRequirements & memory_reqs, const AllocationRequirements & alloc_details, const uint32_t & memory_type_idx, const SuballocationType & type, VkMappedMemoryRange * dest_memory_range) {
 		*dest_memory_range = VkMappedMemoryRange{ VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE, nullptr, VK_NULL_HANDLE, 0, memory_reqs.size };
 		
 		const VkDeviceSize preferredBlockSize = GetPreferredBlockSize(memory_type_idx);
@@ -652,7 +652,7 @@ namespace vulpes {
 		const bool private_memory = alloc_details.privateMemory || memory_reqs.size > preferredBlockSize / 2;
 
 		if (private_memory) {
-			if (AllocationDetails::noNewAllocations) {
+			if (AllocationRequirements::noNewAllocations) {
 				return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 			}
 			else {
@@ -685,7 +685,7 @@ namespace vulpes {
 			}
 
 			// search didn't pass: create new allocation.
-			if (AllocationDetails::noNewAllocations) {
+			if (AllocationRequirements::noNewAllocations) {
 				LOG(ERROR) << "All available allocations full or invalid, and requested allocation not allowed to be private!";
 				return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 			}
@@ -740,6 +740,126 @@ namespace vulpes {
 				return VK_SUCCESS;
 			}
 		}
+
+	}
+
+	VkResult Allocator::AllocateForImage(VkImage & image_handle, const AllocationRequirements & details, const SuballocationType & alloc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * memory_type_idx) {
+
+		// Get memory info.
+		VkMemoryRequirements memreqs;
+		vkGetImageMemoryRequirements(parent->vkHandle(), image_handle, &memreqs);
+
+		return AllocateMemory(memreqs, details, alloc_type, dest_memory_range, memory_type_idx);
+	}
+
+	VkResult Allocator::AllocateForBuffer(VkBuffer & buffer_handle, const AllocationRequirements & details, const SuballocationType & alloc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * memory_type_idx) {
+		VkMemoryRequirements memreqs;
+		vkGetBufferMemoryRequirements(parent->vkHandle(), buffer_handle, &memreqs);
+		return AllocateMemory(memreqs, details, alloc_type, dest_memory_range, memory_type_idx);
+	}
+
+	VkResult Allocator::CreateImage(VkImage * image_handle, VkMappedMemoryRange * dest_memory_range, const VkImageCreateInfo * img_create_info, const AllocationRequirements & alloc_reqs) {
+		VkMappedMemoryRange mem_range{};
+
+		{
+			// create image object first.
+			VkResult result = vkCreateImage(parent->vkHandle(), img_create_info, nullptr, image_handle);
+			VkAssert(result);
+		}
+
+		{
+			// allocate memory.
+			uint32_t type_idx = 0;
+			
+			SuballocationType suballoc_type = img_create_info->tiling == VK_IMAGE_TILING_OPTIMAL ? SuballocationType::ImageOptimal : SuballocationType::ImageLinear;
+			VkResult result = AllocateForImage(*image_handle, alloc_reqs, suballoc_type, &mem_range, &type_idx);
+			VkAssert(result);
+		}
+		
+		{
+			// bind memory to image
+			if (dest_memory_range != nullptr) {
+				// update memory range
+				*dest_memory_range = mem_range;
+			}
+			VkResult result = vkBindImageMemory(parent->vkHandle(), *image_handle, mem_range.memory, mem_range.offset);
+			VkAssert(result);
+
+			// add to map
+			imageToMemoryMap.insert(std::make_pair(*image_handle, mem_range));
+			return VK_SUCCESS;
+		}
+
+		// shouldn't reach here: temporary while add in additional paths to above code
+		return VK_ERROR_VALIDATION_FAILED_EXT;
+	}
+
+	VkResult Allocator::CreateBuffer(VkBuffer * buffer_handle, VkMappedMemoryRange * dest_memory_range, const VkBufferCreateInfo * buffer_create_info, const AllocationRequirements & alloc_reqs) {
+
+		// create buffer object first
+		VkResult result = vkCreateBuffer(parent->vkHandle(), buffer_create_info, nullptr, buffer_handle);
+		VkAssert(result);
+
+		// allocate memory
+		uint32_t type_idx = 0;
+		VkMappedMemoryRange mem_range{};
+		result = AllocateForBuffer(*buffer_handle, alloc_reqs, SuballocationType::Buffer, &mem_range, &type_idx);
+		VkAssert(result);
+
+		// bind memory
+		if (dest_memory_range != nullptr) {
+			*dest_memory_range = mem_range;
+		}
+		result = vkBindBufferMemory(parent->vkHandle(), *buffer_handle, mem_range.memory, mem_range.offset);
+		VkAssert(result);
+
+		return VK_SUCCESS;
+	}
+
+	void Allocator::DestroyImage(const VkImage & image_handle) {
+		if (image_handle == VK_NULL_HANDLE) {
+			LOG(ERROR) << "Tried to destroy null image object.";
+			throw std::runtime_error("Cannot destroy null image objects.");
+		}
+
+		VkMappedMemoryRange mem_range{};
+		auto search = imageToMemoryMap.find(image_handle);
+		if (search == imageToMemoryMap.end()) {
+			LOG(WARNING) << "Couldn't find image to delete in allocator's image-memory map.";
+			return;
+		}
+
+		// get memory range to erase
+		mem_range = search->second;
+
+		// remove handle from map.
+		imageToMemoryMap.erase(image_handle);
+
+		// delete handle.
+		vkDestroyImage(parent->vkHandle(), image_handle, nullptr);
+
+		// Free memory previously tied to handle.
+		FreeMemory(&mem_range);
+	}
+
+	void Allocator::DestroyBuffer(const VkBuffer & buffer_handle) {
+		if (buffer_handle == VK_NULL_HANDLE) {
+			LOG(ERROR) << "Tried to destroy null buffer object.";
+			throw std::runtime_error("Cannot destroy null buffer objects.");
+		}
+
+		VkMappedMemoryRange range_to_free{};
+		auto search = bufferToMemoryMap.find(buffer_handle);
+		if (search == bufferToMemoryMap.end()) {
+			LOG(WARNING) << "Couldn't find buffer/buffer's memory in allocator's buffer-memory map.";
+			return;
+		}
+
+		range_to_free = search->second;
+		bufferToMemoryMap.erase(search);
+
+		vkDestroyBuffer(parent->vkHandle(), buffer_handle, nullptr);
+		FreeMemory(&range_to_free);
 
 	}
 

@@ -182,7 +182,7 @@ namespace vulpes {
 		
 	*/
 
-	struct AllocationDetails {
+	struct AllocationRequirements {
 		// Defaults to false. If true, no new allocations are created beyond
 		// the set created upon initilization of the allocator system.
 		static VkBool32 noNewAllocations;
@@ -387,17 +387,45 @@ namespace vulpes {
 
 		const VkDevice& DeviceHandle() const noexcept;
 
-		void AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx);
+		VkResult AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationRequirements& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx);
 
 		void FreeMemory(const VkMappedMemoryRange * memory_to_free);
+
+		// Uses given handle to search the image map for the handle, returning its memory range object
+		VkMappedMemoryRange GetMemoryRange(const VkImage& image) const;
+		VkMappedMemoryRange GetMemoryRange(const VkBuffer& buffer) const;
+
+		//  Maps given memory range to given void** destination
+		VkResult MapMemoryRange(const VkMappedMemoryRange* range, void** dest);
+
+		// Unmaps given range
+		VkResult UnmapMemoryRange(const VkMappedMemoryRange* range);
+
+		// Allocates memory for an image, using given handle to get requirements. Allocation information is written to dest_memory_range, so it can then be used to bind the resources together.
+		VkResult AllocateForImage(VkImage& image_handle, const AllocationRequirements& details, const SuballocationType& alloc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* memory_type_idx);
+
+		// Much like AllocateForImage: uses given handle to get requirements, writes details of allocation ot given range, making memory valid for binding.
+		VkResult AllocateForBuffer(VkBuffer& buffer_handle, const AllocationRequirements& details, const SuballocationType& alloc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* memory_type_idx);
+
+		// Creates an image object using given info. When finished, given handle is a valid image object (so long as the result value is VkSuccess). Also writes details to 
+		// dest_memory_range, but this method will try to bind the memory and image together too
+		VkResult CreateImage(VkImage* image_handle, VkMappedMemoryRange* dest_memory_range, const VkImageCreateInfo* img_create_info, const AllocationRequirements& alloc_reqs);
+
+		// Creates a buffer object using given info. Given handle is valid for use if method returns VK_SUCCESS, and memory will also have been bound to the object. Details of the 
+		// memory used for this particular object are also written to dest_memory_range, however.
+		VkResult CreateBuffer(VkBuffer* buffer_handle, VkMappedMemoryRange* dest_memory_range, const VkBufferCreateInfo* buffer_create_info, const AllocationRequirements& alloc_reqs);
+
+		// Destroys image/buffer specified by given handle.
+		void DestroyImage(const VkImage& image_handle);
+		void DestroyBuffer(const VkBuffer& buffer_handle);
 
 	private:
 
 		// Won't throw: but can return invalid indices. Make sure to handle this.
-		uint32_t findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationDetails& details) const noexcept;
+		uint32_t findMemoryTypeIdx(const VkMemoryRequirements& mem_reqs, const AllocationRequirements& details) const noexcept;
 
 		// These allocation methods return VkResult's so that we can try different parameters (based partially on return code) in main allocation method.
-		VkResult allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationDetails& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
+		VkResult allocateMemoryType(const VkMemoryRequirements& memory_reqs, const AllocationRequirements& alloc_details, const uint32_t& memory_type_idx, const SuballocationType& type, VkMappedMemoryRange* dest_memory_range);
 		VkResult allocatePrivateMemory(const VkDeviceSize& size, const SuballocationType& type, const uint32_t& memory_type_idx, VkMappedMemoryRange* memory_range);
 
 		// called from "FreeMemory" if memory to free isn't found in the allocation vectors for any of our active memory types.
