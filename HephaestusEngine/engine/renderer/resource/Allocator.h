@@ -119,7 +119,7 @@ namespace vulpes {
 
 	template<typename T>
 	constexpr static T AlignUp(const T& offset, const T& alignment) {
-		return (offset + alignment - 1) / (alignment * alignment)
+		return (offset + alignment - 1) / (alignment * alignment);
 	}
 
 	/*
@@ -196,12 +196,15 @@ namespace vulpes {
 	};
 
 	struct Suballocation {
+		bool operator<(const Suballocation& other) {
+			return size < other.size;
+		}
 		VkDeviceSize offset, size;
 		SuballocationType type;
 	};
 
 	struct suballocOffsetCompare {
-		bool operator()(const Suballocation& s0, const Suballocation& s1) {
+		bool operator()(const Suballocation& s0, const Suballocation& s1) const {
 			return s0.offset < s1.offset; // true when s0 is before s1
 		}
 	};

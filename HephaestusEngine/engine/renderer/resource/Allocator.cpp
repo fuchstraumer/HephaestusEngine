@@ -146,8 +146,16 @@ namespace vulpes {
 		const size_t numFreeSuballocs = availSuballocations.size();
 
 		// use lower_bound to find location of avail suballocation
-		auto avail_iter = std::lower_bound(availSuballocations.data(), availSuballocations.data() + numFreeSuballocs, allocation_size, suballocIterCompare());
-		for (size_t idx = avail_iter - availSuballocations.data(); idx < numFreeSuballocs; ++idx) {
+
+		size_t avail_idx;
+		for (auto iter = availSuballocations.cbegin(); iter != availSuballocations.cend(); ++iter) {
+			if ((*iter)->size < allocation_size) {
+				avail_idx = iter - availSuballocations.cbegin();
+				break;
+			}
+		}
+
+		for (size_t idx = avail_idx; idx < numFreeSuballocs; ++idx) {
 			VkDeviceSize offset = 0;
 			const auto iter = availSuballocations[idx];
 			// Check allocation for validity
@@ -172,7 +180,7 @@ namespace vulpes {
 		assert(suballoc.type != SuballocationType::Free);
 
 		if (suballoc.size < allocation_size) {
-			return;
+			return false;
 		}
 
 		*dest_offset = suballoc.offset;
@@ -299,10 +307,12 @@ namespace vulpes {
 			}
 		}
 		else {
-			for (auto iter = Suballocations.rbegin(); iter != Suballocations.rend(); ++iter) {
+			auto iter = Suballocations.end();
+			--iter;
+			for (; iter != Suballocations.begin(); --iter) {
 				auto& suballoc = *iter;
 				if (suballoc.offset == memory_to_free->offset) {
-					freeSuballocation((iter + 1).base());
+					freeSuballocation(iter);
 					return;
 				}
 			}
@@ -545,12 +555,12 @@ namespace vulpes {
 		return parent->vkHandle();
 	}
 
-	void Allocator::AllocateMemory(const VkMemoryRequirements & memory_reqs, const AllocationRequirements & alloc_details, const SuballocationType & suballoc_type, VkMappedMemoryRange * dest_memory_range, uint32_t * dest_memory_type_idx) {
+	VkResult Allocator::AllocateMemory(const VkMemoryRequirements& memory_reqs, const AllocationRequirements& alloc_details, const SuballocationType& suballoc_type, VkMappedMemoryRange* dest_memory_range, uint32_t* dest_memory_type_idx) {
 		
 		// find memory type (i.e idx) required for this allocation
 		uint32_t memory_type_idx = findMemoryTypeIdx(memory_reqs, alloc_details);
 		if (memory_type_idx != std::numeric_limits<uint32_t>::max()) {
-			allocateMemoryType(memory_reqs, alloc_details, memory_type_idx, suballoc_type, dest_memory_range);
+			return allocateMemoryType(memory_reqs, alloc_details, memory_type_idx, suballoc_type, dest_memory_range);
 		}
 	}
 

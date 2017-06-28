@@ -52,7 +52,7 @@ namespace objects {
 
 		~ChunkManager();
 
-		void CreatePipeline(const VkRenderPass& renderpass, const Swapchain* swapchain, const glm::mat4& projection);
+		void CreatePipeline(const VkRenderPass& renderpass, const vulpes::Swapchain* swapchain, const glm::mat4& projection);
 
 		void CreateChunk(const glm::ivec2& grid_position);
 

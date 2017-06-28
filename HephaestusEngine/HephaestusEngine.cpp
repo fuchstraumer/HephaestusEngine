@@ -8,10 +8,6 @@
 #include "common\CommonUtil.h"
 
 // Other includes.
-#include "util\lodeTexture.h"
-#include "rendering\shader.h"
-#include "rendering\camera.h"
-#include "objects\Chunk.h"
 
 int main() {
 	

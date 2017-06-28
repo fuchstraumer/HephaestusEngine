@@ -168,14 +168,14 @@ namespace objects {
 		float_position.z = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 
 		// Set the updated positions in the mesh (most important), and this chunk (good for reference)
-		mesh.position = float_position;
+		mesh->position = float_position;
 		Position = float_position;
 
 	}
 
 	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), blocks(std::move(other.blocks)) {}
 
-	Chunk& Chunk::operator=(Chunk && other) {
+	Chunk& Chunk::operator=(Chunk && other) noexcept {
 		if (this != &other) {
 			this->mesh = std::move(other.mesh);
 			this->terrainBlocks = std::move(other.terrainBlocks);
@@ -346,7 +346,7 @@ namespace objects {
 
 	void Chunk::clear() {
 		// Mesh clear method clears data and calls shrink_to_fit()
-		mesh.cleanup();
+		mesh->cleanup();
 		// First call clear to empty containers
 		terrainBlocks.clear();
 		lightMap.clear();
@@ -367,12 +367,12 @@ namespace objects {
 
 	void Chunk::SetSunlightLevel(const glm::ivec3 & p, uint8_t level){
 		size_t idx = GetBlockIndex(p);
-		lightMap[idx] = SetFront4(lightMap[idx], level);
+		SetFront4(lightMap[idx], level);
 	}
 
 	void Chunk::SetTorchlightLevel(const glm::ivec3 & p, uint8_t level){
 		size_t idx = GetBlockIndex(p);
-		lightMap[idx] = SetBack4(lightMap[idx], level);
+		SetBack4(lightMap[idx], level);
 	}
 
 }

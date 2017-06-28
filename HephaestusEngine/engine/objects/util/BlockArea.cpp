@@ -16,48 +16,56 @@ namespace objects::util {
 	BlockArea & BlockArea::operator+=(const glm::ivec3 & p){
 		Min += p;
 		Max += p;
+		return *this;
 	}
 
 	// Subtracts P from min and max
 	BlockArea & BlockArea::operator-=(const glm::ivec3 & p){
 		Min -= p;
 		Max -= p;
+		return *this;
 	}
 
 	// Multiplies min and max by p
 	BlockArea & BlockArea::operator*=(const glm::ivec3 & p){
 		Min *= p;
 		Max *= p;
+		return *this;
 	}
 
 	// Divides min and max by p
 	BlockArea & BlockArea::operator/=(const glm::ivec3 & p){
 		Min /= p;
 		Max /= p;
+		return *this;
 	}
 
 	// Adds scalar f to vectors min/max
 	BlockArea & BlockArea::operator+=(const float & f){
 		Min += f;
 		Max += f;
+		return *this;
 	}
 
 	// Subtracts scalar f from vectors min/max
 	BlockArea & BlockArea::operator-=(const float & f){
 		Min -= f;
 		Max -= f;
+		return *this;
 	}
 
 	// Multiplies min/max by scalar f
 	BlockArea & BlockArea::operator*=(const float & f){
 		Min *= f;
 		Max *= f;
+		return *this;
 	}
 
 	// Divides min/max by scalar f
 	BlockArea & BlockArea::operator/=(const float & f){
 		Min /= f;
 		Max /= f;
+		return *this;
 	}
 
 	bool BlockArea::operator==(const BlockArea & other) const{
@@ -186,6 +194,7 @@ namespace objects::util {
 
 	Block & BlockManipulator::GetBlockRef(const glm::ivec3 & p){
 		// TODO: insert return statement here
+		return data[GetBlockIndex(p)];
 	}
 
 	void BlockManipulator::SetBlock(const glm::ivec3 & p, const Block & block){

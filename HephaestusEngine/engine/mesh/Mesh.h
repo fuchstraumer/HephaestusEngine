@@ -3,7 +3,7 @@
 #define VULPES_MESH_H
 #include "stdafx.h"
 #include "MeshComponents.h"
-#include "engine/renderer//core//LogicalDevice.h"
+#include "engine/renderer/core/LogicalDevice.h"
 #include "engine/renderer/resource/Buffer.h"
 
 namespace mesh {
@@ -176,9 +176,9 @@ namespace mesh {
 		glm::mat4 get_model_matrix() const;
 		glm::mat4 update_model_matrix();
 
-		void create_buffers(const Device* render_device);
+		void create_buffers(const vulpes::Device* render_device);
 
-		void transfer_to_device(CommandPool* cmd_pool, const VkQueue& queue);
+		void transfer_to_device(vulpes::CommandPool* cmd_pool, const VkQueue& queue);
 		void record_transfer_commands(VkCommandBuffer& transfer_cmd);
 
 		void render(const VkCommandBuffer& cmd) const;
@@ -198,12 +198,13 @@ namespace mesh {
 	protected:
 
 		// Position, normal, UV
-		std::array<std::unique_ptr<Buffer>, 2> vbo;
+		std::array<std::unique_ptr<vulpes::Buffer>, 2> vbo;
 
 		// Indices.
-		std::unique_ptr<Buffer> ebo;
+		std::unique_ptr<vulpes::Buffer> ebo;
+		
 		bool ready = false;
-		const Device* device;
+		const vulpes::Device* device;
 	};
 
 
@@ -296,7 +297,7 @@ namespace mesh {
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
-	inline void Mesh<vertices_type, vertex_type, index_type>::create_buffers(const Device * render_device) {
+	inline void Mesh<vertices_type, vertex_type, index_type>::create_buffers(const vulpes::Device * render_device) {
 		if (ready) {
 			return;
 		}
@@ -305,21 +306,21 @@ namespace mesh {
 
 		VkDeviceSize sz = vertices.PositionsSize();
 
-		vbo[0] = std::move(std::make_unique<Buffer>(device));
+		vbo[0] = std::move(std::make_unique<vulpes::Buffer>(device));
 		vbo[0]->CreateBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, sz);
 
 		sz = vertices.DataSize();
-		vbo[1] = std::move(std::make_unique<Buffer>(device));
+		vbo[1] = std::move(std::make_unique<vulpes::Buffer>(device));
 		vbo[1]->CreateBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, sz);
 
-		ebo = std::move(std::make_unique<Buffer>(device));
+		ebo = std::move(std::make_unique<vulpes::Buffer>(device));
 		ebo->CreateBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indices.size() * sizeof(index_type));
 
 		ready = true;
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
-	inline void Mesh<vertices_type, vertex_type, index_type>::transfer_to_device(CommandPool * cmd_pool, const VkQueue & queue) {
+	inline void Mesh<vertices_type, vertex_type, index_type>::transfer_to_device(vulpes::CommandPool * cmd_pool, const VkQueue & queue) {
 		VkCommandBuffer transfer_cmd = cmd_pool->StartSingleCmdBuffer();
 		record_transfer_commands(transfer_cmd);
 		cmd_pool->EndSingleCmdBuffer(transfer_cmd, queue);

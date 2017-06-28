@@ -41,6 +41,7 @@ namespace objects {
 	class Block {
 	public:
 		// Constructors / operators
+		Block() = default;
 
 		// Constructs a block using a blocktype, optionally supplying parameter data
 		Block(uint8_t block_type, uint8_t parameter = 0, BlockRotation rot = BlockRotation::R0);

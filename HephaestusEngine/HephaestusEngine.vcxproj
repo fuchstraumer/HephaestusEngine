@@ -219,6 +219,7 @@
     <ClInclude Include="objects\Player.h" />
     <ClInclude Include="objects\Region.h" />
     <ClInclude Include="objects\util\Inventory.h" />
+    <ClInclude Include="scenes\BaseScene.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="rendering\Camera.h" />
     <ClInclude Include="util\AABB.h" />
@@ -226,7 +227,6 @@
     <ClInclude Include="ext\include\LodePNG\lodepng.h" />
     <ClInclude Include="util\easylogging++.h" />
     <ClInclude Include="util\lodepng.h" />
-    <ClInclude Include="util\lodeTexture.h" />
     <ClInclude Include="mesh\MeshComponents.h" />
     <ClInclude Include="mesh\Mesh.h" />
     <ClInclude Include="util\Morton.h" />
@@ -251,10 +251,15 @@
     <ClCompile Include="engine\renderer\core\LogicalDevice.cpp" />
     <ClCompile Include="engine\renderer\core\PhysicalDevice.cpp" />
     <ClCompile Include="engine\renderer\gui\imguiWrapper.cpp" />
-    <ClCompile Include="engine\renderer\gui\imgui_lib\extra_fonts\binary_to_compressed_c.cpp" />
-    <ClCompile Include="engine\renderer\gui\imgui_lib\imgui.cpp" />
-    <ClCompile Include="engine\renderer\gui\imgui_lib\imgui_demo.cpp" />
-    <ClCompile Include="engine\renderer\gui\imgui_lib\imgui_draw.cpp" />
+    <ClCompile Include="engine\renderer\gui\imgui_lib\extra_fonts\binary_to_compressed_c.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="engine\renderer\gui\imgui_lib\imgui.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="engine\renderer\gui\imgui_lib\imgui_draw.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="engine\renderer\render\DepthStencil.cpp" />
     <ClCompile Include="engine\renderer\render\Framebuffer.cpp" />
     <ClCompile Include="engine\renderer\render\GraphicsPipeline.cpp" />
@@ -268,31 +273,12 @@
     <ClCompile Include="engine\renderer\resource\ShaderModule.cpp" />
     <ClCompile Include="engine\renderer\resource\Texture.cpp" />
     <ClCompile Include="HephaestusEngine.cpp" />
-    <ClCompile Include="objects\Block.cpp" />
-    <ClCompile Include="objects\ChunkManager.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="objects\Chunk.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="objects\Light.cpp" />
+    <ClCompile Include="scenes\BaseScene.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="rendering\Shader.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="util\easylogging++.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

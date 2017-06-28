@@ -27,7 +27,7 @@ static inline std::vector<T> convertRawData(const std::vector<float>& raw_data) 
 
 	// Like with the min/max of our set, we don't use max of T alone and instead can evaluate
 	// the expression its used with here (finding range of data type), instead of during every iteration
-	__m128 t_ratio = _mm_sub_ps(_mm_set1_ps(static_cast<float>(std::numeric_limits<T>::max()), t_min);
+	__m128 t_ratio = _mm_sub_ps(_mm_set1_ps(static_cast<float>(std::numeric_limits<T>::max()), t_min));
 
 	// Declare result vector and use resize so we can use memory offsets/addresses to store data in it.
 	std::vector<T> result;
@@ -88,12 +88,12 @@ inline int GetBack4(const uint8_t val) {
 }
 
 // Used for setting front 4 bits of given uint8_t to value int (doesn't check to make sure within range)
-inline int SetFront4(uint8_t dest, int val) {
+inline void SetFront4(uint8_t& dest, int val) {
 	dest = (dest & 0xF) | (val << 4);
 }
 
 // Used for setting back 4 bits of given uint8_t
-inline int SetBack4(uint8_t dest, int val) {
+inline void SetBack4(uint8_t& dest, int val) {
 	dest = (dest & 0xF0) | val;
 }
 

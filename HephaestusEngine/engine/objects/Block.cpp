@@ -44,28 +44,28 @@ namespace objects {
 		}
 	}
 
-	Block::Block(uint8_t block_type, uint8_t _param, BlockRotation rot) : type(block_type), param(_param), rotation(rot) {}
+	Block::Block(uint8_t block_type, uint8_t _param, BlockRotation rot) : type(block_type), parameters(_param), rotation(rot) {}
 
-	Block::Block(const Block& other) : type(other.type), param(other.param), rotation(other.rotation) {}
+	Block::Block(const Block& other) : type(other.type), parameters(other.parameters), rotation(other.rotation) {}
 
-	Block::Block(Block&& other) noexcept : type(std::move(other.type)), param(std::move(other.param)), rotation(std::move(other.rotation)) {}
+	Block::Block(Block&& other) noexcept : type(std::move(other.type)), parameters(std::move(other.parameters)), rotation(std::move(other.rotation)) {}
 
 	Block & Block::operator=(const Block & other){
 		type = other.type;
-		param = other.param;
+		parameters = other.parameters;
 		rotation = other.rotation;
 		return *this;
 	}
 
 	Block& Block::operator=(Block && other) noexcept{
 		type = std::move(other.type);
-		param = std::move(other.param);
+		parameters = std::move(other.parameters);
 		rotation = std::move(other.rotation);
 		return *this;
 	}
 
 	bool Block::operator==(const Block & other) const{
-		return (type == other.type) && (param == other.param) && (rotation == other.rotation);
+		return (type == other.type) && (parameters == other.parameters) && (rotation == other.rotation);
 	}
 
 	uint8_t Block::GetType() const{
@@ -81,15 +81,15 @@ namespace objects {
 	}
 
 	uint8_t Block::GetParam() const{
-		return param;
+		return parameters;
 	}
 
 	void Block::SetParam(const uint8_t& new_param) {
-		param = new_param;
+		parameters = new_param;
 	}
 
 	void Block::SetParam(uint8_t && new_param){
-		param = std::move(new_param);
+		parameters = std::move(new_param);
 	}
 
 	BlockRotation Block::GetRotation() const{

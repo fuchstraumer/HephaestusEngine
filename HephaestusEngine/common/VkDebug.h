@@ -3,7 +3,15 @@
 #define VULPES_VK_DEBUG_H
 
 #include "stdafx.h"
-
+	
+// Debug report callback info
+static VkDebugReportCallbackCreateInfoEXT vk_debug_callback_create_info_base{
+	VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
+	nullptr,
+	0,
+	nullptr,
+	nullptr,
+};
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VkBaseDebugCallbackPFN(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t obj, size_t location, int32_t code, const char* layerPrefix, const char* msg, void* userData) {
 
