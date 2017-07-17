@@ -13,23 +13,18 @@ namespace objects {
 		glm::ivec3(0, 0,-1),   // (back)
 	};
 
-	/*
+	static const std::array<glm::vec3, 8> vertices{
+		glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
+		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
+		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
+		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
+		glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
+		glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
+		glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
+		glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f), // Point 7, right upper rear
+	};
 
-		Texture indices array:
-
-		Each block will always use the same UV coordinates: recall that texture coordinates
-		are usually 2D coordinates, (u, v). The only component that will change is the third component:
-		our UV coords are unconventially 3D because our 3rd component is how we select different textures.
-		Instead of binding a different texture for each block, we use a texture array. We index through
-		this array using this 3rd component, like it was the index into a regular ol array or vector.
-
-		Note that even among blocks there is variation in these indices. This is because some blocks have
-		different textures on each face: grass blocks, for example, use the pure grass texture only on
-		the upper face, and actually re-use the dirt texture on their bottom face.
-
-	*/
-
-	static constexpr unsigned int textures[256][6] = {
+	static constexpr size_t textures[24][6] = {
 		// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
 		// Loading order:: Grass_Top, Grass_Sides, dirt, sand, stone, bedrock
 		{ 0,0,0,0,0,0 }, // Air block
@@ -43,111 +38,6 @@ namespace objects {
 		{ 8,8,8,8,8,8 }, // Iron ore
 		{ 9,9,9,9,9,9 }, // Diamond Ore
 	};
-
-	// Build the mesh data for a cube at position XYZ, building the faces specified by each boolean if that boolean is false (false = there isn't another block in this location)
-	void Chunk::createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type) {
-		// Use a std::array since the data isn't modified, rather it's used like a template to build the individual points from
-		// This setup means that the xyz of a given block is actually the center of the block's mesh
-		std::array<glm::vec3, 8> vertices{
-		    glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
-			glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
-			glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
-			glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
-			glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
-			glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
-			glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
-			glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f), // Point 7, right upper rear
-		};
-
-		// Following method for generating lighting data from:
-		// https://github.com/fogleman/Craft/blob/master/src/main.c#L1077
-		std::array<BlockType, 27> neighbors;
-		std::array<float, 27> shades;
-		size_t idx = 0;
-		if (x > 0 && y > 0 && z > 0 && x < CHUNK_SIZE && y < CHUNK_SIZE_Y && z < CHUNK_SIZE) {
-			for (int dx = -1; dx <= 1; ++dx) {
-				for (int dy = -1; dy <= 1; ++dy) {
-					for (int dz = -1; dz <= 1; ++dz) {
-						neighbors[idx] = terrainBlocks[GetBlockIndex(x + dx, y + dy, z + dz)].GetType();
-						shades[idx] = 0.0f;
-						// If current block is the topmost in this column, do the following.
-						if (terrainBlocks[GetBlockIndex(x + dx, y + dy + 1, z + dz)].GetType() == BlockTypes::AIR) {
-							for (int offset_y = 0; offset_y < 8; ++offset_y) {
-								if (terrainBlocks[GetBlockIndex(x + dx, y + dy + offset_y, z + dz)].Opaque()) {
-									shades[idx] = 1.0f - (static_cast<float>(offset_y) * 0.125f);
-									break;
-								}
-							}
-						}
-					}
-				}
-				idx++;
-			}
-		}
-
-		// Builds a side of a cube
-		glm::vec3 blockPosition = glm::vec3(x, y, z);
-		auto buildface = [this, uv_type, blockPosition, vertices](index_t i00, index_t i01, index_t i02, index_t i03, int norm, int face) {
-			// Get points from input indices into pre-built vertex array
-			glm::vec3 p0, p1, p2, p3;
-			p0 = vertices[i00];
-			p1 = vertices[i01];
-			p2 = vertices[i02];
-			p3 = vertices[i03];
-
-			// We'll need four indices and four vertices for the two tris defining a face.
-			index_t i0, i1, i2, i3;
-			block_vertex_t v0, v1, v2, v3;
-
-			// Assign each vertex it's appropriate UV coords based on the blocks type
-			glm::vec3 uv0 = glm::ivec3(0.0, 0.0, textures[uv_type][face]);
-			glm::vec3 uv1 = glm::ivec3(1.0, 0.0, textures[uv_type][face]);
-			glm::vec3 uv3 = glm::ivec3(0.0, 1.0, textures[uv_type][face]);
-			glm::vec3 uv2 = glm::ivec3(1.0, 1.0, textures[uv_type][face]);
-			v0.UV = uv0;
-			v1.UV = uv1;
-			v2.UV = uv2;
-			v3.UV = uv3;
-
-			// Set the vertex positions.
-			v0.Position.xyz = p0;
-			v1.Position.xyz = p1;
-			v2.Position.xyz = p2;
-			v3.Position.xyz = p3;
-
-			// Set vertex normals.
-			v0.Normal = normals[norm];
-			v1.Normal = normals[norm];
-			v2.Normal = normals[norm];
-			v3.Normal = normals[norm];
-
-		};
-
-		// The following statements build a face based on the boolean value given to this method,
-		// using the lambda (inline) function above.
-		if (frontFace == false) {
-			buildface(0, 1, 2, 3, 0, 0); // Using Points 0, 1, 2, 3 and Normal 0
-		}
-		if (rightFace == false) {
-			buildface(1, 4, 7, 2, 1, 1); // Using Points 1, 4, 7, 2 and Normal 1
-		}
-		if (topFace == false) {
-			buildface(3, 2, 7, 6, 2, 2); // Using Points 3, 2, 7, 6 and Normal 2
-		}
-
-		if (leftFace == false) {
-			buildface(5, 0, 3, 6, 3, 3); // Using Points 5, 0, 3, 6 and Normal 3
-		}
-
-		if (bottomFace == false) {
-			buildface(5, 4, 1, 0, 4, 4); // Using Points 5, 4, 1, 0 and Normal 4
-		}
-
-		if (backFace == false) {
-			buildface(4, 5, 6, 7, 5, 5); // Using Points 4, 5, 6, 7 and Normal 5
-		}
-
-	}
 
 	Chunk::Chunk(glm::ivec2 gridpos) {
 		// Set grid position.
@@ -176,12 +66,10 @@ namespace objects {
 	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), blocks(std::move(other.blocks)) {}
 
 	Chunk& Chunk::operator=(Chunk && other) noexcept {
-		if (this != &other) {
-			this->mesh = std::move(other.mesh);
-			this->terrainBlocks = std::move(other.terrainBlocks);
-			this->blocks = std::move(other.blocks);
-			other.clear();
-		}
+		this->mesh = std::move(other.mesh);
+		this->terrainBlocks = std::move(other.terrainBlocks);
+		this->blocks = std::move(other.blocks);
+		other.clear();
 		return *this;
 	}
 
@@ -373,6 +261,138 @@ namespace objects {
 	void Chunk::SetTorchlightLevel(const glm::ivec3 & p, uint8_t level){
 		size_t idx = GetBlockIndex(p);
 		SetBack4(lightMap[idx], level);
+	}
+
+	void Chunk::setBlockLightingData(const uint32_t& x, const uint32_t& y, const uint32_t& z, std::array<BlockType, 27>& neighbor_blocks, std::array<float, 27>& neighbor_shades) const {
+		size_t idx = 0;
+		if (x > 0 && y > 0 && z > 0 && x < CHUNK_SIZE && y < CHUNK_SIZE_Y && z < CHUNK_SIZE) {
+			for (int dx = -1; dx <= 1; ++dx) {
+				for (int dy = -1; dy <= 1; ++dy) {
+					for (int dz = -1; dz <= 1; ++dz) {
+						neighbor_blocks[idx] = terrainBlocks[GetBlockIndex(x + dx, y + dy, z + dz)].GetType();
+						neighbor_shades[idx] = 0.0f;
+						// If current block is the topmost in this column, do the following.
+						if (terrainBlocks[GetBlockIndex(x + dx, y + dy + 1, z + dz)].GetType() == BlockTypes::AIR) {
+							for (int offset_y = 0; offset_y < 8; ++offset_y) {
+								if (terrainBlocks[GetBlockIndex(x + dx, y + dy + offset_y, z + dz)].Opaque()) {
+									neighbor_shades[idx] = 1.0f - (static_cast<float>(offset_y) * 0.125f);
+									break;
+								}
+							}
+						}
+					}
+				}
+				idx++;
+			}
+		}
+	}
+
+	void Chunk::getFaceVertices(const blockFace & face, block_vertex_t & v0, block_vertex_t & v1, block_vertex_t & v2, block_vertex_t & v3, const size_t& texture_idx) {
+		switch (face) {
+		case blockFace::BOTTOM:
+			v0.Position = vertices[5];
+			v1.Position = vertices[4];
+			v2.Position = vertices[1];
+			v3.Position = vertices[0];
+			break;
+		case blockFace::TOP:
+			v0.Position = vertices[3];
+			v1.Position = vertices[2];
+			v2.Position = vertices[7];
+			v3.Position = vertices[6];
+			break;
+		case blockFace::BACK:
+			v0.Position = vertices[4];
+			v1.Position = vertices[5];
+			v2.Position = vertices[6];
+			v3.Position = vertices[7];
+			break;
+		case blockFace::FRONT:
+			v0.Position = vertices[0];
+			v1.Position = vertices[1];
+			v2.Position = vertices[2];
+			v3.Position = vertices[3];
+			break;
+		case blockFace::LEFT:
+			v0.Position = vertices[5];
+			v1.Position = vertices[0];
+			v2.Position = vertices[3];
+			v3.Position = vertices[6];
+			break;
+		case blockFace::RIGHT:
+			v0.Position = vertices[1];
+			v1.Position = vertices[4];
+			v2.Position = vertices[7];
+			v3.Position = vertices[2];
+			break;
+		default:
+			throw std::runtime_error("Tried to create face with invalid face type enum value");
+		}
+
+		v0.Normal = v1.Normal = v2.Normal = v3.Normal = normals[static_cast<size_t>(face)];
+		v0.UV = glm::ivec3(0, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v1.UV = glm::ivec3(1, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v2.UV = glm::ivec3(0, 1, textures[texture_idx][static_cast<size_t>(face)]);
+		v3.UV = glm::ivec3(1, 1, textures[texture_idx][static_cast<size_t>(face)]);
+	}
+
+	void Chunk::createBlockFace(const blockFace& face, const size_t& uv_idx, const glm::vec3 & pos) {
+		block_vertex_t v0, v1, v2, v3;
+
+		getFaceVertices(face, v0, v1, v2, v3, uv_idx);
+
+		v0.Position += pos;
+		v1.Position += pos;
+		v2.Position += pos;
+		v3.Position += pos;
+
+		index_t i0, i1, i2, i3;
+		i0 = mesh->add_vertex(std::move(v0));
+		i1 = mesh->add_vertex(std::move(v1));
+		i2 = mesh->add_vertex(std::move(v2));
+		i3 = mesh->add_vertex(std::move(v3));
+
+		mesh->add_triangle(i0, i1, i2);
+		mesh->add_triangle(i0, i2, i3);
+
+	}
+
+	void Chunk::createCube(const size_t & x, const size_t & y, const size_t & z, const bool & front_face, const bool & right_face, const bool & top_face, const bool & left_face, 
+		const bool & bottom_face, const bool & back_face, const size_t & uv_idx) {
+
+		// Following method for generating lighting data from:
+		// https://github.com/fogleman/Craft/blob/master/src/main.c#L1077
+		std::array<BlockType, 27> neighbors;
+		std::array<float, 27> shades;
+		setBlockLightingData(x, y, z, neighbors, shades);
+
+		// Builds a side of a cube
+		glm::vec3 block_pos = glm::vec3(x, y, z);
+
+		if (front_face == false) {
+			createBlockFace(blockFace::FRONT, uv_idx, block_pos);
+		}
+
+		if (right_face == false) {
+			createBlockFace(blockFace::RIGHT, uv_idx, block_pos);
+		}
+
+		if (top_face == false) {
+			createBlockFace(blockFace::TOP, uv_idx, block_pos);
+		}
+
+		if (left_face == false) {
+			createBlockFace(blockFace::LEFT, uv_idx, block_pos);
+		}
+
+		if (bottom_face == false) {
+			createBlockFace(blockFace::BOTTOM, uv_idx, block_pos);
+		}
+
+		if (back_face == false) {
+			createBlockFace(blockFace::BACK, uv_idx, block_pos);
+		}
+
 	}
 
 }

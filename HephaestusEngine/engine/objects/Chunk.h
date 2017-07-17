@@ -42,65 +42,36 @@ namespace objects {
 
 		// Position in homogenous integer grid defining chunk layout (used for logic, mostly)
 		glm::ivec2 GridPosition;
-
 		// Floating-point position used for rendering 
 		glm::vec3 Position;
 
-		// Default Ctor
 		Chunk(glm::ivec2 grid_position);
 
-		// Delete copy operator: We don't want to copy whole chunks!
 		Chunk(const Chunk& other) = delete;
-
-		// Delete copy assignment as well: No copying!
 		Chunk& operator=(const Chunk& other) = delete;
 
-		// Move operators okay: just make sure to explicitly define them.
-
-		// Move constructor.
 		Chunk(Chunk&& other) noexcept;
-
-		// Move assignment.
 		Chunk& operator=(Chunk&& other) noexcept;
-
-		// Get position of this chunk in the overall grid.
-		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
 
 		~Chunk() = default;
 
-		// Calls noise function to build terrain
+		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
+
 		void BuildTerrain(terrain::GeneratorBase& gen, int terraintype);
-
-		// Builds the mesh and populates the buffers
 		void BuildMesh();
-
-		// Encodes blocks in this chunk using RLE compression
 		void EncodeBlocks();
-
-		// Clears chunk of data and frees up memory.
 		void clear();
 
-		// Gets block at position xyz
-		Block GetBlock(glm::vec3 pos) const;
-		Block GetBlock(float x, float y, float z) const;
+		Block GetBlock(const glm::vec3& pos) const;
+		Block GetBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z) const;
+		void SetBlock(const glm::vec3& pos, Block _new);
+		void SetBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z, Block _new);
 
-		// Sets block at position to be of provided type
-		void SetBlock(glm::vec3 pos, Block _new);
-		void SetBlock(float x, float y, float z, Block _new);
 
-		// Attempts to find "ground" level at point in XZ plane
 		size_t GetGroundLevel(const glm::vec2& point) const;
-
-		// Get sunlight level of block at point p
 		int GetSunlightLevel(const glm::ivec3& p) const;
-
-		// Get torchlight (artifical light) value at point p
 		int GetTorchlightLevel(const glm::ivec3& p) const;
-
-		// Set sunlight level of block at point p to be level
 		void SetSunlightLevel(const glm::ivec3& p, uint8_t level);
-
-		// Set torchlight level at point p to level
 		void SetTorchlightLevel(const glm::ivec3& p, uint8_t level);
 
 
@@ -114,32 +85,40 @@ namespace objects {
 		std::array<std::weak_ptr<Chunk>, 4> Neighbors;
 
 		// Mesh object for this chunk.
-		std::unique_ptr<mesh::Mesh<mesh::BlockVertices>> mesh;
+		std::unique_ptr<mesh::Mesh<mesh::BlockVertices, block_vertex_t>> mesh;
 
 	private:
 
-		// Used to get references to internal blocks
-		Block& getBlockRef(const glm::vec3& pos);
-		Block& getBlockRef(const float& x, const float& y, const float& z);
+		enum class blockFace : size_t {
+			FRONT,
+			RIGHT,
+			TOP,
+			LEFT,
+			BOTTOM,
+			BACK,
+		};
 
-		// Stride of blocks along Y axis
+		void setBlockLightingData(const uint32_t&, const uint32_t& y, const uint32_t& z, std::array<BlockType, 27>& neighbor_blocks, std::array<float, 27>& neighbor_shades) const;
+		void getFaceVertices(const blockFace& face, block_vertex_t& v0, block_vertex_t& v1, block_vertex_t& v2, block_vertex_t& v3, const size_t& texture_idx);
+		void createBlockFace(const blockFace& face, const size_t& uv_idx, const glm::vec3& pos);
+
+		Block& getBlockRef(const glm::uvec3& pos);
+		Block& getBlockRef(const uint32_t& x, const uint32_t& y, const uint32_t& z);
+
 		static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
 		static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
 
-		// Whether or not this object has had it's terrain generated.
 		bool generated;
 
 		// Lightmap for a chunk: stores light values from 0-15 for each block in a chunk.
 		std::vector<uint8_t> lightMap;
-
-		// Container for uncompressed block data
 		std::vector<Block> terrainBlocks;
 
 		// Container for modified blocks.
 		std::unordered_map<glm::ivec3, Block> blocks;
 
-		// Creates the mesh data for a cube at xyz using the given opacity values at each face and the specified texture coord.
-		void createCube(int x, int y, int z, bool frontFace, bool rightFace, bool topFace, bool leftFace, bool bottomFace, bool backFace, int uv_type);
+		void createCube(const size_t& x, const size_t& y, const size_t& z, const bool& front_face, const bool& right_face, 
+			const bool& top_face, const bool& leftFace, const bool& bottom_face, const bool& backFace, const size_t& uv_idx);
 
 		ChunkStatus status;
 	};
