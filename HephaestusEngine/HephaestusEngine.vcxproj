@@ -165,6 +165,7 @@
     <ClInclude Include="common\CommonUtil.h" />
     <ClInclude Include="common\Constants.h" />
     <ClInclude Include="common\CreateInfoBase.h" />
+    <ClInclude Include="common\Morton.h" />
     <ClInclude Include="common\vkAssert.h" />
     <ClInclude Include="common\VkDebug.h" />
     <ClInclude Include="common\vk_constants.h" />
