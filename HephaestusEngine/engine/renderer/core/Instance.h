@@ -11,8 +11,6 @@ namespace vulpes {
 
 	struct PhysicalDeviceFactory;
 
-	constexpr size_t DEFAULT_WIDTH = 1024, DEFAULT_HEIGHT = 720;
-
 	class Instance : NonMovable {
 	public:
 		

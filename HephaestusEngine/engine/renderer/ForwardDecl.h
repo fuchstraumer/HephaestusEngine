@@ -3,17 +3,15 @@
 #define VULPES_VK_FORWARD_DECL_H
 
 namespace vulpes {
-
+	class Allocator;
+	class Allocation;
+	struct Suballocation;
 	class Instance;
 	class InstanceGLFW;
 	class PhysicalDevice;
 	class Device;
 	class Buffer;
 	class Image;
-	class Texture2D_STB;
-	class Texture2D;
-	class TextureCubemap;
-	class TextureArray;
 	class Swapchain;
 	class ShaderModule;
 	class DeviceMemory;
@@ -23,9 +21,7 @@ namespace vulpes {
 	class CommandPool;
 	class TransferPool;
 	class GraphicsPipeline;
+
 	class PipelineCache;
-	class Allocator;
-	class Allocation;
-	struct Suballocation;
 }
 #endif // !VULPES_VK_FORWARD_DECL_H
