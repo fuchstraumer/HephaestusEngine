@@ -12,18 +12,6 @@ namespace objects {
 
 	Represents a single block in the game world. The main item loaded in chunks.
 
-	There are other objects, but those are encompassed by other classes/structs,
-	as this struct makes up the predominant object type in a game world.
-
-	We use ints/uints to hold a variety of data on these objects, and then use
-	masking operations to access seperate attributes or set seperate attributes. This
-	lets us enjoy space-efficient storage of a number of diverse attributes.
-
-	When we want to know more about a block, we pass its main data to a struct that
-	grabs the rest of the attributes based on the type of a block. There are a large
-	number of attributes, and this would otherwise take up a ton of space, so we try
-	to avoid doing this unless we absolutely need to (like for rendered blocks).
-
 	Original source: https://github.com/minetest/minetest/blob/master/src/mapnode.h
 
 	*/
@@ -40,49 +28,30 @@ namespace objects {
 
 	class Block {
 	public:
-		// Constructors / operators
-		Block() = default;
 
-		// Constructs a block using a blocktype, optionally supplying parameter data
+		Block() = default;
 		Block(uint8_t block_type, uint8_t parameter = 0, BlockRotation rot = BlockRotation::R0);
 
-		// Copy ctor
 		Block(const Block& other);
-
-		// Copy operator
 		Block& operator=(const Block& other);
 
-		// Move ctor
 		Block(Block&& other) noexcept;
-
-		// Move operator
 		Block& operator=(Block&& other) noexcept;
 
-		// Comparison operator
 		bool operator==(const Block& other) const;
-
-		// Returns main data
 		uint8_t GetType() const;
 
-		// Sets main data
 		void SetType(const uint8_t& new_data);
 		void SetType(uint8_t&& new_data);
 
-		// Returns param data
 		uint8_t GetParam() const;
-
-		// Sets param data
 		void SetParam(const uint8_t& new_param);
 		void SetParam(uint8_t&& new_param);
 
-		// Get rotation
 		BlockRotation GetRotation() const;
-
-		// Set rotation
 		void SetRotation(const BlockRotation& new_rot);
 		void SetRotation(BlockRotation&& new_rot);
 
-		// Whether or not this block is opaque
 		bool Opaque() const;
 
 	private:
@@ -94,28 +63,10 @@ namespace objects {
 		// Used for special blocks, like torches and flowing water.
 		uint8_t parameters;
 
-		// Tracks rotation of this block. important for types of blocks that need to have a certain face in one direction.
 		BlockRotation rotation;
 
 	};
 
-	/*
-
-		Following are block features and attributes. These are retrieved by the dedicated
-		getter struct, which takes a blocktype in its ctor (uint8_t defining type of a block)
-		and then can fetch the following features easily.
-
-		It also tells us what the contents of param will be used for, for a given
-		type of block.
-
-	*/
-
-	/* 
-		How to draw a block. Used for setting mesh parameters, along 
-		with generating the mesh data itself. In the case of glass blocks,
-		for example, we make sure we draw the back face of each glass block
-		but never a face touching another glass block.
-	*/
 	enum class BlockDrawMode : uint8_t {
 		AIR, // An air block, i.e don't draw it at all
 		NORMAL, // A solid block

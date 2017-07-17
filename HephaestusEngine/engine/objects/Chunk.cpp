@@ -81,63 +81,10 @@ namespace objects {
 		return res;
 	}
 
-	void Chunk::BuildTerrain(terrain::GeneratorBase& gen, int terraintype) {
+	void Chunk::BuildTerrain(const size_t& terrain_type) {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			for (int z = 0; z < CHUNK_SIZE; ++z) {
 
-				// Recall that XZ is our left/right forward/back, so set every single block at Y = 0 and 
-				// with any XZ value to be bedrock, defining the base layer of our world. 
-				this->terrainBlocks[GetBlockIndex(x, 0, z)] = BlockTypes::BEDROCK;
-
-				/*
-
-				Following terrain generation method is fast but primitive. We query the noise generator for a value,
-				and use that value as a height value. We iterate from above the bedrock layer (Y=1) to whatever this
-				height value is.
-
-				*/
-
-				// If we're using the FBM generator, use this branch.
-				if (terraintype == 0) {
-					for (int y = 1; y < static_cast<int>(gen.SimplexFBM(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						int currentIndex = GetBlockIndex(x, y, z);
-						this->terrainBlocks[GetBlockIndex(x, y - 1, z)] = Block(BlockTypes::STONE);
-						this->terrainBlocks[currentIndex] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 1, z)] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 2, z)] = Block(BlockTypes::GRASS);
-					}
-				}
-
-				// Billow generator.
-				if (terraintype == 1) {
-					for (int y = 1; y < static_cast<int>(gen.SimplexBillow(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						int currentIndex = GetBlockIndex(x, y, z);
-						this->terrainBlocks[GetBlockIndex(x, y - 1, z)] = Block(BlockTypes::STONE);
-						this->terrainBlocks[currentIndex] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 1, z)] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 2, z)] = Block(BlockTypes::GRASS);
-					}
-				}
-
-				// Ridged generator.
-				if (terraintype == 2) {
-					for (int y = 1; y < static_cast<int>(gen.SimplexRidged(static_cast<int>(Position.x) + x, static_cast<int>(Position.z) + z)); ++y) {
-						// Since we start at y = 1 and iterate up the column progressively
-						// set the majority of blocks to be stone, blocks 3 above stone to be grass,
-						// blocks 2 above stone to be dirt, blocks 1 above to be dirt to form some basic terrain
-						int currentIndex = GetBlockIndex(x, y, z);
-						this->terrainBlocks[GetBlockIndex(x, y - 1, z)] = Block(BlockTypes::STONE);
-						this->terrainBlocks[currentIndex] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 1, z)] = Block(BlockTypes::DIRT);
-						this->terrainBlocks[GetBlockIndex(x, y + 2, z)] = Block(BlockTypes::GRASS);
-					}
-				}
 			}
 		}
 	}

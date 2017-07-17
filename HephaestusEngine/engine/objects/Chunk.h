@@ -57,7 +57,7 @@ namespace objects {
 
 		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
 
-		void BuildTerrain(terrain::GeneratorBase& gen, int terraintype);
+		void BuildTerrain(const size_t& terrain_type);
 		void BuildMesh();
 		void EncodeBlocks();
 		void clear();

@@ -78,13 +78,15 @@ namespace objects {
 		size_t renderRadius;
 
 		// Main container of chunk data, map allows for searching based on the chunks position.
-		std::unordered_map<glm::ivec2, std::unique_ptr<Chunk>> chunkMap;
+		std::unordered_map<glm::ivec2, std::shared_ptr<Chunk>> chunkMap;
 
-		std::forward_list<Chunk*> transferChunks;
-		std::set<Chunk*> renderChunks;
+		std::forward_list<std::shared_ptr<Chunk>> transferChunks;
+		std::set<std::shared_ptr<Chunk>> renderChunks;
 
 		// Update lighting.
 		void updateLighting();	
+
+		void transferChunksToDevice();
 
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSet descriptorSet;
@@ -93,7 +95,7 @@ namespace objects {
 
 		std::unique_ptr<vulpes::PipelineCache> cache;
 		std::unique_ptr<vulpes::ShaderModule> vert, frag;
-		std::unique_ptr<vulpes::TextureArray> blockTextures;
+		//std::unique_ptr<vulpes::TextureArray> blockTextures;
 		std::unique_ptr<vulpes::TransferPool> transferPool;
 		std::unique_ptr<vulpes::GraphicsPipeline> pipeline;
 		const vulpes::Device* device;

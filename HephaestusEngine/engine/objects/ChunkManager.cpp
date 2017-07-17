@@ -73,10 +73,18 @@ namespace objects {
 		static const VkDynamicState dynamic_states[2] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 	}
 
-	void ChunkManager::Update(const glm::vec3& update_position) {
-		// For each chunk in the list of active chunks, check them for any blocks that have changed.
+	void ChunkManager::Init(const glm::vec3 & initial_position, const unsigned int & view_distance) {
 
-		// Check to see if our position has changed enough that we should be checking for chunks to load/unload
+		for (size_t j = 0; j < view_distance; ++j) {
+			for (size_t i = 0; i < view_distance; ++i) {
+				if ((i * i) + (j * j) <= (view_distance * view_distance)) {
+					auto new_chunk = std::make_shared<Chunk>(glm::ivec2(i, j));
+					std::async(std::launch::async, &Chunk::BuildTerrain, new_chunk.get(), 0);
+					chunkMap.insert(std::make_pair(glm::ivec2(i, j), new_chunk));
+					transferChunks.push_front(new_chunk);
+				}
+			}
+		}
 
 	}
 
@@ -99,9 +107,8 @@ namespace objects {
 			// push view + projection.
 			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), sizeof(glm::mat4) * 2, &uboData.view);
 			for (auto iter = renderChunks.cbegin(); iter != renderChunks.end(); ++iter) {
-				Chunk* curr = *iter;
 				vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), glm::value_ptr(uboData.model));
-				curr->mesh->render(cmd);
+				(*iter)->mesh->render(cmd);
 			}
 		}
 
