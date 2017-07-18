@@ -5,12 +5,12 @@ namespace objects {
 
 	// Face normals. Don't change and can be reused. Yay for cubes!
 	static const std::array<glm::ivec3, 6> normals = {
-		glm::ivec3(0, 0, 1),   // (front)
-		glm::ivec3(1, 0, 0),   // (right)
-		glm::ivec3(0, 1, 0),   // (top)
+		glm::ivec3( 0, 0, 1),   // (front)
+		glm::ivec3( 1, 0, 0),   // (right)
+		glm::ivec3( 0, 1, 0),   // (top)
 		glm::ivec3(-1, 0, 0),   // (left)
-		glm::ivec3(0,-1, 0),   // (bottom)
-		glm::ivec3(0, 0,-1),   // (back)
+		glm::ivec3( 0,-1, 0),   // (bottom)
+		glm::ivec3( 0, 0,-1),   // (back)
 	};
 
 	static const std::array<glm::vec3, 8> vertices{
@@ -185,10 +185,6 @@ namespace objects {
 				}
 			}
 		}
-	}
-
-	void Chunk::EncodeBlocks() {
-		
 	}
 
 	void Chunk::clear() {
