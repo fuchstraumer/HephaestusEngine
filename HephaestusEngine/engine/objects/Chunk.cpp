@@ -14,14 +14,14 @@ namespace objects {
 	};
 
 	static const std::array<glm::vec3, 8> vertices{
-		glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front
-		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front
-		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front 
-		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front
-		glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
-		glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
-		glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
-		glm::vec3(x + 0.50f,y + 0.50f,z - 0.50f), // Point 7, right upper rear
+		glm::vec3(-0.50f,-0.50f, 0.50f), // Point 0, left lower front
+		glm::vec3( 0.50f,-0.50f, 0.50f), // Point 1, right lower front
+		glm::vec3( 0.50f, 0.50f, 0.50f), // Point 2, right upper front 
+		glm::vec3(-0.50f, 0.50f, 0.50f), // Point 3, left upper front
+		glm::vec3( 0.50f,-0.50f,-0.50f), // Point 4, right lower rear
+		glm::vec3(-0.50f,-0.50f,-0.50f), // Point 5, left lower rear
+		glm::vec3(-0.50f, 0.50f,-0.50f), // Point 6, left upper rear
+		glm::vec3( 0.50f, 0.50f,-0.50f), // Point 7, right upper rear
 	};
 
 	static constexpr size_t textures[24][6] = {
