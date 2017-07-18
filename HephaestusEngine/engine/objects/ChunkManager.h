@@ -70,6 +70,14 @@ namespace objects {
 
 	private:
 
+		void updateLighting();
+		void transferChunksToDevice();
+
+		void createDescriptors();
+		void createPipelineLayout();
+		void allocateDescriptors();
+		void setupPipelineInfo();
+
 		struct chunkUBO {
 			glm::mat4 model, view, projection;
 		} uboData;
@@ -82,11 +90,6 @@ namespace objects {
 
 		std::forward_list<std::shared_ptr<Chunk>> transferChunks;
 		std::set<std::shared_ptr<Chunk>> renderChunks;
-
-		// Update lighting.
-		void updateLighting();	
-
-		void transferChunksToDevice();
 
 		VkDescriptorPool descriptorPool;
 		VkDescriptorSet descriptorSet;

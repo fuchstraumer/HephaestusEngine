@@ -36,6 +36,7 @@ namespace objects {
 	*/
 
 	class Chunk {
+		friend class ChunkManager;
 	public:
 
 		// Position in homogenous integer grid defining chunk layout (used for logic, mostly)

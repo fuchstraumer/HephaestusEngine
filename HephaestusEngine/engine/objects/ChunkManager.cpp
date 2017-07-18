@@ -7,58 +7,17 @@ namespace objects {
 
 	ChunkManager::ChunkManager(const size_t & init_view_radius) : renderRadius(init_view_radius) {
 
-		static const std::array<VkDescriptorPoolSize, 1> pools{
-			VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
-		};
-
-		VkDescriptorPoolCreateInfo pool_cr_info = vk_descriptor_pool_create_info_base;
-		pool_cr_info.maxSets = 1;
-		pool_cr_info.poolSizeCount = static_cast<uint32_t>(pools.size());
-		pool_cr_info.pPoolSizes = pools.data();
-
-		VkResult result = vkCreateDescriptorPool(device->vkHandle(), &pool_cr_info, nullptr, &descriptorPool);
-		VkAssert(result);
-
-		static std::array<VkDescriptorSetLayoutBinding, 1> bindings{
-			VkDescriptorSetLayoutBinding{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-		};
-
-		VkDescriptorSetLayoutCreateInfo set_layout_info = vk_descriptor_set_layout_create_info_base;
-		set_layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
-		set_layout_info.pBindings = bindings.data();
-
-		result = vkCreateDescriptorSetLayout(device->vkHandle(), &set_layout_info, nullptr, &descriptorSetLayout);
-		VkAssert(result);
-
-		static const std::array<VkPushConstantRange, 2> push_constants{
-			VkPushConstantRange{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uboData) },
-			VkPushConstantRange{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(glm::vec4) }, // camera position.
-		};
-
-		VkPipelineLayoutCreateInfo pipeline_layout_info = vk_pipeline_layout_create_info_base;
-		pipeline_layout_info.pushConstantRangeCount = static_cast<uint32_t>(push_constants.size());
-		pipeline_layout_info.pPushConstantRanges = push_constants.data();
-		pipeline_layout_info.pSetLayouts = &descriptorSetLayout;
-		pipeline_layout_info.setLayoutCount = 1;
-
-		result = vkCreatePipelineLayout(device->vkHandle(), &pipeline_layout_info, nullptr, &pipelineLayout);
-		VkAssert(result);
-
-		VkDescriptorSetAllocateInfo alloc_info = vk_descriptor_set_alloc_info_base;
-		alloc_info.descriptorPool = descriptorPool;
-		alloc_info.descriptorSetCount = 1;
-		alloc_info.pSetLayouts = &descriptorSetLayout;
-
-		result = vkAllocateDescriptorSets(device->vkHandle(), &alloc_info, &descriptorSet);
-		VkAssert(result);
-
+		createDescriptors();
+		createPipelineLayout();
+		allocateDescriptors();
 		vert = std::make_unique<ShaderModule>(device, "rsrc/shaders/block/block.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
 		frag = std::make_unique<ShaderModule>(device, "rsrc/shaders/block/block.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
-
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
+
 	}
 
 	void ChunkManager::CreatePipeline(const VkRenderPass & renderpass, const Swapchain * swapchain, const glm::mat4 & projection) {
+		
 		uboData.projection = projection;
 
 		const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{
@@ -67,10 +26,17 @@ namespace objects {
 		};
 
 		VkPipelineVertexInputStateCreateInfo vert_info = mesh::BlockVertices::PipelineInfo();
+		setupPipelineInfo();
 
-		GraphicsPipelineInfo pipeline_info;
+	}
 
-		static const VkDynamicState dynamic_states[2] { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	void ChunkManager::CreateChunk(const glm::ivec2 & grid_position) {
+		
+		auto new_chunk = std::make_shared<Chunk>(grid_position);
+		std::async(std::launch::async, &Chunk::BuildTerrain, new_chunk.get(), 0);
+		chunkMap.insert(std::make_pair(grid_position, new_chunk));
+		transferChunks.push_front(new_chunk);
+
 	}
 
 	void ChunkManager::Init(const glm::vec3 & initial_position, const unsigned int & view_distance) {
@@ -78,10 +44,7 @@ namespace objects {
 		for (size_t j = 0; j < view_distance; ++j) {
 			for (size_t i = 0; i < view_distance; ++i) {
 				if ((i * i) + (j * j) <= (view_distance * view_distance)) {
-					auto new_chunk = std::make_shared<Chunk>(glm::ivec2(i, j));
-					std::async(std::launch::async, &Chunk::BuildTerrain, new_chunk.get(), 0);
-					chunkMap.insert(std::make_pair(glm::ivec2(i, j), new_chunk));
-					transferChunks.push_front(new_chunk);
+					CreateChunk(glm::ivec2(i, j));
 				}
 			}
 		}
@@ -116,6 +79,61 @@ namespace objects {
 		VkAssert(result);
 	}
 
+	void ChunkManager::createDescriptors() {
 
+		static const std::array<VkDescriptorPoolSize, 1> pools{
+			VkDescriptorPoolSize{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+		};
+
+		VkDescriptorPoolCreateInfo pool_cr_info = vk_descriptor_pool_create_info_base;
+		pool_cr_info.maxSets = 1;
+		pool_cr_info.poolSizeCount = static_cast<uint32_t>(pools.size());
+		pool_cr_info.pPoolSizes = pools.data();
+
+		VkResult result = vkCreateDescriptorPool(device->vkHandle(), &pool_cr_info, nullptr, &descriptorPool);
+		VkAssert(result);
+
+		static std::array<VkDescriptorSetLayoutBinding, 1> bindings{
+			VkDescriptorSetLayoutBinding{ 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+		};
+
+		VkDescriptorSetLayoutCreateInfo set_layout_info = vk_descriptor_set_layout_create_info_base;
+		set_layout_info.bindingCount = static_cast<uint32_t>(bindings.size());
+		set_layout_info.pBindings = bindings.data();
+
+		result = vkCreateDescriptorSetLayout(device->vkHandle(), &set_layout_info, nullptr, &descriptorSetLayout);
+		VkAssert(result);
+
+	}
+
+	void ChunkManager::createPipelineLayout() {
+		
+		static const std::array<VkPushConstantRange, 2> push_constants{
+			VkPushConstantRange{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uboData) },
+			VkPushConstantRange{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(glm::vec4) }, // camera position.
+		};
+
+		VkPipelineLayoutCreateInfo pipeline_layout_info = vk_pipeline_layout_create_info_base;
+		pipeline_layout_info.pushConstantRangeCount = static_cast<uint32_t>(push_constants.size());
+		pipeline_layout_info.pPushConstantRanges = push_constants.data();
+		pipeline_layout_info.pSetLayouts = &descriptorSetLayout;
+		pipeline_layout_info.setLayoutCount = 1;
+
+		VkResult result = vkCreatePipelineLayout(device->vkHandle(), &pipeline_layout_info, nullptr, &pipelineLayout);
+		VkAssert(result);
+
+	}
+
+	void ChunkManager::allocateDescriptors() {
+
+		VkDescriptorSetAllocateInfo alloc_info = vk_descriptor_set_alloc_info_base;
+		alloc_info.descriptorPool = descriptorPool;
+		alloc_info.descriptorSetCount = 1;
+		alloc_info.pSetLayouts = &descriptorSetLayout;
+
+		VkResult result = vkAllocateDescriptorSets(device->vkHandle(), &alloc_info, &descriptorSet);
+		VkAssert(result);
+
+	}
 
 }
