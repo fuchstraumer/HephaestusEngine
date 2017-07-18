@@ -158,7 +158,7 @@ namespace vulpes {
 		case SuballocationType::ImageOptimal:
 			return false;
 		default:
-			LOG(WARNING) << "Reached default case in CheckBufferImageGranularity switch statement: this should NOT occur";
+			//LOG(WARNING) << "Reached default case in CheckBufferImageGranularity switch statement: this should NOT occur";
 			return false;
 		}
 	}

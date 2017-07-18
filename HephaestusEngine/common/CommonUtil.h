@@ -67,16 +67,6 @@ static inline std::vector<T> convertRawData(const std::vector<float>& raw_data) 
 }
 
 
-// Converts 3D coordinates into 1D space used for storage in the vector
-inline int GetBlockIndex(const glm::vec3 pos) {
-	return static_cast<int>(((pos.y) * CHUNK_SIZE * CHUNK_SIZE + (pos.x) * CHUNK_SIZE + (pos.z)));
-}
-
-// Same as above, with individual positions
-inline int GetBlockIndex(const int x, const int y, const int z) {
-	return static_cast<int>((y)* CHUNK_SIZE * CHUNK_SIZE + (x)* CHUNK_SIZE + (z));
-}
-
 // Used for grabbing front 4 bits of a given uint8_t
 inline int GetFront4(const uint8_t val) {
 	return (val >> 4) & 0xF;

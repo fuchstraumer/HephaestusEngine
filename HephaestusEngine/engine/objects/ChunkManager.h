@@ -39,9 +39,9 @@ namespace objects {
 	// Used in lighting update.
 	struct LightNode {
 		short Idx; // Index into container.
-		std::weak_ptr<Chunk> Parent;
+		std::shared_ptr<Chunk> Parent;
 		LightNode(const glm::ivec3& p, Chunk* parent) : Parent(std::shared_ptr<Chunk>(parent)) {
-			Idx = p.y * CHUNK_SIZE * CHUNK_SIZE + p.x * CHUNK_SIZE + p.z;
+			Idx = p.y * Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE + p.x * Chunk::CHUNK_SIZE + p.z;
 		}
 	};
 

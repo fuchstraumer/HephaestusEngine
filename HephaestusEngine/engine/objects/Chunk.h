@@ -36,8 +36,6 @@ namespace objects {
 	*/
 
 	class Chunk {
-		// Chunk manager is allowed to access internal details.
-		friend class ChunkManager;
 	public:
 
 		// Position in homogenous integer grid defining chunk layout (used for logic, mostly)
@@ -62,18 +60,8 @@ namespace objects {
 		void EncodeBlocks();
 		void clear();
 
-		Block GetBlock(const glm::vec3& pos) const;
-		Block GetBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z) const;
-		void SetBlock(const glm::vec3& pos, Block _new);
+		const Block& GetBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z) const;
 		void SetBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z, Block _new);
-
-
-		size_t GetGroundLevel(const glm::vec2& point) const;
-		int GetSunlightLevel(const glm::ivec3& p) const;
-		int GetTorchlightLevel(const glm::ivec3& p) const;
-		void SetSunlightLevel(const glm::ivec3& p, uint8_t level);
-		void SetTorchlightLevel(const glm::ivec3& p, uint8_t level);
-
 
 		// Keeps list of neighbors of this chunk, ordered as such:
 		/*
@@ -82,10 +70,10 @@ namespace objects {
 		2: Bottom Left
 		3: Bottom Right
 		*/
-		std::array<std::weak_ptr<Chunk>, 4> Neighbors;
+		std::array<std::shared_ptr<Chunk>, 4> Neighbors;
 
-		// Mesh object for this chunk.
-		std::unique_ptr<mesh::Mesh<mesh::BlockVertices, block_vertex_t>> mesh;
+		static constexpr size_t CHUNK_SIZE = 32;
+		static constexpr size_t CHUNK_SIZE_Y = 128;
 
 	private:
 
@@ -102,23 +90,25 @@ namespace objects {
 		void getFaceVertices(const blockFace& face, block_vertex_t& v0, block_vertex_t& v1, block_vertex_t& v2, block_vertex_t& v3, const size_t& texture_idx);
 		void createBlockFace(const blockFace& face, const size_t& uv_idx, const glm::vec3& pos);
 
-		Block& getBlockRef(const glm::uvec3& pos);
-		Block& getBlockRef(const uint32_t& x, const uint32_t& y, const uint32_t& z);
+		void createCube(const size_t& x, const size_t& y, const size_t& z, const bool& front_face, const bool& right_face,
+			const bool& top_face, const bool& leftFace, const bool& bottom_face, const bool& backFace, const size_t& uv_idx);
+
+		Block& getBlock(const uint32_t& x, const uint32_t& y, const uint32_t& z);
 
 		static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
 		static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
+		static constexpr size_t BLOCKS_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE_Y;
 
-		bool generated;
+		bool generated = false;
 
 		// Lightmap for a chunk: stores light values from 0-15 for each block in a chunk.
-		std::vector<uint8_t> lightMap;
-		std::vector<Block> terrainBlocks;
+		std::array<uint8_t, BLOCKS_PER_CHUNK> lightMap;
+		std::array<Block, BLOCKS_PER_CHUNK> terrainBlocks;
 
+		// Mesh object for this chunk.
+		std::unique_ptr<mesh::Mesh<mesh::BlockVertices, block_vertex_t>> mesh;
 		// Container for modified blocks.
-		std::unordered_map<glm::ivec3, Block> blocks;
-
-		void createCube(const size_t& x, const size_t& y, const size_t& z, const bool& front_face, const bool& right_face, 
-			const bool& top_face, const bool& leftFace, const bool& bottom_face, const bool& backFace, const size_t& uv_idx);
+		std::unordered_map<glm::ivec3, std::reference_wrapper<Block>> uniqueBlocks;
 
 		ChunkStatus status;
 	};

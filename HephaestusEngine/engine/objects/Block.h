@@ -38,6 +38,8 @@ namespace objects {
 		Block(Block&& other) noexcept;
 		Block& operator=(Block&& other) noexcept;
 
+		operator uint16_t() const noexcept;
+
 		bool operator==(const Block& other) const;
 		uint8_t GetType() const;
 

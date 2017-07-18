@@ -4,9 +4,6 @@
 #include "stdafx.h"
 
 // Chunk size constants. 32x32 in XZ, and 128 in Y.
-static constexpr int CHUNK_SIZE = 32;
-static constexpr int CHUNK_SIZE_Y = 128;
-
 // Just pi lol
 static constexpr float FLOAT_PI = 3.14159265359f;
 

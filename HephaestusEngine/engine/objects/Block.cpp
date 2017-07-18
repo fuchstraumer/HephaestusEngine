@@ -64,6 +64,10 @@ namespace objects {
 		return *this;
 	}
 
+	Block::operator uint16_t() const noexcept {
+
+	}
+
 	bool Block::operator==(const Block & other) const{
 		return (type == other.type) && (parameters == other.parameters) && (rotation == other.rotation);
 	}

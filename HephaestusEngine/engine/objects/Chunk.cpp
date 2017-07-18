@@ -14,10 +14,10 @@ namespace objects {
 	};
 
 	static const std::array<glm::vec3, 8> vertices{
-		glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front UV{0,0}
-		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front UV{1,0}
-		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front UV{1,1}
-		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front UV{0,1}
+		glm::vec3(x - 0.50f,y - 0.50f,z + 0.50f), // Point 0, left lower front
+		glm::vec3(x + 0.50f,y - 0.50f,z + 0.50f), // Point 1, right lower front
+		glm::vec3(x + 0.50f,y + 0.50f,z + 0.50f), // Point 2, right upper front 
+		glm::vec3(x - 0.50f,y + 0.50f,z + 0.50f), // Point 3, left upper front
 		glm::vec3(x + 0.50f,y - 0.50f,z - 0.50f), // Point 4, right lower rear
 		glm::vec3(x - 0.50f,y - 0.50f,z - 0.50f), // Point 5, left lower rear
 		glm::vec3(x - 0.50f,y + 0.50f,z - 0.50f), // Point 6, left upper rear
@@ -26,18 +26,29 @@ namespace objects {
 
 	static constexpr size_t textures[24][6] = {
 		// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
-		// Loading order:: Grass_Top, Grass_Sides, dirt, sand, stone, bedrock
-		{ 0,0,0,0,0,0 }, // Air block
-		{ 1,1,0,1,2,1 }, // Grass block
-		{ 3,3,3,3,3,3 }, // Sand block
-		{ 2,2,2,2,2,2 }, // Dirt block
-		{ 4,4,4,4,4,4 }, // Stone block
-		{ 5,5,5,5,5,5 }, // Bedrock block
-		{ 6,6,6,6,6,6 }, // tall grass
-		{ 7,7,7,7,7,7 }, // Coal ore
-		{ 8,8,8,8,8,8 }, // Iron ore
-		{ 9,9,9,9,9,9 }, // Diamond Ore
+		// Current array order: Bedrock, Grass Top, Grass Sides, Dirt, Stone, Gravel, Sand, Cobble, Coal, Iron, Gold, Diamond, Emerald, Log, Log Top,
+		// Leaves, Planks, Glass, Stonebricks, Bricks, Tall grass, Fern, Flower, Grass Lower, Grass Upper,
+		{  0, 0, 0, 0, 0, 0 }, // Bedrock block
+		{  2, 2, 1, 2, 3, 2 }, // Grass block
+		{  5, 5, 5, 5, 5, 5 }, // Sand block
+		{  3, 3, 3, 3, 3, 3 }, // Dirt block
+		{  4, 4, 4, 4, 4, 4 }, // Stone block
+		{  5, 5, 5, 5, 5, 5 }, // Gravel
+		{  6, 6, 6, 6, 6, 6 }, // Sand
+		{  7, 7, 7, 7, 7, 7 }, // Cobblestone
+		{  8, 8, 8, 8, 8, 8 }, // Coal
+		{  9, 9, 9, 9, 9, 9 }, // Iron
+		{ 10,10,10,10,10,10 }, // Gold
+		{ 11,11,11,11,11,11 }, // Diamond
+		{ 12,12,12,12,12,12 }, // Emerald
+		{ 20,20,20,20,20,20 }, // tall grass
 	};
+
+	// Same as above, with individual positions
+	static constexpr inline size_t GetBlockIndex(const size_t& x, const size_t& y, const size_t& z) {
+		return ((y* Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE) + (x* Chunk::CHUNK_SIZE) + z);
+	}
+
 
 	Chunk::Chunk(glm::ivec2 gridpos) {
 		// Set grid position.
@@ -45,10 +56,10 @@ namespace objects {
 
 		// Reserve space in our textures container.
 		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Y;
-		terrainBlocks.assign(totalBlocks, BlockTypes::AIR);
+		terrainBlocks.fill(Block(BlockTypes::AIR));
 
 		// Assign initial zeroed values in our lighting container.
-		lightMap.assign(totalBlocks, 0);
+		lightMap.fill(0);
 
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
@@ -63,12 +74,13 @@ namespace objects {
 
 	}
 
-	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), blocks(std::move(other.blocks)) {}
+	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), uniqueBlocks(std::move(other.uniqueBlocks)), lightMap(std::move(other.lightMap)) {}
 
 	Chunk& Chunk::operator=(Chunk && other) noexcept {
-		this->mesh = std::move(other.mesh);
-		this->terrainBlocks = std::move(other.terrainBlocks);
-		this->blocks = std::move(other.blocks);
+		mesh = std::move(other.mesh);
+		lightMap = std::move(other.lightMap);
+		terrainBlocks = std::move(other.terrainBlocks);
+		uniqueBlocks = std::move(other.uniqueBlocks);
 		other.clear();
 		return *this;
 	}
@@ -182,32 +194,8 @@ namespace objects {
 	void Chunk::clear() {
 		// Mesh clear method clears data and calls shrink_to_fit()
 		mesh->cleanup();
-		// First call clear to empty containers
-		terrainBlocks.clear();
-		lightMap.clear();
-		// Then call shrink to fit to actually free up memory.
-		terrainBlocks.shrink_to_fit();
-		lightMap.shrink_to_fit();
-	}
-
-	int Chunk::GetSunlightLevel(const glm::ivec3 & p) const{
-		size_t idx = GetBlockIndex(p);
-		return GetFront4(lightMap[idx]);
-	}
-
-	int Chunk::GetTorchlightLevel(const glm::ivec3 & p) const{
-		size_t idx = GetBlockIndex(p);
-		return GetBack4(lightMap[idx]);
-	}
-
-	void Chunk::SetSunlightLevel(const glm::ivec3 & p, uint8_t level){
-		size_t idx = GetBlockIndex(p);
-		SetFront4(lightMap[idx], level);
-	}
-
-	void Chunk::SetTorchlightLevel(const glm::ivec3 & p, uint8_t level){
-		size_t idx = GetBlockIndex(p);
-		SetBack4(lightMap[idx], level);
+		terrainBlocks.fill(Block(BlockTypes::AIR));
+		lightMap.fill(0);
 	}
 
 	void Chunk::setBlockLightingData(const uint32_t& x, const uint32_t& y, const uint32_t& z, std::array<BlockType, 27>& neighbor_blocks, std::array<float, 27>& neighbor_shades) const {
