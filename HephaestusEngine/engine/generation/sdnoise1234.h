@@ -37,19 +37,19 @@ struct NoiseGen {
 	* If the last argument is not null, the analytic derivative
 	* is also calculated.
 	*/
-	float sdnoise1(float x, float *dnoise_dx);
+	float sdnoise1(float x, float *dnoise_dx) const;
 
 	/** 2D simplex noise with derivatives.
 	* If the last two arguments are not null, the analytic derivative
 	* (the 2D gradient of the scalar noise field) is also calculated.
 	*/
-	float sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy);
+	float sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy) const;
 
 	/** 3D simplex noise with derivatives.
 	* If the last tthree arguments are not null, the analytic derivative
 	* (the 3D gradient of the scalar noise field) is also calculated.
 	*/
-	float sdnoise3(float x, float y, float z, glm::vec3* deriv);
+	float sdnoise3(float x, float y, float z, glm::vec3* deriv) const;
 
 	/** 4D simplex noise with derivatives.
 	* If the last four arguments are not null, the analytic derivative
@@ -57,7 +57,7 @@ struct NoiseGen {
 	*/
 	float sdnoise4(float x, float y, float z, float w,
 		float *dnoise_dx, float *dnoise_dy,
-		float *dnoise_dz, float *dnoise_dw);
+		float *dnoise_dz, float *dnoise_dw) const;
 
 	std::array<uint8_t, 512> perm;
 };

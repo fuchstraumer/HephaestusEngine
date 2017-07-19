@@ -121,7 +121,7 @@ NoiseGen::NoiseGen() {
 * If the last argument is not null, the analytic derivative
 * is also calculated.
 */
-float NoiseGen::sdnoise1(float x, float *dnoise_dx)
+float NoiseGen::sdnoise1(float x, float *dnoise_dx) const
 {
 	int i0 = FASTFLOOR(x);
 	int i1 = i0 + 1;
@@ -180,7 +180,7 @@ float NoiseGen::sdnoise1(float x, float *dnoise_dx)
 * If the last two arguments are not null, the analytic derivative
 * (the 2D gradient of the scalar noise field) is also calculated.
 */
-float NoiseGen::sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy)
+float NoiseGen::sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy) const
 {
 	float n0, n1, n2; /* Noise contributions from the three simplex corners */
 	float gx0, gy0, gx1, gy1, gx2, gy2; /* Gradients at simplex corners */
@@ -293,7 +293,7 @@ float NoiseGen::sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy)
 * If the last tthree arguments are not null, the analytic derivative
 * (the 3D gradient of the scalar noise field) is also calculated.
 */
-float NoiseGen::sdnoise3(float x, float y, float z, glm::vec3* deriv)
+float NoiseGen::sdnoise3(float x, float y, float z, glm::vec3* deriv) const
 {
 	float n0, n1, n2, n3; /* Noise contributions from the four simplex corners */
 	float noise;          /* Return value */
@@ -457,7 +457,7 @@ float NoiseGen::sdnoise3(float x, float y, float z, glm::vec3* deriv)
 */
 float NoiseGen::sdnoise4(float x, float y, float z, float w,
 	float *dnoise_dx, float *dnoise_dy,
-	float *dnoise_dz, float *dnoise_dw)
+	float *dnoise_dz, float *dnoise_dw) const
 {
 	float n0, n1, n2, n3, n4; // Noise contributions from the five corners
 	float noise; // Return value
