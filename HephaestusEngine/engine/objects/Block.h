@@ -59,6 +59,7 @@ namespace objects {
 	private:
 
 		// main data. Does not vary in content across block types.
+		// Only item saved to file. Other items regenerated at runtime.
 		uint8_t type;
 
 		// Parameter dataset. 

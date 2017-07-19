@@ -169,6 +169,8 @@
     <ClInclude Include="common\vkAssert.h" />
     <ClInclude Include="common\VkDebug.h" />
     <ClInclude Include="common\vk_constants.h" />
+    <ClInclude Include="engine\generation\NoiseSampler.h" />
+    <ClInclude Include="engine\generation\sdnoise1234.h" />
     <ClInclude Include="engine\mesh\Mesh.h" />
     <ClInclude Include="engine\mesh\MeshComponents.h" />
     <ClInclude Include="engine\objects\Block.h" />
@@ -241,6 +243,7 @@
     <ClInclude Include="util\view_frustum.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="engine\generation\sdnoise1234.cpp" />
     <ClCompile Include="engine\objects\Block.cpp" />
     <ClCompile Include="engine\objects\Chunk.cpp" />
     <ClCompile Include="engine\objects\ChunkManager.cpp" />

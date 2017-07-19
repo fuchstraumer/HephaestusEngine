@@ -51,6 +51,11 @@ namespace objects {
 
 	}
 
+	void ChunkManager::Update(const glm::vec3 & update_position) {
+
+
+	}
+
 	void ChunkManager::Render(VkCommandBuffer & cmd, VkCommandBufferBeginInfo & begin_info, const glm::mat4 & view, const glm::vec3 & camera_pos, const VkViewport & viewport, const VkRect2D & scissor) {
 		uboData.view = view;
 		VkResult result = vkBeginCommandBuffer(cmd, &begin_info);
