@@ -28,38 +28,40 @@ This was barely tweaked, mostly to include a seed.
 * General Public License for more details.
 */
 
+namespace noise {
+	struct NoiseGen {
 
-struct NoiseGen {
+		NoiseGen();
 
-	NoiseGen();
+		/** 1D simplex noise with derivative.
+		* If the last argument is not null, the analytic derivative
+		* is also calculated.
+		*/
+		float sdnoise1(float x, float *dnoise_dx) const;
 
-	/** 1D simplex noise with derivative.
-	* If the last argument is not null, the analytic derivative
-	* is also calculated.
-	*/
-	float sdnoise1(float x, float *dnoise_dx) const;
+		/** 2D simplex noise with derivatives.
+		* If the last two arguments are not null, the analytic derivative
+		* (the 2D gradient of the scalar noise field) is also calculated.
+		*/
+		float sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy) const;
 
-	/** 2D simplex noise with derivatives.
-	* If the last two arguments are not null, the analytic derivative
-	* (the 2D gradient of the scalar noise field) is also calculated.
-	*/
-	float sdnoise2(float x, float y, float *dnoise_dx, float *dnoise_dy) const;
+		/** 3D simplex noise with derivatives.
+		* If the last tthree arguments are not null, the analytic derivative
+		* (the 3D gradient of the scalar noise field) is also calculated.
+		*/
+		float sdnoise3(float x, float y, float z, glm::vec3* deriv) const;
 
-	/** 3D simplex noise with derivatives.
-	* If the last tthree arguments are not null, the analytic derivative
-	* (the 3D gradient of the scalar noise field) is also calculated.
-	*/
-	float sdnoise3(float x, float y, float z, glm::vec3* deriv) const;
+		/** 4D simplex noise with derivatives.
+		* If the last four arguments are not null, the analytic derivative
+		* (the 4D gradient of the scalar noise field) is also calculated.
+		*/
+		float sdnoise4(float x, float y, float z, float w,
+			float *dnoise_dx, float *dnoise_dy,
+			float *dnoise_dz, float *dnoise_dw) const;
 
-	/** 4D simplex noise with derivatives.
-	* If the last four arguments are not null, the analytic derivative
-	* (the 4D gradient of the scalar noise field) is also calculated.
-	*/
-	float sdnoise4(float x, float y, float z, float w,
-		float *dnoise_dx, float *dnoise_dy,
-		float *dnoise_dz, float *dnoise_dw) const;
+		std::array<uint8_t, 512> perm;
+	};
 
-	std::array<uint8_t, 512> perm;
-};
+}
 
 #endif // !SDNOISE_1234_H
