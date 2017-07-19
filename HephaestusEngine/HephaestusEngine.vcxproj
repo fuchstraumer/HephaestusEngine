@@ -243,6 +243,7 @@
     <ClInclude Include="util\view_frustum.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="engine\generation\NoiseSampler.cpp" />
     <ClCompile Include="engine\generation\sdnoise1234.cpp" />
     <ClCompile Include="engine\objects\Block.cpp" />
     <ClCompile Include="engine\objects\Chunk.cpp" />
