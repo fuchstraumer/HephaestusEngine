@@ -11,11 +11,11 @@
 *.userprefs
 
 # Build results
-[Dd]ebug/
+[D]ebug/
 [Dd]ebugPublic/
 # [Rr]elease/
 [Rr]eleases/
-[Xx]64/
+
 [Xx]86/
 [Bb]uild/
 bld/
@@ -243,18 +243,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
-HephaestusEngine/chunkbuffers.cpp
-HephaestusEngine/test_light.h
-HephaestusEngine/test_light.cpp
-Fast_Terrain/FastNoise_Wrapper.h
-Fast_Terrain/Fast_Terrain.cpp
-Fast_Terrain/Fast_Terrain.vcxproj
-Fast_Terrain/targetver.h
-Fast_Terrain/Fast_Terrain.vcxproj.filters
-Fast_Terrain/ReadMe.txt
-Fast_Terrain/stdafx.cpp
-Fast_Terrain/stdafx.h
-HephaestusEngine/chunkdata.txt
-HephaestusEngine/deprecated/testrle.txt
 *.tlog
-HephaestusEngine/chunks/
+
+x64/Debug/vc141.idb
+x64/Debug/HephaestusEngine.exe
