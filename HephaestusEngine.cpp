@@ -3,9 +3,6 @@
 // Precompiled headers
 #include "stdafx.h"
 
-// Common includes
-#include "common\Constants.h"
-#include "common\CommonUtil.h"
 INITIALIZE_EASYLOGGINGPP
 // Other includes.
 
