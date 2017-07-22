@@ -46,6 +46,8 @@ namespace objects {
 
 	Block::Block(uint8_t block_type, uint8_t _param, BlockRotation rot) : type(block_type), parameters(_param), rotation(rot) {}
 
+	Block::Block(const BlockTypes & block_type, const uint8_t & parameter, const BlockRotation & rot) : type(static_cast<uint8_t>(block_type)), parameters(parameter), rotation(rot) {}
+
 	Block::Block(const Block& other) : type(other.type), parameters(other.parameters), rotation(other.rotation) {}
 
 	Block::Block(Block&& other) noexcept : type(std::move(other.type)), parameters(std::move(other.parameters)), rotation(std::move(other.rotation)) {}
@@ -66,6 +68,10 @@ namespace objects {
 
 	Block::operator uint16_t() const noexcept {
 		return static_cast<uint8_t>(type);
+	}
+
+	bool Block::Active() const noexcept {
+		return type != static_cast<uint8_t>(BlockTypes::AIR);
 	}
 
 	bool Block::operator==(const Block & other) const{
@@ -109,7 +115,7 @@ namespace objects {
 	}
 
 	bool Block::Opaque() const{
-		return (type != BlockTypes::AIR && type != BlockTypes::LEAVES && type != BlockTypes::GLASS);
+		return (type != static_cast<uint8_t>(BlockTypes::AIR) && type != static_cast<uint8_t>(BlockTypes::LEAVES) && type != static_cast<uint8_t>(BlockTypes::GLASS));
 	}
 
 }

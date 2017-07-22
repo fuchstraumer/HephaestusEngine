@@ -48,7 +48,7 @@ namespace objects {
 	class ChunkManager {
 	public:
 
-		ChunkManager(const size_t& init_view_radius);
+		ChunkManager(const vulpes::Device* parent_device, const size_t& init_view_radius);
 
 		~ChunkManager();
 

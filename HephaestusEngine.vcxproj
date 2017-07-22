@@ -168,6 +168,7 @@
     <ClInclude Include="engine\generation\NoiseSampler.h" />
     <ClInclude Include="engine\generation\sdnoise1234.h" />
     <ClInclude Include="engine\generation\TerrainGenerator.h" />
+    <ClInclude Include="engine\MeshingTest.h" />
     <ClInclude Include="engine\mesh\Mesh.h" />
     <ClInclude Include="engine\mesh\MeshComponents.h" />
     <ClInclude Include="engine\objects\Block.h" />
@@ -367,6 +368,10 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
       <DeploymentContent>false</DeploymentContent>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="rsrc\shaders\debug.frag" />
+    <None Include="rsrc\shaders\debug.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

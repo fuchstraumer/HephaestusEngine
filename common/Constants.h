@@ -26,8 +26,7 @@ using BlockType = uint8_t;
 // to a better solution when one is found.
 // Note that it automatically inherits a type from blockType. Usually a uint8, so maximum variety is 255 blocks
 // (or 127 blocks if we use RLE, but that's another problem)
-enum BlockTypes : BlockType {
-	EMPTY = -1,
+enum class BlockTypes : BlockType {
 	AIR = 0,
 	GRASS,
 	SAND,

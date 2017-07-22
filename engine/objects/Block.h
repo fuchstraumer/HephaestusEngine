@@ -31,6 +31,7 @@ namespace objects {
 
 		Block() = default;
 		Block(uint8_t block_type, uint8_t parameter = 0, BlockRotation rot = BlockRotation::R0);
+		Block(const BlockTypes& block_type, const uint8_t& parameter = 0, const BlockRotation& rot = BlockRotation::R0);
 
 		Block(const Block& other);
 		Block& operator=(const Block& other);
@@ -39,6 +40,8 @@ namespace objects {
 		Block& operator=(Block&& other) noexcept;
 
 		operator uint16_t() const noexcept;
+
+		bool Active() const noexcept;
 
 		bool operator==(const Block& other) const;
 		uint8_t GetType() const;

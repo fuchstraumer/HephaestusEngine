@@ -5,13 +5,13 @@ namespace objects {
 
 	using namespace vulpes;
 
-	ChunkManager::ChunkManager(const size_t & init_view_radius) : renderRadius(init_view_radius) {
+	ChunkManager::ChunkManager(const vulpes::Device* parent_device, const size_t & init_view_radius) : renderRadius(init_view_radius), device(parent_device) {
 
 		createDescriptors();
 		createPipelineLayout();
 		allocateDescriptors();
-		vert = std::make_unique<ShaderModule>(device, "rsrc/shaders/block/block.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		frag = std::make_unique<ShaderModule>(device, "rsrc/shaders/block/block.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+		vert = std::make_unique<ShaderModule>(device, "rsrc/shaders/debug.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		frag = std::make_unique<ShaderModule>(device, "rsrc/shaders/debug.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
 	
 	}
@@ -65,7 +65,6 @@ namespace objects {
 	}
 
 	void ChunkManager::Update(const glm::vec3 & update_position) {
-
 		if (!transferChunks.empty()) {
 			transferChunksToDevice();
 		}

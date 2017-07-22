@@ -96,7 +96,7 @@ namespace objects {
 	void Chunk::BuildTerrain(const size_t& terrain_type) {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			for (int z = 0; z < CHUNK_SIZE; ++z) {
-
+				terrainBlocks[GetBlockIndex(x, 0, z)].SetType(static_cast<uint8_t>(BlockTypes::BEDROCK));
 			}
 		}
 	}
@@ -106,17 +106,15 @@ namespace objects {
 		bool def = true;
 
 		// Iterate through every block in this chunk one-by-one to decide how/if to render it.
-		for (int j = 0; j < CHUNK_SIZE_Y - 1; j++) {
-			for (int i = 0; i < CHUNK_SIZE - 1; i++) {
-				for (int k = 0; k < CHUNK_SIZE - 1; k++) {
+		for (size_t j = 0; j < CHUNK_SIZE_Y - 1; j++) {
+			for (size_t i = 0; i < CHUNK_SIZE - 1; i++) {
+				for (size_t k = 0; k < CHUNK_SIZE - 1; k++) {
 					// Get index of the current block we're at.
-					int currBlock = GetBlockIndex(i, j, k);
+					size_t currBlock = GetBlockIndex(i, j, k);
 
-					// If the current block is an air block, we don't need to worry about meshing+rendering it.
-					if (this->terrainBlocks[currBlock].GetType() == BlockTypes::AIR) {
+					if (!terrainBlocks[currBlock].Active()) {
 						continue;
 					}
-					// Current block isn't air, lets look at all its adjacent blocks to find out what we need to do next.
 					else {
 						// The uv_type is simpyly the value of the block at the given point (grabbed from the enum)
 						// This is used to index into the texture array, so each block gets the right textures and UVs
@@ -126,59 +124,54 @@ namespace objects {
 						// If we are primitively culling invisible faces, run this system
 						// Primitive culling merely means that we don't render faces we can't see: this 
 						// cuts rendered elements by easily 85-95% compared to no culling at all. 
-						if (SIMPLE_CULLING_GLOBAL == true) {
+						if (SIMPLE_CULLING_GLOBAL) {
 
-							//// If a face is visible, set that face's value to be false
-							//bool xNeg = def; // left
-							//if (i > 0) {
-							//	if (!this->terrainBlocks[GetBlockIndex(i - 1, j, k)].Active()) {
-							//		xNeg = false;
-							//	}
-							//}
+							bool xNeg = def; // left
+							if (i > 0) {
+								if (!this->terrainBlocks[GetBlockIndex(i - 1, j, k)].Active()) {
+									xNeg = false;
+								}
+							}
 
-							//bool xPos = def; // right
-							//if (i < CHUNK_SIZE - 1) {
-							//	if (!this->terrainBlocks[GetBlockIndex(i + 1, j, k)].Active()) {
-							//		xPos = false;
-							//	}
-							//}
+							bool xPos = def; // right
+							if (i < CHUNK_SIZE - 1) {
+								if (!this->terrainBlocks[GetBlockIndex(i + 1, j, k)].Active()) {
+									xPos = false;
+								}
+							}
 
-							//bool yPos = def; // bottom
-							//if (j > 0) {
-							//	if (!this->terrainBlocks[GetBlockIndex(i, j - 1, k)].Active()) {
-							//		yPos = false;
-							//	}
-							//}
+							bool yPos = def; // bottom
+							if (j > 0) {
+								if (!this->terrainBlocks[GetBlockIndex(i, j - 1, k)].Active()) {
+									yPos = false;
+								}
+							}
 
-							//bool yNeg = def; // top
-							//if (j < CHUNK_SIZE_Y - 1) {
-							//	//std::cerr << GetBlockIndex(i, j - 1, k);
-							//	if (!this->terrainBlocks[GetBlockIndex(i, j + 1, k)].Active()) {
-							//		yNeg = false;
-							//	}
-							//}
+							bool yNeg = def; // top
+							if (j < CHUNK_SIZE_Y - 1) {
+								//std::cerr << GetBlockIndex(i, j - 1, k);
+								if (!this->terrainBlocks[GetBlockIndex(i, j + 1, k)].Active()) {
+									yNeg = false;
+								}
+							}
 
-							//bool zNeg = def; // back
-							//if (k < CHUNK_SIZE - 1) {
-							//	if (!this->terrainBlocks[GetBlockIndex(i, j, k + 1)].Active()) {
-							//		zNeg = false;
-							//	}
-							//}
+							bool zNeg = def; // back
+							if (k < CHUNK_SIZE - 1) {
+								if (!this->terrainBlocks[GetBlockIndex(i, j, k + 1)].Active()) {
+									zNeg = false;
+								}
+							}
 
-							//bool zPos = def; // front
-							//if (k > 0) {
-							//	if (!this->terrainBlocks[GetBlockIndex(i, j, k - 1)].Active()) {
-							//		zPos = false;
-							//	}
-							//}
+							bool zPos = def; // front
+							if (k > 0) {
+								if (!this->terrainBlocks[GetBlockIndex(i, j, k - 1)].Active()) {
+									zPos = false;
+								}
+							}
 
-							// Create a cube at i,j,k with certain faces rendered
-							// Each false value specifies a face that should be visible, and thus should be rendered
-							// At the end, we include the type of block and thus what texture it needs
-							// this->createCube(i, j, k, zNeg, xPos, yNeg, xNeg, yPos, zPos, uv_type);
+							 this->createCube(i, j, k, zNeg, xPos, yNeg, xNeg, yPos, zPos, uv_type);
 						}
-						// If we're not doing primitive culling, render every non-air block in the volume regardless of visibility
-						else if (SIMPLE_CULLING_GLOBAL == false) {
+						else {
 							this->createCube(i, j, k, false, false, false, false, false, false, uv_type);
 						}
 					}
@@ -203,7 +196,7 @@ namespace objects {
 						neighbor_blocks[idx] = terrainBlocks[GetBlockIndex(x + dx, y + dy, z + dz)].GetType();
 						neighbor_shades[idx] = 0.0f;
 						// If current block is the topmost in this column, do the following.
-						if (terrainBlocks[GetBlockIndex(x + dx, y + dy + 1, z + dz)].GetType() == BlockTypes::AIR) {
+						if (terrainBlocks[GetBlockIndex(x + dx, y + dy + 1, z + dz)].Active()) {
 							for (int offset_y = 0; offset_y < 8; ++offset_y) {
 								if (terrainBlocks[GetBlockIndex(x + dx, y + dy + offset_y, z + dz)].Opaque()) {
 									neighbor_shades[idx] = 1.0f - (static_cast<float>(offset_y) * 0.125f);
