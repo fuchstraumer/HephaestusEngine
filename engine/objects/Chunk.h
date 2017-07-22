@@ -6,7 +6,6 @@
 #include "common\Constants.h"
 #include "common\CommonUtil.h"
 #include "Block.h"
-#include "util\terrain\GeneratorBase.h"
 #include "..\mesh\mesh.h"
 
 namespace objects {

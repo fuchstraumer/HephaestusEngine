@@ -65,7 +65,7 @@ namespace objects {
 	}
 
 	Block::operator uint16_t() const noexcept {
-
+		return static_cast<uint8_t>(type);
 	}
 
 	bool Block::operator==(const Block & other) const{

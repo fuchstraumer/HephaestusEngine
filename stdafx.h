@@ -56,3 +56,7 @@
 #include "common/vk_constants.h"
 #include "common/Constants.h"
 
+#define NOMINMAX
+#include "util\easylogging++.h"
+#undef NOMINMAX
+

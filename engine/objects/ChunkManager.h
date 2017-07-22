@@ -3,11 +3,11 @@
 #define CHUNK_MANAGER_H
 #include "stdafx.h"
 #include "Chunk.h"
-#include "engine\renderer\resource\PipelineCache.h"
-#include "engine\renderer\render\GraphicsPipeline.h"
-#include "engine\renderer\resource\ShaderModule.h"
-#include "engine\renderer\command\TransferPool.h"
-#include "engine\renderer\resource\Texture.h"
+#include "VulpesRender/resource\PipelineCache.h"
+#include "VulpesRender/render\GraphicsPipeline.h"
+#include "VulpesRender/resource\ShaderModule.h"
+#include "VulpesRender/command\TransferPool.h"
+#include "VulpesRender/resource\Texture.h"
 
 namespace objects {
 

@@ -6,10 +6,9 @@
 // Common includes
 #include "common\Constants.h"
 #include "common\CommonUtil.h"
-
+INITIALIZE_EASYLOGGINGPP
 // Other includes.
 
 int main() {
-	
-
+	return 0;
 }
