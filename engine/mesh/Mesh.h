@@ -3,8 +3,8 @@
 #define VULPES_MESH_H
 #include "stdafx.h"
 #include "MeshComponents.h"
-#include "VulpesRender/core/LogicalDevice.h"
-#include "VulpesRender/resource/Buffer.h"
+#include "core/LogicalDevice.h"
+#include "resource/Buffer.h"
 
 namespace mesh {
 

@@ -3,11 +3,11 @@
 #define CHUNK_MANAGER_H
 #include "stdafx.h"
 #include "Chunk.h"
-#include "VulpesRender/resource\PipelineCache.h"
-#include "VulpesRender/render\GraphicsPipeline.h"
-#include "VulpesRender/resource\ShaderModule.h"
-#include "VulpesRender/command\TransferPool.h"
-#include "VulpesRender/resource\Texture.h"
+#include "resource/PipelineCache.h"
+#include "render/GraphicsPipeline.h"
+#include "resource/ShaderModule.h"
+#include "command/TransferPool.h"
+#include "resource/Texture.h"
 
 namespace objects {
 
@@ -73,6 +73,8 @@ namespace objects {
 		void updateLighting();
 		void transferChunksToDevice();
 
+		void transferChunkToDevice(std::shared_ptr<Chunk>& chunk_to_transfer) const;
+
 		void createDescriptors();
 		void createPipelineLayout();
 		void allocateDescriptors();
@@ -95,12 +97,14 @@ namespace objects {
 		VkDescriptorSet descriptorSet;
 		VkDescriptorSetLayout descriptorSetLayout;
 		VkPipelineLayout pipelineLayout;
+		VkGraphicsPipelineCreateInfo pipelineCreateInfo;
 
 		std::unique_ptr<vulpes::PipelineCache> cache;
 		std::unique_ptr<vulpes::ShaderModule> vert, frag;
 		//std::unique_ptr<vulpes::TextureArray> blockTextures;
 		std::unique_ptr<vulpes::TransferPool> transferPool;
 		std::unique_ptr<vulpes::GraphicsPipeline> pipeline;
+		vulpes::GraphicsPipelineInfo pipelineInfo;
 		const vulpes::Device* device;
 
 	};
