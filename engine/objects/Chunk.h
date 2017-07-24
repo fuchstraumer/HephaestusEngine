@@ -56,7 +56,7 @@ namespace objects {
 		glm::vec3 GetPosFromGrid(glm::ivec2 gridpos);
 
 		void BuildTerrain(const size_t& terrain_type);
-		void BuildMesh();
+		void BuildMesh(const vulpes::Device * _device);
 		void EncodeBlocks();
 		void clear();
 
@@ -109,7 +109,7 @@ namespace objects {
 		std::unique_ptr<mesh::Mesh<mesh::BlockVertices, block_vertex_t>> mesh;
 		// Container for modified blocks.
 		std::unordered_map<glm::ivec3, std::reference_wrapper<Block>> uniqueBlocks;
-
+		const vulpes::Device* device;
 		ChunkStatus status;
 	};
 

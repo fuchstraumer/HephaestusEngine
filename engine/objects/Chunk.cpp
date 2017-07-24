@@ -50,7 +50,7 @@ namespace objects {
 	}
 
 
-	Chunk::Chunk(glm::ivec2 gridpos) {
+	Chunk::Chunk(glm::ivec2 gridpos) : mesh(std::make_unique<mesh::Mesh<mesh::BlockVertices, block_vertex_t>>()) {
 		// Set grid position.
 		GridPosition = gridpos;
 
@@ -64,14 +64,15 @@ namespace objects {
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
 		glm::vec3 float_position;
-		float_position.x = this->GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+		float_position.x = GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 		float_position.y = 0.0f;
-		float_position.z = this->GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+		float_position.z = -GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 
 		// Set the updated positions in the mesh (most important), and this chunk (good for reference)
 		mesh->position = float_position;
 		Position = float_position;
-
+		mesh->scale = glm::vec3(0.5f);
+		mesh->update_model_matrix();
 	}
 
 	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), uniqueBlocks(std::move(other.uniqueBlocks)), lightMap(std::move(other.lightMap)) {}
@@ -101,14 +102,14 @@ namespace objects {
 		}
 	}
 
-	void Chunk::BuildMesh() {
+	void Chunk::BuildMesh(const vulpes::Device * _device) {
 		// Default block adjacency value assumes true
 		bool def = true;
 
 		// Iterate through every block in this chunk one-by-one to decide how/if to render it.
-		for (size_t j = 0; j < CHUNK_SIZE_Y - 1; j++) {
-			for (size_t i = 0; i < CHUNK_SIZE - 1; i++) {
-				for (size_t k = 0; k < CHUNK_SIZE - 1; k++) {
+		for (size_t j = 0; j < CHUNK_SIZE_Y; j++) {
+			for (size_t i = 0; i < CHUNK_SIZE; i++) {
+				for (size_t k = 0; k < CHUNK_SIZE; k++) {
 					// Get index of the current block we're at.
 					size_t currBlock = GetBlockIndex(i, j, k);
 
@@ -178,6 +179,8 @@ namespace objects {
 				}
 			}
 		}
+		device = _device;
+		mesh->create_buffers(device);
 	}
 
 	void Chunk::clear() {
@@ -254,10 +257,10 @@ namespace objects {
 		}
 
 		v0.Normal = v1.Normal = v2.Normal = v3.Normal = normals[static_cast<size_t>(face)];
-		v0.UV = glm::ivec3(0, 0, textures[texture_idx][static_cast<size_t>(face)]);
-		v1.UV = glm::ivec3(1, 0, textures[texture_idx][static_cast<size_t>(face)]);
-		v2.UV = glm::ivec3(0, 1, textures[texture_idx][static_cast<size_t>(face)]);
-		v3.UV = glm::ivec3(1, 1, textures[texture_idx][static_cast<size_t>(face)]);
+		v0.UV = glm::ivec3(1, 1, textures[texture_idx][static_cast<size_t>(face)]);
+		v1.UV = glm::ivec3(0, 1, textures[texture_idx][static_cast<size_t>(face)]);
+		v2.UV = glm::ivec3(1, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v3.UV = glm::ivec3(0, 0, textures[texture_idx][static_cast<size_t>(face)]);
 	}
 
 	void Chunk::createBlockFace(const blockFace& face, const size_t& uv_idx, const glm::vec3 & pos) {

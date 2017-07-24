@@ -17,11 +17,15 @@ namespace meshing_test {
 		MeshingScene() : BaseScene(2) {
 
 			chunkManager = std::make_unique<ChunkManager>(device.get(), 10);
-			chunkManager->Init(glm::vec3(0.0f), 10);
+			chunkManager->Init(glm::vec3(0.0f), 5);
 			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
 
 			SetupFramebuffers();
 
+			/*auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
+			gui = std::make_unique<imguiWrapper>();
+			gui->Init(device.get(), gui_cache, renderPass->vkHandle());
+			gui->UploadTextureData(graphicsPool.get());*/
 		}
 
 		~MeshingScene() = default;
@@ -60,7 +64,7 @@ namespace meshing_test {
 				// holds secondary buffers
 				std::vector<VkCommandBuffer> buffers;
 
-				gui->NewFrame(instance.get(), true);
+				//gui->NewFrame(instance.get(), true);
 
 				VkCommandBufferBeginInfo begin_info = vk_command_buffer_begin_info_base;
 				begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
@@ -95,12 +99,13 @@ namespace meshing_test {
 				begin_info.pInheritanceInfo = &inherit_info;
 
 				VkCommandBuffer& terrain_buffer = secondaryPool->GetCmdBuffer(i * swapchain->ImageCount);
-				VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * swapchain->ImageCount));
+				//VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * swapchain->ImageCount));
 
-				renderGUI(gui_buffer, begin_info, i);
-				buffers.push_back(gui_buffer);
+				//renderGUI(gui_buffer, begin_info, i);
+				//buffers.push_back(gui_buffer);
 
 				chunkManager->Render(terrain_buffer, begin_info, instance->GetViewMatrix(), instance->GetCamPos(), viewport, scissor);
+				buffers.push_back(terrain_buffer);
 
 				vkCmdExecuteCommands(graphicsPool->GetCmdBuffer(i), static_cast<uint32_t>(buffers.size()), buffers.data());
 
@@ -160,7 +165,9 @@ namespace meshing_test {
 			submit_info.signalSemaphoreCount = 1;
 			submit_info.pSignalSemaphores = &semaphores[1];
 			VkResult result = vkQueueSubmit(device->GraphicsQueue(), 1, &submit_info, VK_NULL_HANDLE);
-			//VkAssert(result);
+			if ((result != VK_ERROR_DEVICE_LOST)) {
+				VkAssert(result);
+			}
 
 			VkPresentInfoKHR present_info{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
 			present_info.waitSemaphoreCount = 1;

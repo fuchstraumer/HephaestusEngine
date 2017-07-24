@@ -247,3 +247,7 @@ ModelManifest.xml
 
 x64/Debug/vc141.idb
 x64/Debug/HephaestusEngine.exe
+x64/Release/HephaestusEngine.ipdb
+x64/Release/HephaestusEngine.iobj
+x64/Release/HephaestusEngine.exe
+shader_cache/60439.vkdat

@@ -58,7 +58,7 @@ namespace objects {
 
 		// Initialize the chunk manager by starting at an initial position and using the input
 		// view distance (given in terms of a radius of chunks to render)
-		void Init(const glm::vec3 & initial_position, const unsigned int& view_distance);
+		void Init(const glm::vec3 & initial_position, const int& view_distance);
 
 		void Update(const glm::vec3& update_position);
 
@@ -78,11 +78,16 @@ namespace objects {
 		void createDescriptors();
 		void createPipelineLayout();
 		void allocateDescriptors();
+		void updateWriteDescriptors();
 		void setupPipelineInfo();
 
 		struct chunkUBO {
 			glm::mat4 model, view, projection;
 		} uboData;
+
+		struct fragment_UBO {
+			glm::vec4 lightPos, lightColor, viewPos;
+		} fragmentUBO;
 
 		// Radius, in chunks, to render
 		size_t renderRadius;
@@ -104,6 +109,7 @@ namespace objects {
 		//std::unique_ptr<vulpes::TextureArray> blockTextures;
 		std::unique_ptr<vulpes::TransferPool> transferPool;
 		std::unique_ptr<vulpes::GraphicsPipeline> pipeline;
+		std::unique_ptr<vulpes::Texture<gli::texture2d_array>> blockTexture;
 		vulpes::GraphicsPipelineInfo pipelineInfo;
 		const vulpes::Device* device;
 

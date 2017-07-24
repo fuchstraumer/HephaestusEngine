@@ -27,19 +27,17 @@ using BlockType = uint8_t;
 // Note that it automatically inherits a type from blockType. Usually a uint8, so maximum variety is 255 blocks
 // (or 127 blocks if we use RLE, but that's another problem)
 enum class BlockTypes : BlockType {
-	AIR = 0,
+	BEDROCK,
 	GRASS,
 	SAND,
 	DIRT,
 	STONE,
-	BEDROCK,
 	TALL_GRASS,
 	COAL_ORE,
 	IRON_ORE,
 	DIAMOND_ORE,
 	BRICK,
 	WOOD,
-	CEMENT,
 	PLANK,
 	SNOW,
 	GLASS,
@@ -86,6 +84,7 @@ enum class BlockTypes : BlockType {
 	COLOR_29,
 	COLOR_30,
 	COLOR_31,
+	AIR,
 };
 
 enum class ChunkStatus : uint8_t {

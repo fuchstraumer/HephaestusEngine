@@ -5,15 +5,31 @@ namespace objects {
 
 	using namespace vulpes;
 
-	ChunkManager::ChunkManager(const vulpes::Device* parent_device, const size_t & init_view_radius) : renderRadius(init_view_radius), device(parent_device) {
+	ChunkManager::ChunkManager(const vulpes::Device* parent_device, const size_t & init_view_radius) : renderRadius(init_view_radius), device(parent_device), pipelineCreateInfo(vulpes::vk_graphics_pipeline_create_info_base) {
 
 		createDescriptors();
 		createPipelineLayout();
 		allocateDescriptors();
-		vert = std::make_unique<ShaderModule>(device, "rsrc/shaders/debug.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
-		frag = std::make_unique<ShaderModule>(device, "rsrc/shaders/debug.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+		vert = std::make_unique<ShaderModule>(device, "./rsrc/shaders/terrain/block.vert.spv", VK_SHADER_STAGE_VERTEX_BIT);
+		frag = std::make_unique<ShaderModule>(device, "./rsrc/shaders/terrain/block.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT);
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
-	
+		transferPool = std::make_unique<TransferPool>(device);
+		
+		fragmentUBO.lightColor = glm::vec4(0.95f, 0.3f, 0.0f, 1.0f);
+		fragmentUBO.lightPos = glm::vec4(0.0f, 500.0f, 0.0f, 1.0f);
+
+		blockTexture = std::make_unique<vulpes::Texture<gli::texture2d_array>>(device);
+		blockTexture->CreateFromFile("./rsrc/textures/arrays/blocks_bc7.dds", VK_FORMAT_BC7_UNORM_BLOCK);
+		
+		auto cmd = transferPool->Begin();
+		blockTexture->TransferToDevice(cmd);
+		transferPool->End();
+		transferPool->Submit();
+
+		updateWriteDescriptors();
+
+		blockTexture->FreeStagingBuffer();
 	}
 
 	ChunkManager::~ChunkManager() {
@@ -21,6 +37,7 @@ namespace objects {
 		vkDestroyPipelineLayout(device->vkHandle(), pipelineLayout, nullptr);
 		vkDestroyDescriptorSetLayout(device->vkHandle(), descriptorSetLayout, nullptr);
 		vkDestroyDescriptorPool(device->vkHandle(), descriptorPool, nullptr);
+		renderChunks.clear();
 	}
 
 	void ChunkManager::CreatePipeline(const VkRenderPass & renderpass, const Swapchain * swapchain, const glm::mat4 & projection) {
@@ -32,12 +49,17 @@ namespace objects {
 			frag->PipelineInfo(),
 		};
 
-		static const VkPipelineVertexInputStateCreateInfo vert_info = mesh::BlockVertices::PipelineInfo();
+		static VkPipelineVertexInputStateCreateInfo vert_info = mesh::BlockVertices::PipelineInfo();
+		static const auto binding_info = mesh::BlockVertices::BindDescr();
+		static const auto attribute_info = mesh::BlockVertices::AttrDescr();
+		vert_info.pVertexAttributeDescriptions = attribute_info.data();
+		vert_info.pVertexBindingDescriptions = binding_info.data();
+
 		setupPipelineInfo();
 		pipelineCreateInfo.pStages = shader_stages.data();
 		pipelineCreateInfo.pVertexInputState = &vert_info;
 		pipelineCreateInfo.renderPass = renderpass;
-
+		pipelineCreateInfo.layout = pipelineLayout;
 		pipeline = std::make_unique<GraphicsPipeline>(device);
 		pipeline->Init(pipelineCreateInfo, cache->vkHandle());
 
@@ -46,16 +68,16 @@ namespace objects {
 	void ChunkManager::CreateChunk(const glm::ivec2 & grid_position) {
 		
 		auto new_chunk = std::make_shared<Chunk>(grid_position);
-		std::async(std::launch::async, &Chunk::BuildTerrain, new_chunk.get(), 0);
+		new_chunk->BuildTerrain(0);
 		chunkMap.insert(std::make_pair(grid_position, new_chunk));
 		transferChunks.push_front(new_chunk);
 
 	}
 
-	void ChunkManager::Init(const glm::vec3 & initial_position, const unsigned int & view_distance) {
+	void ChunkManager::Init(const glm::vec3 & initial_position, const int & view_distance) {
 
-		for (size_t j = 0; j < view_distance; ++j) {
-			for (size_t i = 0; i < view_distance; ++i) {
+		for (int j = -view_distance; j <= view_distance; ++j) {
+			for (int i = -view_distance; i <= view_distance; ++i) {
 				if ((i * i) + (j * j) <= (view_distance * view_distance)) {
 					CreateChunk(glm::ivec2(i, j));
 				}
@@ -74,7 +96,7 @@ namespace objects {
 		transferPool->Begin();
 
 		while (!transferChunks.empty()) {
-			auto& curr_chunk = transferChunks.front();
+			auto curr_chunk = transferChunks.front();
 			transferChunks.pop_front();
 			transferChunkToDevice(curr_chunk);
 			renderChunks.insert(curr_chunk);
@@ -85,7 +107,7 @@ namespace objects {
 	}
 
 	void ChunkManager::transferChunkToDevice(std::shared_ptr<Chunk>& chunk_to_transfer) const {
-		chunk_to_transfer->BuildMesh();
+		chunk_to_transfer->BuildMesh(device);
 		chunk_to_transfer->mesh->record_transfer_commands(transferPool->GetCmdBuffer(0));
 	}
 
@@ -103,12 +125,17 @@ namespace objects {
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
 			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->vkHandle());
 			vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, nullptr);
+			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(glm::vec4), glm::value_ptr(fragmentUBO.lightColor));
+			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData) + sizeof(glm::vec4), sizeof(glm::vec4), glm::value_ptr(fragmentUBO.lightPos));
 			glm::vec4 camera_push = glm::vec4(camera_pos.x, camera_pos.y, camera_pos.z, 0.0f); // use vec4 for sake of alignment.
-			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(glm::vec4), glm::value_ptr(camera_push));
+			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData) + (2 * sizeof(glm::vec4)), sizeof(glm::vec4), glm::value_ptr(camera_push));
 			// push view + projection.
-			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), sizeof(glm::mat4) * 2, &uboData.view);
+			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(uboData.view));
+			vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(uboData.projection));
 			for (auto iter = renderChunks.cbegin(); iter != renderChunks.end(); ++iter) {
+				uboData.model = (*iter)->mesh->model;
 				vkCmdPushConstants(cmd, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), glm::value_ptr(uboData.model));
+
 				(*iter)->mesh->render(cmd);
 			}
 		}
@@ -148,7 +175,7 @@ namespace objects {
 		
 		static const std::array<VkPushConstantRange, 2> push_constants{
 			VkPushConstantRange{ VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(uboData) },
-			VkPushConstantRange{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(glm::vec4) }, // camera position.
+			VkPushConstantRange{ VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uboData), sizeof(fragment_UBO) },
 		};
 
 		VkPipelineLayoutCreateInfo pipeline_layout_info = vk_pipeline_layout_create_info_base;
@@ -174,6 +201,15 @@ namespace objects {
 
 	}
 
+	void ChunkManager::updateWriteDescriptors() {
+
+		static const VkDescriptorImageInfo image_info{ blockTexture->Sampler(), blockTexture->View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		static const VkWriteDescriptorSet image_write_descriptor{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, descriptorSet, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr };
+
+		vkUpdateDescriptorSets(device->vkHandle(), 1, &image_write_descriptor, 0, nullptr);
+
+	}
+
 	void ChunkManager::setupPipelineInfo() {
 
 		static const std::array<VkDynamicState, 2>  dynamic_states{
@@ -183,12 +219,14 @@ namespace objects {
 		pipelineInfo.DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
 		pipelineInfo.DynamicStateInfo.pDynamicStates = dynamic_states.data();
 		pipelineInfo.MultisampleInfo.rasterizationSamples = vulpes::Multisampling::SampleCount;
+		pipelineInfo.RasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		
 		pipelineCreateInfo.flags = 0;
 		pipelineCreateInfo.stageCount = 2;
 		pipelineCreateInfo.pInputAssemblyState = &pipelineInfo.AssemblyInfo;
 		pipelineCreateInfo.pTessellationState = nullptr;
-		pipelineCreateInfo.pViewportState = nullptr;
+		pipelineCreateInfo.pViewportState = &pipelineInfo.ViewportInfo;
 		pipelineCreateInfo.pRasterizationState = &pipelineInfo.RasterizationInfo;
 		pipelineCreateInfo.pMultisampleState = &pipelineInfo.MultisampleInfo;
 		pipelineCreateInfo.pDepthStencilState = &pipelineInfo.DepthStencilInfo;
@@ -196,6 +234,7 @@ namespace objects {
 		pipelineCreateInfo.pDynamicState = &pipelineInfo.DynamicStateInfo;
 		pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
 		pipelineCreateInfo.basePipelineIndex = -1;
+		pipelineCreateInfo.subpass = 0;
 
 	}
 
