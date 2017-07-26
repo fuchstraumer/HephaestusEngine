@@ -24,7 +24,7 @@ layout(location = 2) out vec3 vUV;
 void main() {
 	vUV = uv;
 	mat4 norm_transform = transpose(inverse(ubo.model));
-	vNormal = normal; // * mat3(norm_transform);
+	vNormal = normalize(mat3(norm_transform) * normal);
 	vPosition = vec3(vec4(position, 1.0f) * ubo.model);
 	gl_Position = ubo.projection * ubo.view * ubo.model * vec4(position, 1.0f);
 }

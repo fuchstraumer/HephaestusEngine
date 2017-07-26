@@ -16,11 +16,11 @@ namespace objects {
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
 		transferPool = std::make_unique<TransferPool>(device);
 		
-		fragmentUBO.lightColor = glm::vec4(0.95f, 0.3f, 0.0f, 1.0f);
+		fragmentUBO.lightColor = glm::vec4(0.98f, 0.95f, 0.95f, 1.0f);
 		fragmentUBO.lightPos = glm::vec4(0.0f, 500.0f, 0.0f, 1.0f);
 
 		blockTexture = std::make_unique<vulpes::Texture<gli::texture2d_array>>(device);
-		blockTexture->CreateFromFile("./rsrc/textures/arrays/blocks_bc7.dds", VK_FORMAT_BC7_UNORM_BLOCK);
+		blockTexture->CreateFromFile("./rsrc/textures/arrays/blocks.dds", VK_FORMAT_R8G8B8A8_UNORM);
 		
 		auto cmd = transferPool->Begin();
 		blockTexture->TransferToDevice(cmd);
@@ -90,6 +90,22 @@ namespace objects {
 		if (!transferChunks.empty()) {
 			transferChunksToDevice();
 		}
+	}
+
+	void ChunkManager::SetLightPos(const glm::vec3 & light_pos) {
+		fragmentUBO.lightPos.xyz = light_pos;
+	}
+
+	void ChunkManager::SetLightColor(const glm::vec3 & light_color) {
+		fragmentUBO.lightColor.xyz = light_color;
+	}
+
+	const glm::vec3 & ChunkManager::GetLightPos() const noexcept {
+		return fragmentUBO.lightPos.xyz;
+	}
+
+	const glm::vec3 & ChunkManager::GetLightColor() const noexcept {
+		return fragmentUBO.lightColor.xyz;
 	}
 
 	void ChunkManager::transferChunksToDevice() {
@@ -220,7 +236,8 @@ namespace objects {
 		pipelineInfo.DynamicStateInfo.pDynamicStates = dynamic_states.data();
 		pipelineInfo.MultisampleInfo.rasterizationSamples = vulpes::Multisampling::SampleCount;
 		pipelineInfo.RasterizationInfo.cullMode = VK_CULL_MODE_NONE;
-		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+		pipelineInfo.DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
 		
 		pipelineCreateInfo.flags = 0;
 		pipelineCreateInfo.stageCount = 2;

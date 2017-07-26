@@ -3,6 +3,8 @@
 
 namespace objects {
 
+	noise::NoiseSampler Chunk::sampler = noise::NoiseSampler(0.005);
+
 	// Face normals. Don't change and can be reused. Yay for cubes!
 	static const std::array<glm::ivec3, 6> normals = {
 		glm::ivec3( 0, 0, 1),   // (front)
@@ -30,9 +32,9 @@ namespace objects {
 		// Leaves, Planks, Glass, Stonebricks, Bricks, Tall grass, Fern, Flower, Grass Lower, Grass Upper,
 		{  0, 0, 0, 0, 0, 0 }, // Bedrock block
 		{  2, 2, 1, 2, 3, 2 }, // Grass block
+		{  4, 4, 4, 4, 4, 4 }, // Stone block
 		{  5, 5, 5, 5, 5, 5 }, // Sand block
 		{  3, 3, 3, 3, 3, 3 }, // Dirt block
-		{  4, 4, 4, 4, 4, 4 }, // Stone block
 		{  5, 5, 5, 5, 5, 5 }, // Gravel
 		{  6, 6, 6, 6, 6, 6 }, // Sand
 		{  7, 7, 7, 7, 7, 7 }, // Cobblestone
@@ -98,6 +100,11 @@ namespace objects {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			for (int z = 0; z < CHUNK_SIZE; ++z) {
 				terrainBlocks[GetBlockIndex(x, 0, z)].SetType(static_cast<uint8_t>(BlockTypes::BEDROCK));
+				float height = sampler.SampleBillow(glm::vec2(x + Position.x, z + Position.z)) * 10;
+				height = floorf(height);
+				for (int y = 1; y < height; ++y) {
+					terrainBlocks[GetBlockIndex(x, y, z)].SetType(static_cast<uint8_t>(BlockTypes::STONE));
+				}
 			}
 		}
 	}
@@ -257,10 +264,10 @@ namespace objects {
 		}
 
 		v0.Normal = v1.Normal = v2.Normal = v3.Normal = normals[static_cast<size_t>(face)];
-		v0.UV = glm::ivec3(1, 1, textures[texture_idx][static_cast<size_t>(face)]);
-		v1.UV = glm::ivec3(0, 1, textures[texture_idx][static_cast<size_t>(face)]);
-		v2.UV = glm::ivec3(1, 0, textures[texture_idx][static_cast<size_t>(face)]);
-		v3.UV = glm::ivec3(0, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v0.UV = glm::ivec3(0, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v1.UV = glm::ivec3(1, 0, textures[texture_idx][static_cast<size_t>(face)]);
+		v2.UV = glm::ivec3(1, 1, textures[texture_idx][static_cast<size_t>(face)]);
+		v3.UV = glm::ivec3(0, 1, textures[texture_idx][static_cast<size_t>(face)]);
 	}
 
 	void Chunk::createBlockFace(const blockFace& face, const size_t& uv_idx, const glm::vec3 & pos) {

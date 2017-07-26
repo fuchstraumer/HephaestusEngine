@@ -11,15 +11,15 @@ namespace noise {
 
 		NoiseSampler(const double& freq = 0.05f, const size_t& octaves = 12, const double& min = 0.0f, const double& max = 128.0f);
 
-		float Sample(const glm::uvec3& block_pos) const;
-		float SampleFBM(const glm::uvec3& block_pos) const;
-		float SampleRidged(const glm::uvec3& block_pos) const;
-		float SampleBillow(const glm::uvec3& block_pos) const;
+		float Sample(const glm::vec3& block_pos) const;
+		float SampleFBM(const glm::vec3& block_pos) const;
+		float SampleRidged(const glm::vec3& block_pos) const;
+		float SampleBillow(const glm::vec3& block_pos) const;
 
-		float Sample(const glm::uvec2& block_pos) const;
-		float SampleFBM(const glm::uvec2& block_pos) const;
-		float SampleRidged(const glm::uvec2& block_pos) const;
-		float SampleBillow(const glm::uvec2& block_pos) const;
+		float Sample(const glm::vec2& block_pos) const;
+		float SampleFBM(const glm::vec2& block_pos) const;
+		float SampleRidged(const glm::vec2& block_pos) const;
+		float SampleBillow(const glm::vec2 & block_pos) const;
 
 		double Frequency;
 		size_t Octaves;

@@ -28,10 +28,10 @@ using BlockType = uint8_t;
 // (or 127 blocks if we use RLE, but that's another problem)
 enum class BlockTypes : BlockType {
 	BEDROCK,
+	STONE,
 	GRASS,
 	SAND,
 	DIRT,
-	STONE,
 	TALL_GRASS,
 	COAL_ORE,
 	IRON_ORE,

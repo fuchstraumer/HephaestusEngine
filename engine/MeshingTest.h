@@ -16,33 +16,37 @@ namespace meshing_test {
 
 		MeshingScene() : BaseScene(2) {
 
-			chunkManager = std::make_unique<ChunkManager>(device.get(), 10);
-			chunkManager->Init(glm::vec3(0.0f), 5);
+			chunkManager = std::make_unique<ChunkManager>(device.get(), 4);
+			chunkManager->Init(glm::vec3(0.0f), 3);
 			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
 
 			SetupFramebuffers();
 
-			/*auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
+			auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
 			gui = std::make_unique<imguiWrapper>();
 			gui->Init(device.get(), gui_cache, renderPass->vkHandle());
-			gui->UploadTextureData(graphicsPool.get());*/
+			gui->UploadTextureData(transferPool.get());
+
+			secondaryBuffers.resize(graphicsPool->size());
 		}
 
-		~MeshingScene() = default;
+		~MeshingScene() {
+			gui.reset();
+		}
 
 		virtual void WindowResized() override {
 			chunkManager.reset();
 		}
 
 		virtual void RecreateObjects() override {
-			chunkManager = std::make_unique<ChunkManager>(device.get(), 10);
+			chunkManager = std::make_unique<ChunkManager>(device.get(), 4);
 			chunkManager->Init(glm::vec3(0.0f), 10);
 			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
 		}
 
 		virtual void RecordCommands() override {
 			// Clear color value, clear depth value
-			static const std::array<VkClearValue, 3> clear_values{ VkClearValue{ 0.025f, 0.025f, 0.085f, 1.0f }, VkClearValue{ 0.025f, 0.025f, 0.085f, 1.0f }, VkClearValue{ 1.0f, 0 } };
+			static const std::array<VkClearValue, 4> clear_values{ VkClearValue{ 0.025f, 0.025f, 0.085f, 1.0f },  VkClearValue{ 1.0f, 0 }, VkClearValue{ 0.025f, 0.025f, 0.085f, 1.0f }, VkClearValue{ 1.0f, 0 } };
 
 			// Given at each frame in framebuffer to describe layout of framebuffer
 			static VkRenderPassBeginInfo renderpass_begin{
@@ -59,15 +63,27 @@ namespace meshing_test {
 			inherit_info.renderPass = renderPass->vkHandle();
 			inherit_info.subpass = 0;
 
+			glm::vec3 lpos = chunkManager->GetLightPos(), lcolor = chunkManager->GetLightColor();
+
 			for (uint32_t i = 0; i < graphicsPool->size(); ++i) {
 
 				// holds secondary buffers
 				std::vector<VkCommandBuffer> buffers;
 
-				//gui->NewFrame(instance.get(), true);
+				gui->NewFrame(instance.get(), true);
+				//ImGui::ShowMetricsWindow();
+
+				ImGui::SetNextWindowSize(ImVec2(200.0f, 80.0f), ImGuiSetCond_FirstUseEver);
+				ImGui::SetNextWindowPos(ImVec2(200.0f, 400.0f), ImGuiSetCond_FirstUseEver);
+				ImGui::Begin("Lighting");
+				ImGui::InputFloat3("Light Position", glm::value_ptr(lpos), 0);
+				ImGui::InputFloat3("Light Color", glm::value_ptr(lcolor), 2);
+				chunkManager->SetLightPos(lpos);
+				chunkManager->SetLightColor(lcolor);
+				ImGui::End();
 
 				VkCommandBufferBeginInfo begin_info = vk_command_buffer_begin_info_base;
-				begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+				begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 				begin_info.pInheritanceInfo = nullptr;
 
 				VkResult err = vkBeginCommandBuffer(graphicsPool->GetCmdBuffer(i), &begin_info);
@@ -99,15 +115,15 @@ namespace meshing_test {
 				begin_info.pInheritanceInfo = &inherit_info;
 
 				VkCommandBuffer& terrain_buffer = secondaryPool->GetCmdBuffer(i * swapchain->ImageCount);
-				//VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * swapchain->ImageCount));
+				VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * swapchain->ImageCount));
 
-				//renderGUI(gui_buffer, begin_info, i);
-				//buffers.push_back(gui_buffer);
+				renderGUI(gui_buffer, begin_info, i);
+				secondaryBuffers[i].push_back(std::move(gui_buffer));
 
 				chunkManager->Render(terrain_buffer, begin_info, instance->GetViewMatrix(), instance->GetCamPos(), viewport, scissor);
-				buffers.push_back(terrain_buffer);
+				secondaryBuffers[i].push_back(std::move(terrain_buffer));
 
-				vkCmdExecuteCommands(graphicsPool->GetCmdBuffer(i), static_cast<uint32_t>(buffers.size()), buffers.data());
+				vkCmdExecuteCommands(graphicsPool->GetCmdBuffer(i), static_cast<uint32_t>(secondaryBuffers[i].size()), secondaryBuffers[i].data());
 
 				vkCmdEndRenderPass(graphicsPool->GetCmdBuffer(i));
 
@@ -125,8 +141,7 @@ namespace meshing_test {
 		}
 
 		void RenderLoop() {
-			float delta_time, last_frame = 0.0f;
-
+			float delta_time, last_frame = 0.0f; 
 			while (!glfwWindowShouldClose(instance->Window)) {
 				float current_frame_time = static_cast<float>(glfwGetTime());
 				delta_time = current_frame_time - last_frame;
@@ -143,6 +158,10 @@ namespace meshing_test {
 
 				vkResetCommandPool(device->vkHandle(), secondaryPool->vkHandle(), VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
 				vkResetCommandPool(device->vkHandle(), graphicsPool->vkHandle(), VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
+				secondaryBuffers.clear();
+				secondaryBuffers.resize(graphicsPool->size());
+
+
 			}
 
 			vkDeviceWaitIdle(device->vkHandle());
@@ -199,6 +218,7 @@ namespace meshing_test {
 		}
 
 		std::unique_ptr<ChunkManager> chunkManager;
+		std::vector<std::vector<VkCommandBuffer>> secondaryBuffers;
 	};
 
 }

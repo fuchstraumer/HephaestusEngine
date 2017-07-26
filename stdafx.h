@@ -24,7 +24,6 @@
 #include <forward_list>
 #include <future>
 
-#define GLFW_DLL
 #define GLFW_INCLUDE_VULKAN
 #include "ext/include/glfw/glfw3.h"
 

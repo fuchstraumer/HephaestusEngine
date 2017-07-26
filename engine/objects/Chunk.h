@@ -7,7 +7,7 @@
 #include "common\CommonUtil.h"
 #include "Block.h"
 #include "..\mesh\mesh.h"
-
+#include "../generation/NoiseSampler.h"
 namespace objects {
 
 	/*
@@ -76,7 +76,7 @@ namespace objects {
 		static constexpr size_t CHUNK_SIZE_Y = 128;
 
 	private:
-
+		static noise::NoiseSampler sampler;
 		enum class blockFace : size_t {
 			FRONT,
 			RIGHT,

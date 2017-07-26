@@ -218,8 +218,8 @@ namespace noise {
 		y2 = y0 - 1.0f + 2.0f * G2;
 
 		/* Wrap the integer indices at 256, to avoid indexing perm[] out of bounds */
-		ii = i % 256;
-		jj = j % 256;
+		ii = abs(i % 256);
+		jj = abs(j % 256);
 
 		/* Calculate the contribution from the three corners */
 		t0 = 0.5f - x0 * x0 - y0 * y0;

@@ -68,6 +68,11 @@ namespace objects {
 		// Cleans up inactive chunks in "pruneChunks" by compressing and then saving their data.
 		void Prune();
 
+		void SetLightPos(const glm::vec3& light_pos);
+		void SetLightColor(const glm::vec3& light_color);
+		const glm::vec3& GetLightPos() const noexcept;
+		const glm::vec3& GetLightColor() const noexcept;
+
 	private:
 
 		void updateLighting();
