@@ -141,8 +141,25 @@ namespace meshing_test {
 		}
 
 		void RenderLoop() {
-			float delta_time, last_frame = 0.0f; 
+
+			float delta_time, last_frame = 0.0f;
+			std::chrono::system_clock::time_point a = std::chrono::system_clock::now();
+			std::chrono::system_clock::time_point b = std::chrono::system_clock::now();
+			static constexpr double frame_time_desired = 16.0; // frametime desired in ms, 120Hz
+
 			while (!glfwWindowShouldClose(instance->Window)) {
+
+				a = std::chrono::system_clock::now();
+				std::chrono::duration<double, std::milli> work_time = a - b;
+
+				if (work_time.count() < frame_time_desired) {
+					std::chrono::duration<double, std::milli> delta_ms(frame_time_desired - work_time.count());
+					auto delta_ms_dur = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+					std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_dur.count()));
+				}
+
+				b = std::chrono::system_clock::now();
+
 				float current_frame_time = static_cast<float>(glfwGetTime());
 				delta_time = current_frame_time - last_frame;
 				instance->frameTime = delta_time;
