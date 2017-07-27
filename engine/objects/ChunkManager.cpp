@@ -100,11 +100,11 @@ namespace objects {
 		fragmentUBO.lightColor.xyz = light_color;
 	}
 
-	const glm::vec3 & ChunkManager::GetLightPos() const noexcept {
+	glm::vec3 ChunkManager::GetLightPos() const noexcept {
 		return fragmentUBO.lightPos.xyz;
 	}
 
-	const glm::vec3 & ChunkManager::GetLightColor() const noexcept {
+	glm::vec3 ChunkManager::GetLightColor() const noexcept {
 		return fragmentUBO.lightColor.xyz;
 	}
 
@@ -236,8 +236,8 @@ namespace objects {
 		pipelineInfo.DynamicStateInfo.pDynamicStates = dynamic_states.data();
 		pipelineInfo.MultisampleInfo.rasterizationSamples = vulpes::Multisampling::SampleCount;
 		pipelineInfo.RasterizationInfo.cullMode = VK_CULL_MODE_NONE;
-		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
-		pipelineInfo.DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_GREATER_OR_EQUAL;
+		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		pipelineInfo.DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 		
 		pipelineCreateInfo.flags = 0;
 		pipelineCreateInfo.stageCount = 2;

@@ -123,15 +123,15 @@ namespace mesh {
 		static const std::array<VkVertexInputBindingDescription, 2> BindDescr() noexcept {
 			return std::array<VkVertexInputBindingDescription, 2> {
 				VkVertexInputBindingDescription{ 0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX },
-					VkVertexInputBindingDescription{ 1, sizeof(block_vert_data), VK_VERTEX_INPUT_RATE_VERTEX },
+				VkVertexInputBindingDescription{ 1, sizeof(block_vert_data), VK_VERTEX_INPUT_RATE_VERTEX },
 			};
 		};
 
 		static const std::array<VkVertexInputAttributeDescription, 3> AttrDescr() noexcept {
 			return std::array<VkVertexInputAttributeDescription, 3> {
 				VkVertexInputAttributeDescription{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-					VkVertexInputAttributeDescription{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-					VkVertexInputAttributeDescription{ 2, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3) },
+				VkVertexInputAttributeDescription{ 1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+				VkVertexInputAttributeDescription{ 2, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(glm::vec3) },
 			};
 		};
 

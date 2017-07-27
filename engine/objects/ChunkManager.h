@@ -70,8 +70,8 @@ namespace objects {
 
 		void SetLightPos(const glm::vec3& light_pos);
 		void SetLightColor(const glm::vec3& light_color);
-		const glm::vec3& GetLightPos() const noexcept;
-		const glm::vec3& GetLightColor() const noexcept;
+		glm::vec3 GetLightPos() const noexcept;
+		glm::vec3 GetLightColor() const noexcept;
 
 	private:
 
