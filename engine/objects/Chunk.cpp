@@ -3,8 +3,6 @@
 
 namespace objects {
 
-	noise::NoiseSampler Chunk::sampler = noise::NoiseSampler(0.005);
-
 	// Face normals. Don't change and can be reused. Yay for cubes!
 	static const std::array<glm::ivec3, 6> normals = {
 		glm::ivec3( 0, 0, 1),   // (front)
@@ -31,8 +29,8 @@ namespace objects {
 		// Current array order: Bedrock, Grass Top, Grass Sides, Dirt, Stone, Gravel, Sand, Cobble, Coal, Iron, Gold, Diamond, Emerald, Log, Log Top,
 		// Leaves, Planks, Glass, Stonebricks, Bricks, Tall grass, Fern, Flower, Grass Lower, Grass Upper,
 		{  0, 0, 0, 0, 0, 0 }, // Bedrock block
+		{  1, 1, 1, 1, 1, 1 }, // Stone
 		{  2, 2, 1, 2, 3, 2 }, // Grass block
-		{  4, 4, 4, 4, 4, 4 }, // Stone block
 		{  5, 5, 5, 5, 5, 5 }, // Sand block
 		{  3, 3, 3, 3, 3, 3 }, // Dirt block
 		{  5, 5, 5, 5, 5, 5 }, // Gravel
@@ -45,11 +43,6 @@ namespace objects {
 		{ 12,12,12,12,12,12 }, // Emerald
 		{ 20,20,20,20,20,20 }, // tall grass
 	};
-
-	// Same as above, with individual positions
-	static constexpr inline size_t GetBlockIndex(const size_t& x, const size_t& y, const size_t& z) {
-		return ((y* Chunk::CHUNK_SIZE * Chunk::CHUNK_SIZE) + (x* Chunk::CHUNK_SIZE) + z);
-	}
 
 
 	Chunk::Chunk(glm::ivec2 gridpos) : mesh(std::make_unique<mesh::Mesh<mesh::BlockVertices, block_vertex_t>>()) {
@@ -68,13 +61,15 @@ namespace objects {
 		glm::vec3 float_position;
 		float_position.x = GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 		float_position.y = 0.0f;
-		float_position.z = -GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+		float_position.z = GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
 
 		// Set the updated positions in the mesh (most important), and this chunk (good for reference)
 		mesh->position = float_position;
 		Position = float_position;
 		mesh->scale = glm::vec3(0.5f);
 		mesh->update_model_matrix();
+
+		sampler = std::move(noise::NoiseSampler(Position));
 	}
 
 	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), uniqueBlocks(std::move(other.uniqueBlocks)), lightMap(std::move(other.lightMap)) {}
@@ -100,9 +95,9 @@ namespace objects {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			for (int z = 0; z < CHUNK_SIZE; ++z) {
 				terrainBlocks[GetBlockIndex(x, 0, z)].SetType(static_cast<uint8_t>(BlockTypes::BEDROCK));
-				float height = sampler.SampleBillow(glm::vec2(x + Position.x, z + Position.z)) * 10;
-				height = floorf(height);
-				for (int y = 1; y < height; ++y) {
+				double height = sampler.Sample(glm::vec2(x, z)) * 10.0f;
+				height = floor(height);
+				for (int y = 1; y < static_cast<int>(height); ++y) {
 					terrainBlocks[GetBlockIndex(x, y, z)].SetType(static_cast<uint8_t>(BlockTypes::STONE));
 				}
 			}

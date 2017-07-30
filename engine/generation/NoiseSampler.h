@@ -3,13 +3,17 @@
 #define NOISE_SAMPLER_H
 
 #include "stdafx.h"
-#include "sdnoise1234.h"
+#include "NoiseGen.h"
 
 namespace noise {
 
 	struct NoiseSampler {
 
-		NoiseSampler(const double& freq = 0.05f, const size_t& octaves = 12, const double& min = 0.0f, const double& max = 128.0f);
+		NoiseSampler() = default;
+		NoiseSampler(const glm::vec3& origin, const double& min = 0.0f, const double& max = 128.0f);
+		NoiseSampler(NoiseSampler&& other) noexcept;
+		
+		NoiseSampler& operator=(NoiseSampler&& other) noexcept;
 
 		float Sample(const glm::vec3& block_pos) const;
 		float SampleFBM(const glm::vec3& block_pos) const;
@@ -21,14 +25,17 @@ namespace noise {
 		float SampleRidged(const glm::vec2& block_pos) const;
 		float SampleBillow(const glm::vec2 & block_pos) const;
 
-		double Frequency;
-		size_t Octaves;
-		double Min, Max;
+		double Frequency = 0.10;
+		size_t Octaves = 12;
+		double Min = 0.0, Max = 127.0;
 		double VerticalScale = 1.0;
 		double Lacunarity = 2.20, Persistence = 0.70;
 
 	private:
-		NoiseGen noiseGenerator;
+		glm::vec3 origin;
+		NoiseSampler(const NoiseSampler&) = delete;
+		NoiseSampler& operator=(const NoiseSampler&) = delete;
+		NoiseGenerator noiseGenerator;
 		double rawSample(const double& x, const double& z) const;
 		double rawSample(const double& x, const double& y, const double& z) const;
 	};

@@ -107,6 +107,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir);$(VULKAN_SDK)\Include;$(ProjectDir)ext\include;$(ProjectDir)\VulpesRender\include;$(ProjectDir)\VulpesRender\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -165,8 +166,8 @@
     <ClInclude Include="common\CommonUtil.h" />
     <ClInclude Include="common\Constants.h" />
     <ClInclude Include="common\Morton.h" />
+    <ClInclude Include="engine\generation\NoiseGen.h" />
     <ClInclude Include="engine\generation\NoiseSampler.h" />
-    <ClInclude Include="engine\generation\sdnoise1234.h" />
     <ClInclude Include="engine\generation\TerrainGenerator.h" />
     <ClInclude Include="engine\MeshingTest.h" />
     <ClInclude Include="engine\mesh\Mesh.h" />
@@ -239,8 +240,8 @@
     <ClInclude Include="VulpesRender\include\VulpesRender.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="engine\generation\NoiseGen.cpp" />
     <ClCompile Include="engine\generation\NoiseSampler.cpp" />
-    <ClCompile Include="engine\generation\sdnoise1234.cpp" />
     <ClCompile Include="engine\objects\Block.cpp" />
     <ClCompile Include="engine\objects\Chunk.cpp" />
     <ClCompile Include="engine\objects\ChunkManager.cpp" />

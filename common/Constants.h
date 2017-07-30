@@ -1,7 +1,6 @@
 #pragma once
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
-#include "stdafx.h"
 
 // Chunk size constants. 32x32 in XZ, and 128 in Y.
 // Just pi lol
@@ -94,5 +93,11 @@ enum class ChunkStatus : uint8_t {
 	NEEDS_DELETE,
 	REMOVED,
 };
+
+static constexpr size_t CHUNK_SIZE = 32;
+static constexpr size_t CHUNK_SIZE_Y = 128;
+static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
+static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
+static constexpr size_t BLOCKS_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE_Y;
 
 #endif // !CONSTANTS_H

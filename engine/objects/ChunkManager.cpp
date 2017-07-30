@@ -16,7 +16,7 @@ namespace objects {
 		cache = std::make_unique<PipelineCache>(device, static_cast<int16_t>(typeid(*this).hash_code()));
 		transferPool = std::make_unique<TransferPool>(device);
 		
-		fragmentUBO.lightColor = glm::vec4(0.98f, 0.95f, 0.95f, 1.0f);
+		fragmentUBO.lightColor = glm::vec4(225.0f / 255.0f, 229.0f / 255.0f, 1.0f, 1.0f);
 		fragmentUBO.lightPos = glm::vec4(0.0f, 500.0f, 0.0f, 1.0f);
 
 		blockTexture = std::make_unique<vulpes::Texture<gli::texture2d_array>>(device);

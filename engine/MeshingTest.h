@@ -14,7 +14,7 @@ namespace meshing_test {
 	class MeshingScene : public BaseScene {
 	public:
 
-		MeshingScene() : BaseScene(2) {
+		MeshingScene() : BaseScene(3) {
 
 			chunkManager = std::make_unique<ChunkManager>(device.get(), 1);
 			chunkManager->Init(glm::vec3(0.0f), 1);
@@ -47,8 +47,8 @@ namespace meshing_test {
 		virtual void RecordCommands() override {
 			// Clear color value, clear depth value
 			static std::array<VkClearValue, 3> clear_values;
-			clear_values[0].color = { 0.025f, 0.025f, 0.085f, 1.0f };
-			clear_values[1].color = { 0.025f, 0.025f, 0.085f, 1.0f };
+			clear_values[0].color = { 99.0f / 255.0f, 159.0f / 255.0f, 1.0f, 1.0f };
+			clear_values[1].color = { 99.0f / 255.0f, 159.0f / 255.0f, 1.0f, 1.0f };
 			clear_values[2].depthStencil = { 1.0f, 0 };
 
 			// Given at each frame in framebuffer to describe layout of framebuffer

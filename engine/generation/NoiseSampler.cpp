@@ -1,21 +1,40 @@
 #include "stdafx.h"
 #include "NoiseSampler.h"
 
+noise::NoiseSampler::NoiseSampler(const glm::vec3& _origin, const double & min, const double & max) : origin(_origin) {}
+
+noise::NoiseSampler::NoiseSampler(NoiseSampler && other) noexcept : noiseGenerator(std::move(other.noiseGenerator)), Min(std::move(other.Min)), Max(std::move(other.Max)), VerticalScale(std::move(other.VerticalScale)), origin(std::move(other.origin)),
+	Frequency(std::move(other.Frequency)), Octaves(std::move(other.Octaves)), Lacunarity(std::move(other.Lacunarity)), Persistence(std::move(other.Persistence)) {}
+
+noise::NoiseSampler & noise::NoiseSampler::operator=(NoiseSampler && other) noexcept {
+	noiseGenerator = std::move(other.noiseGenerator);
+	Min = std::move(other.Min);
+	Max = std::move(other.Max);
+	Frequency = std::move(other.Frequency);
+	Octaves = std::move(other.Octaves);
+	Lacunarity = std::move(other.Lacunarity);
+	Persistence = std::move(other.Persistence);
+	VerticalScale = std::move(other.VerticalScale);
+	origin = std::move(other.origin);
+	return *this;
+}
+
 double noise::NoiseSampler::rawSample(const double & x, const double & z) const {
-	return static_cast<double>(noiseGenerator.sdnoise2(x, z, nullptr, nullptr));
+	return static_cast<double>(noiseGenerator.Sample(x, z));
 }
 
 double noise::NoiseSampler::rawSample(const double & x, const double & y, const double & z) const {
-	return static_cast<double>(noiseGenerator.sdnoise3(x, y, z, nullptr));
+	return static_cast<double>(noiseGenerator.Sample(x, y, z));
 }
-
-noise::NoiseSampler::NoiseSampler(const double & freq, const size_t & octaves, const double & min, const double & max) : Frequency(freq), Octaves(octaves), Min(min), Max(max) {}
 
 float noise::NoiseSampler::Sample(const glm::vec3 & block_pos) const {
 	
 	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
 	double y = static_cast<double>(block_pos.y) * Frequency;
+	y += origin.y;
 	double z = static_cast<double>(block_pos.z) * Frequency;
+	z += origin.z;
 	return std::clamp(rawSample(x, y, z), Min, Max);
 
 }
@@ -23,8 +42,11 @@ float noise::NoiseSampler::Sample(const glm::vec3 & block_pos) const {
 float noise::NoiseSampler::SampleFBM(const glm::vec3 & block_pos) const {
 	
 	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
 	double y = static_cast<double>(block_pos.y) * Frequency;
+	y += origin.y;
 	double z = static_cast<double>(block_pos.z) * Frequency;
+	z += origin.z;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {
@@ -41,8 +63,11 @@ float noise::NoiseSampler::SampleFBM(const glm::vec3 & block_pos) const {
 float noise::NoiseSampler::SampleRidged(const glm::vec3 & block_pos) const {
 	
 	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
 	double y = static_cast<double>(block_pos.y) * Frequency;
+	y += origin.y;
 	double z = static_cast<double>(block_pos.z) * Frequency;
+	z += origin.z;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {
@@ -60,8 +85,11 @@ float noise::NoiseSampler::SampleRidged(const glm::vec3 & block_pos) const {
 float noise::NoiseSampler::SampleBillow(const glm::vec3 & block_pos) const {
 	
 	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
 	double y = static_cast<double>(block_pos.y) * Frequency;
+	y += origin.y;
 	double z = static_cast<double>(block_pos.z) * Frequency;
+	z += origin.z;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {
@@ -77,16 +105,20 @@ float noise::NoiseSampler::SampleBillow(const glm::vec3 & block_pos) const {
 
 float noise::NoiseSampler::Sample(const glm::vec2 & block_pos) const {
 	
-	double x = static_cast<double>(block_pos.x) * Frequency;
-	double z = static_cast<double>(block_pos.y) * Frequency;
+	double x = static_cast<double>(block_pos.x);
+	x += origin.x;
+	double z = static_cast<double>(block_pos.y);
+	z += origin.z;
 	return std::clamp(rawSample(x, z) * VerticalScale, Min, Max);
 
 }
 
 float noise::NoiseSampler::SampleFBM(const glm::vec2 & block_pos) const {
 
-	double x = static_cast<double>(block_pos.x + 1) * Frequency;
-	double z = static_cast<double>(block_pos.y + 1) * Frequency;
+	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
+	double z = static_cast<double>(block_pos.y) * Frequency;
+	z += origin.z;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {
@@ -102,7 +134,9 @@ float noise::NoiseSampler::SampleFBM(const glm::vec2 & block_pos) const {
 float noise::NoiseSampler::SampleRidged(const glm::vec2 & block_pos) const {
 
 	double x = static_cast<double>(block_pos.x) * Frequency;
+	x += origin.x;
 	double z = static_cast<double>(block_pos.y) * Frequency;
+	z += origin.z;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {
@@ -117,8 +151,8 @@ float noise::NoiseSampler::SampleRidged(const glm::vec2 & block_pos) const {
 
 float noise::NoiseSampler::SampleBillow(const glm::vec2 & block_pos) const {
 	
-	double x = static_cast<double>(block_pos.x) * Frequency;
-	double z = static_cast<double>(block_pos.y) * Frequency;
+	double x = (static_cast<double>(block_pos.x) + origin.x) * Frequency;
+	double z = (static_cast<double>(block_pos.y) + origin.z) * Frequency;
 	double amplitude = 1.0, sum = 0.0;
 
 	for (size_t i = 0; i < Octaves; ++i) {

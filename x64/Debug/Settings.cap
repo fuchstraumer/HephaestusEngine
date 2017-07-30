@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CaptureSettings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Options>
+    <AllowVSync>true</AllowVSync>
+    <AllowFullscreen>true</AllowFullscreen>
+    <APIValidation>false</APIValidation>
+    <CaptureCallstacks>true</CaptureCallstacks>
+    <CaptureCallstacksOnlyDraws>true</CaptureCallstacksOnlyDraws>
+    <DelayForDebugger>0</DelayForDebugger>
+    <VerifyMapWrites>false</VerifyMapWrites>
+    <HookIntoChildren>true</HookIntoChildren>
+    <RefAllResources>true</RefAllResources>
+    <SaveAllInitials>true</SaveAllInitials>
+    <CaptureAllCmdLists>true</CaptureAllCmdLists>
+    <DebugOutputMute>true</DebugOutputMute>
+  </Options>
+  <Inject>false</Inject>
+  <AutoStart>false</AutoStart>
+  <Executable>C:\Users\kgstr\Documents\Software Dev\HephaestusEngine\x64\Debug\HephaestusEngine.exe</Executable>
+  <WorkingDir>C:\Users\kgstr\Documents\Software Dev\HephaestusEngine</WorkingDir>
+  <CmdLine />
+  <Environment />
+</CaptureSettings>

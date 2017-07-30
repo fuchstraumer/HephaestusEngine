@@ -35,5 +35,5 @@ void main() {
 	vec3 specular = specular_strength * spec * ubo.lightColor.xyz;
 
 	vec4 light_result = vec4(ambient + diffuse + specular, 1.0f);
-	fragColor = texcolor * light_result;
+	fragColor = light_result * texcolor;
 }
