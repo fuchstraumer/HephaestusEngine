@@ -4,25 +4,32 @@
 
 #include "stdafx.h"
 
-#include "util/FastNoise/FastNoise.h"
 
 namespace noise {
 
+	enum class fractalType {
+		FBM,
+		BILLOW,
+		RIDGED
+	};
+
+	enum class noiseType {
+		VALUE,
+		SIMPLEX,
+	};
+
 	struct NoiseCfg {
-		float Frequency = 0.5f, Lacunarity = 2.30f, Persistence = 0.80f;
-		size_t Octaves = 12, Seed = 192487;
-		FastNoise::NoiseType NoiseType = FastNoise::NoiseType::SimplexFractal;
-		FastNoise::FractalType FractalType = FastNoise::FractalType::Billow;
+		float Frequency = 0.01f, Lacunarity = 1.6f, Persistence = 0.80f;
+		size_t Octaves = 5, Seed = 192487;
+		fractalType FractalType = fractalType::FBM;
+		noiseType NoiseType = noiseType::VALUE;
 	};
 
 	class NoiseGenerator {
-		NoiseGenerator(const NoiseGenerator&) = delete;
-		NoiseGenerator& operator=(const NoiseGenerator&) = delete;
+
 	public:
 
 		NoiseGenerator();
-		NoiseGenerator(NoiseGenerator&& other) noexcept;
-		NoiseGenerator& operator=(NoiseGenerator&& other) noexcept;
 
 		float Sample(const glm::vec3& pos) const;
 		float Sample(const size_t& x, const size_t& y, const size_t& z) const;
@@ -31,9 +38,10 @@ namespace noise {
 		size_t Seed;
 		static NoiseCfg NoiseConfig;
 	private:
-
-		std::unique_ptr<FastNoise> noiseGen;
-
+		std::array<uint8_t, 512> perm;
+		double simplex(const double& x, const double& y, glm::dvec2* deriv = nullptr) const;
+		double valueNoise(const double& x, const double& y) const;
+		double fbm(const double& x, const double& y) const;
 	};
 
 

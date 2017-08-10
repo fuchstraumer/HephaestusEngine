@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #include "objects\ChunkManager.h"
 #include "BaseScene.h"
-
+#include "GUI_Elements.h"
 namespace meshing_test {
 
 	using namespace vulpes;
@@ -16,32 +16,41 @@ namespace meshing_test {
 
 		MeshingScene() : BaseScene(3) {
 
-			chunkManager = std::make_unique<ChunkManager>(device.get(), 1);
-			chunkManager->Init(glm::vec3(0.0f), 1);
+			SetupRenderpass(Instance::VulpesInstanceConfig.MSAA_SampleCount);
+			Instance::VulpesInstanceConfig.MovementSpeed = 0.05f;
+			chunkManager = std::make_unique<ChunkManager>(device.get(), 8);
+			chunkManager->Init(glm::vec3(0.0f), 2);
 			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
-
+			render_distance = static_cast<int>(chunkManager->GetRenderDistance());
 			SetupFramebuffers();
 
 			auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
 			gui = std::make_unique<imguiWrapper>();
-			gui->Init(device.get(), gui_cache, renderPass->vkHandle());
+			gui->Init(device.get(), renderPass->vkHandle());
 			gui->UploadTextureData(transferPool.get());
 
 			secondaryBuffers.resize(graphicsPool->size());
 		}
 
 		~MeshingScene() {
+			chunkManager.reset();
+			msaa.reset();
 			gui.reset();
 		}
 
 		virtual void WindowResized() override {
 			chunkManager.reset();
+			gui.reset();
 		}
 
 		virtual void RecreateObjects() override {
 			chunkManager = std::make_unique<ChunkManager>(device.get(), 4);
-			chunkManager->Init(glm::vec3(0.0f), 10);
+			chunkManager->Init(glm::vec3(0.0f), 2);
 			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
+			auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
+			gui = std::make_unique<imguiWrapper>();
+			gui->Init(device.get(), renderPass->vkHandle());
+			gui->UploadTextureData(transferPool.get());
 		}
 
 		virtual void RecordCommands() override {
@@ -61,29 +70,27 @@ namespace meshing_test {
 				static_cast<uint32_t>(clear_values.size()),
 				clear_values.data(),
 			};
+			renderpass_begin.renderPass = renderPass->vkHandle();
 
+			chunkManager->Update(instance->GetCamPos());
 			static VkCommandBufferInheritanceInfo inherit_info = vk_command_buffer_inheritance_info_base;
 			inherit_info.renderPass = renderPass->vkHandle();
 			inherit_info.subpass = 0;
 
-			glm::vec3 lpos = chunkManager->GetLightPos(), lcolor = chunkManager->GetLightColor();
+			gui->NewFrame(instance.get(), true);
+			DrawGUI();
+			chunkManager->SetLightPos(lightPos);
+			chunkManager->SetLightColor(lightColor);
+			chunkManager->SetRenderDistance(render_distance);
 
 			for (uint32_t i = 0; i < graphicsPool->size(); ++i) {
 
+				if (!secondaryBuffers[i].empty()) {
+					secondaryBuffers[i].clear();
+				}
+
 				// holds secondary buffers
 				std::vector<VkCommandBuffer> buffers;
-
-				gui->NewFrame(instance.get(), true);
-				//ImGui::ShowMetricsWindow();
-
-				ImGui::SetNextWindowSize(ImVec2(200.0f, 80.0f), ImGuiSetCond_FirstUseEver);
-				ImGui::SetNextWindowPos(ImVec2(200.0f, 400.0f), ImGuiSetCond_FirstUseEver);
-				ImGui::Begin("Lighting");
-				ImGui::InputFloat3("Light Position", glm::value_ptr(lpos), 0);
-				ImGui::InputFloat3("Light Color", glm::value_ptr(lcolor), 2);
-				chunkManager->SetLightPos(lpos);
-				chunkManager->SetLightColor(lcolor);
-				ImGui::End();
 
 				VkCommandBufferBeginInfo begin_info = vk_command_buffer_begin_info_base;
 				begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT | VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -117,8 +124,8 @@ namespace meshing_test {
 				inherit_info.framebuffer = framebuffers[i];
 				begin_info.pInheritanceInfo = &inherit_info;
 
-				VkCommandBuffer& terrain_buffer = secondaryPool->GetCmdBuffer(i * swapchain->ImageCount);
-				VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * swapchain->ImageCount));
+				VkCommandBuffer& terrain_buffer = secondaryPool->GetCmdBuffer(i * (swapchain->ImageCount));
+				VkCommandBuffer& gui_buffer = secondaryPool->GetCmdBuffer(1 + (i * (swapchain->ImageCount)));
 
 				renderGUI(gui_buffer, begin_info, i);
 				secondaryBuffers[i].push_back(std::move(gui_buffer));
@@ -141,101 +148,16 @@ namespace meshing_test {
 				buffers.shrink_to_fit();
 
 			}
-		}
-
-		void RenderLoop() {
-
-			float delta_time, last_frame = 0.0f;
-			std::chrono::system_clock::time_point a = std::chrono::system_clock::now();
-			std::chrono::system_clock::time_point b = std::chrono::system_clock::now();
-			static constexpr double frame_time_desired = 16.0; // frametime desired in ms, 120Hz
-
-			while (!glfwWindowShouldClose(instance->Window)) {
-
-				a = std::chrono::system_clock::now();
-				std::chrono::duration<double, std::milli> work_time = a - b;
-
-				if (work_time.count() < frame_time_desired) {
-					std::chrono::duration<double, std::milli> delta_ms(frame_time_desired - work_time.count());
-					auto delta_ms_dur = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
-					std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_dur.count()));
-				}
-
-				b = std::chrono::system_clock::now();
-
-				float current_frame_time = static_cast<float>(glfwGetTime());
-				delta_time = current_frame_time - last_frame;
-				instance->frameTime = delta_time;
-				last_frame = current_frame_time;
-
-				glfwPollEvents();
-
-				instance->UpdateMovement(delta_time);
-				chunkManager->Update(instance->GetCamPos());
-
-				RecordCommands();
-				submitFrame();
-
-				vkResetCommandPool(device->vkHandle(), secondaryPool->vkHandle(), VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-				vkResetCommandPool(device->vkHandle(), graphicsPool->vkHandle(), VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT);
-				secondaryBuffers.clear();
-				secondaryBuffers.resize(graphicsPool->size());
-
-
-			}
-
-			vkDeviceWaitIdle(device->vkHandle());
-			glfwTerminate();
 
 		}
 
 	private:
 
-		void submitFrame() {
-			uint32_t image_idx;
-			vkAcquireNextImageKHR(device->vkHandle(), swapchain->vkHandle(), std::numeric_limits<uint64_t>::max(), semaphores[0], VK_NULL_HANDLE, &image_idx);
-			VkSubmitInfo submit_info = vk_submit_info_base;
-			VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-			submit_info.waitSemaphoreCount = 1;
-			submit_info.pWaitSemaphores = &semaphores[0];
-			submit_info.pWaitDstStageMask = wait_stages;
-			submit_info.commandBufferCount = 1;
-			submit_info.pCommandBuffers = &graphicsPool->GetCmdBuffer(image_idx);
-			submit_info.signalSemaphoreCount = 1;
-			submit_info.pSignalSemaphores = &semaphores[1];
-			VkResult result = vkQueueSubmit(device->GraphicsQueue(), 1, &submit_info, VK_NULL_HANDLE);
-			if ((result != VK_ERROR_DEVICE_LOST)) {
-				VkAssert(result);
-			}
-
-			VkPresentInfoKHR present_info{ VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
-			present_info.waitSemaphoreCount = 1;
-			present_info.pWaitSemaphores = &semaphores[1];
-			present_info.swapchainCount = 1;
-			present_info.pSwapchains = &swapchain->vkHandle();
-			present_info.pImageIndices = &image_idx;
-			present_info.pResults = nullptr;
-
-			vkQueuePresentKHR(device->GraphicsQueue(), &present_info);
-			vkQueueWaitIdle(device->GraphicsQueue());
+		virtual void endFrame(const size_t& idx) override {
+			vkResetFences(device->vkHandle(), 1, &presentFences[idx]);
 		}
 
-		void renderGUI(VkCommandBuffer& gui_buffer, const VkCommandBufferBeginInfo& begin_info, const size_t& frame_idx) const {
-			ImGui::Render();
-			if (device->MarkersEnabled) {
-				device->vkCmdInsertDebugMarker(graphicsPool->GetCmdBuffer(frame_idx), "Update GUI", glm::vec4(0.6f, 0.6f, 0.0f, 1.0f));
-			}
-			gui->UpdateBuffers();
-			vkBeginCommandBuffer(gui_buffer, &begin_info);
-			if (device->MarkersEnabled) {
-				device->vkCmdBeginDebugMarkerRegion(gui_buffer, "Draw GUI", glm::vec4(0.6f, 0.7f, 0.0f, 1.0f));
-			}
-			gui->DrawFrame(gui_buffer);
-			if (device->MarkersEnabled) {
-				device->vkCmdEndDebugMarkerRegion(gui_buffer);
-			}
-			vkEndCommandBuffer(gui_buffer);
-		}
+		void imguiDrawcalls() override {}
 
 		std::unique_ptr<ChunkManager> chunkManager;
 		std::vector<std::vector<VkCommandBuffer>> secondaryBuffers;

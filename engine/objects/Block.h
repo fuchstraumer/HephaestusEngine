@@ -65,12 +65,6 @@ namespace objects {
 		// Only item saved to file. Other items regenerated at runtime.
 		uint8_t type;
 
-		// Parameter dataset. 
-		// Used for special blocks, like torches and flowing water.
-		uint8_t parameters;
-
-		BlockRotation rotation;
-
 	};
 
 	enum class BlockDrawMode : uint8_t {

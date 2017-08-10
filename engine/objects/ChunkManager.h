@@ -60,6 +60,9 @@ namespace objects {
 		// view distance (given in terms of a radius of chunks to render)
 		void Init(const glm::vec3 & initial_position, const int& view_distance);
 
+		void SetRenderDistance(const size_t & render_distance);
+		size_t GetRenderDistance() const noexcept;
+
 		void Update(const glm::vec3& update_position);
 
 		// Renders chunks in the 

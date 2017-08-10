@@ -1,9 +1,13 @@
 #include "stdafx.h"
 #include "ChunkManager.h"
-
+#include "core/Instance.h"
 namespace objects {
 
 	using namespace vulpes;
+
+	struct area_t {
+		glm::ivec2 min, max;
+	};
 
 	ChunkManager::ChunkManager(const vulpes::Device* parent_device, const size_t & init_view_radius) : renderRadius(init_view_radius), device(parent_device), pipelineCreateInfo(vulpes::vk_graphics_pipeline_create_info_base) {
 
@@ -76,19 +80,71 @@ namespace objects {
 
 	void ChunkManager::Init(const glm::vec3 & initial_position, const int & view_distance) {
 
-		for (int j = -view_distance; j <= view_distance; ++j) {
-			for (int i = -view_distance; i <= view_distance; ++i) {
-				if ((i * i) + (j * j) <= (view_distance * view_distance)) {
-					CreateChunk(glm::ivec2(i, j));
+		area_t area;
+	
+		for (int i = 0; i < view_distance; ++i) {
+			area.min = glm::ivec2(static_cast<int>(initial_position.x) - i, static_cast<int>(initial_position.y) - i);
+			area.max = glm::ivec2(static_cast<int>(initial_position.x) + i, static_cast<int>(initial_position.y) + i);
+
+			for (int x = area.min.x; x < area.max.x; ++x) {
+				for (int y = area.min.y; y < area.max.y; ++y) {
+					CreateChunk(glm::ivec2(x, y));
 				}
 			}
 		}
 
 	}
 
+	void ChunkManager::SetRenderDistance(const size_t& render_distance) {
+		renderRadius = render_distance;
+	}
+
+	size_t ChunkManager::GetRenderDistance() const noexcept {
+		return renderRadius;
+	}
+
 	void ChunkManager::Update(const glm::vec3 & update_position) {
 		if (!transferChunks.empty()) {
 			transferChunksToDevice();
+		}
+
+		glm::ivec2 camera_chunk_pos = glm::ivec2(static_cast<int>(update_position.x) / CHUNK_SIZE, static_cast<int>(update_position.z) / CHUNK_SIZE);
+
+		{
+			
+			area_t area;
+			for (size_t i = 0; i < renderRadius; ++i) {
+				area.min = camera_chunk_pos - static_cast<int>(i);
+				area.max = camera_chunk_pos + static_cast<int>(i);
+
+				for (int x = area.min.x; x < area.max.x; ++x) {
+					for (int y = area.min.y; y < area.max.y; ++y) {
+						if (chunkMap.count(glm::ivec2(x, y)) == 0) {
+							CreateChunk(glm::ivec2(x, y));
+						}
+					}
+				}
+			}
+
+		}
+
+		{
+
+			area_t area;
+			area.min = camera_chunk_pos - static_cast<int>(renderRadius);
+			area.max = camera_chunk_pos + static_cast<int>(renderRadius);
+
+			auto iter = chunkMap.begin();
+			while(iter != chunkMap.end()) {
+				const auto& pos = iter->second->GridPosition;
+				if (pos.x <= area.min.x || pos.y <= area.min.y || pos.x >= area.max.x || pos.y >= area.max.y) {
+					renderChunks.erase((iter++)->second);
+					chunkMap.erase(pos);
+				}
+				else {
+					++iter;
+				}
+			}
 		}
 	}
 
@@ -109,21 +165,37 @@ namespace objects {
 	}
 
 	void ChunkManager::transferChunksToDevice() {
+
+		std::vector<std::future<void>> mesh_launches;
+
+		for (auto iter = transferChunks.begin(); iter != transferChunks.end(); ++iter) {
+			auto& chunk_ptr = *iter;
+			mesh_launches.push_back(std::async(std::launch::async, &Chunk::BuildMesh, chunk_ptr.get()));
+		}
+
+		for (auto&& fut : mesh_launches) {
+			fut.get();
+		}
+
 		transferPool->Begin();
+
+		std::forward_list<std::shared_ptr<Chunk>> transferred_chunks;
 
 		while (!transferChunks.empty()) {
 			auto curr_chunk = transferChunks.front();
 			transferChunks.pop_front();
+			curr_chunk->CreateMeshBuffers(device);
 			transferChunkToDevice(curr_chunk);
 			renderChunks.insert(curr_chunk);
+			transferred_chunks.push_front(curr_chunk);
 		}
 
 		transferPool->End();
 		transferPool->Submit();
+
 	}
 
 	void ChunkManager::transferChunkToDevice(std::shared_ptr<Chunk>& chunk_to_transfer) const {
-		chunk_to_transfer->BuildMesh(device);
 		chunk_to_transfer->mesh->record_transfer_commands(transferPool->GetCmdBuffer(0));
 	}
 
@@ -219,8 +291,8 @@ namespace objects {
 
 	void ChunkManager::updateWriteDescriptors() {
 
-		static const VkDescriptorImageInfo image_info{ blockTexture->Sampler(), blockTexture->View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-		static const VkWriteDescriptorSet image_write_descriptor{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, descriptorSet, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr };
+		const VkDescriptorImageInfo image_info{ blockTexture->Sampler(), blockTexture->View(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
+		const VkWriteDescriptorSet image_write_descriptor{ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, descriptorSet, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_info, nullptr, nullptr };
 
 		vkUpdateDescriptorSets(device->vkHandle(), 1, &image_write_descriptor, 0, nullptr);
 
@@ -234,7 +306,8 @@ namespace objects {
 
 		pipelineInfo.DynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamic_states.size());
 		pipelineInfo.DynamicStateInfo.pDynamicStates = dynamic_states.data();
-		pipelineInfo.MultisampleInfo.rasterizationSamples = vulpes::Multisampling::SampleCount;
+		pipelineInfo.MultisampleInfo.rasterizationSamples = vulpes::Instance::VulpesInstanceConfig.MSAA_SampleCount;
+		pipelineInfo.MultisampleInfo.sampleShadingEnable = vulpes::Instance::VulpesInstanceConfig.EnableMSAA;
 		pipelineInfo.RasterizationInfo.cullMode = VK_CULL_MODE_NONE;
 		pipelineInfo.RasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 		pipelineInfo.DepthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;

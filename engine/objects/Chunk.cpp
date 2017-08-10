@@ -24,6 +24,16 @@ namespace objects {
 		glm::vec3( 0.50f, 0.50f,-0.50f), // Point 7, right upper rear
 	};
 
+	
+	static const std::array<std::initializer_list<uint32_t>, 6> face_indices{
+		std::initializer_list<uint32_t>{ 5, 4, 1, 0 }, // Bottom
+		std::initializer_list<uint32_t>{ 3, 2, 7, 6 }, // Top
+		std::initializer_list<uint32_t>{ 4, 5, 6, 7 }, // Back
+		std::initializer_list<uint32_t>{ 0, 1, 2, 3 }, // Front 
+		std::initializer_list<uint32_t>{ 5, 0, 3, 6 }, // Left
+		std::initializer_list<uint32_t>{ 1, 4, 7, 2 } // Right
+	};
+
 	static constexpr size_t textures[24][6] = {
 		// Each number corresponds to certain face, and thus certain index into texture array. Given as {front, right, top, left, bottom, back}
 		// Current array order: Bedrock, Grass Top, Grass Sides, Dirt, Stone, Gravel, Sand, Cobble, Coal, Iron, Gold, Diamond, Emerald, Log, Log Top,
@@ -53,49 +63,26 @@ namespace objects {
 		std::size_t totalBlocks = CHUNK_SIZE*CHUNK_SIZE*CHUNK_SIZE_Y;
 		terrainBlocks.fill(Block(BlockTypes::AIR));
 
-		// Assign initial zeroed values in our lighting container.
-		lightMap.fill(0);
-
 		// The gridpos is simply "normalized" world coords to be integral values.
 		// The actual position in the world is calculated now - we use this later to offset the chunk using a model matrix
 		glm::vec3 float_position;
-		float_position.x = GridPosition.x * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+		float_position.x = GridPosition.x * (static_cast<float>(CHUNK_SIZE));
 		float_position.y = 0.0f;
-		float_position.z = GridPosition.y * (static_cast<float>(CHUNK_SIZE) / 2.0f);
+		float_position.z = GridPosition.y * (static_cast<float>(CHUNK_SIZE));
 
 		// Set the updated positions in the mesh (most important), and this chunk (good for reference)
 		mesh->position = float_position;
 		Position = float_position;
-		mesh->scale = glm::vec3(0.5f);
 		mesh->update_model_matrix();
 
-		sampler = std::move(noise::NoiseSampler(Position));
-	}
-
-	Chunk::Chunk(Chunk&& other) noexcept : mesh(std::move(other.mesh)), terrainBlocks(std::move(other.terrainBlocks)), uniqueBlocks(std::move(other.uniqueBlocks)), lightMap(std::move(other.lightMap)) {}
-
-	Chunk& Chunk::operator=(Chunk && other) noexcept {
-		mesh = std::move(other.mesh);
-		lightMap = std::move(other.lightMap);
-		terrainBlocks = std::move(other.terrainBlocks);
-		uniqueBlocks = std::move(other.uniqueBlocks);
-		other.clear();
-		return *this;
-	}
-
-	glm::vec3 Chunk::GetPosFromGrid(glm::ivec2 gridpos) {
-		glm::vec3 res;
-		res.x = this->GridPosition.x * ((CHUNK_SIZE / 2.0f));
-		res.y = static_cast<float>(CHUNK_SIZE_Y) / 2.0f;
-		res.z = this->GridPosition.y * (CHUNK_SIZE / 2.0f);
-		return res;
 	}
 
 	void Chunk::BuildTerrain(const size_t& terrain_type) {
 		for (int x = 0; x < CHUNK_SIZE; ++x) {
 			for (int z = 0; z < CHUNK_SIZE; ++z) {
 				terrainBlocks[GetBlockIndex(x, 0, z)].SetType(static_cast<uint8_t>(BlockTypes::BEDROCK));
-				double height = sampler.Sample(glm::vec2(x, z)) * 10.0f;
+				double height = noiseGen.Sample(static_cast<double>(x) + Position.x, static_cast<double>(z) + Position.z) * 10.0f;
+				height += 50.0f;
 				height = floor(height);
 				for (int y = 1; y < static_cast<int>(height); ++y) {
 					terrainBlocks[GetBlockIndex(x, y, z)].SetType(static_cast<uint8_t>(BlockTypes::STONE));
@@ -104,7 +91,7 @@ namespace objects {
 		}
 	}
 
-	void Chunk::BuildMesh(const vulpes::Device * _device) {
+	void Chunk::BuildMesh() {
 		// Default block adjacency value assumes true
 		bool def = true;
 
@@ -181,15 +168,17 @@ namespace objects {
 				}
 			}
 		}
-		device = _device;
-		mesh->create_buffers(device);
+
 	}
 
-	void Chunk::clear() {
-		// Mesh clear method clears data and calls shrink_to_fit()
-		mesh->cleanup();
-		terrainBlocks.fill(Block(BlockTypes::AIR));
-		lightMap.fill(0);
+	void Chunk::CreateMeshBuffers(const vulpes::Device * _device) {
+		mesh->create_buffers(_device);
+	}
+
+	void Chunk::LoadComplete() {
+		if (mesh) {
+			mesh->free_cpu_data();
+		}
 	}
 
 	void Chunk::setBlockLightingData(const uint32_t& x, const uint32_t& y, const uint32_t& z, std::array<BlockType, 27>& neighbor_blocks, std::array<float, 27>& neighbor_shades) const {
@@ -215,6 +204,7 @@ namespace objects {
 			}
 		}
 	}
+
 
 	void Chunk::getFaceVertices(const blockFace & face, block_vertex_t & v0, block_vertex_t & v1, block_vertex_t & v2, block_vertex_t & v3, const size_t& texture_idx) {
 		switch (face) {
@@ -291,9 +281,9 @@ namespace objects {
 
 		// Following method for generating lighting data from:
 		// https://github.com/fogleman/Craft/blob/master/src/main.c#L1077
-		std::array<BlockType, 27> neighbors;
+		/*std::array<BlockType, 27> neighbors;
 		std::array<float, 27> shades;
-		setBlockLightingData(x, y, z, neighbors, shades);
+		setBlockLightingData(x, y, z, neighbors, shades);*/
 
 		// Builds a side of a cube
 		glm::vec3 block_pos = glm::vec3(x, y, z);

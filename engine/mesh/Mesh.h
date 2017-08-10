@@ -190,7 +190,9 @@ namespace mesh {
 		bool Ready() const noexcept { return ready; }
 
 		vertices_type vertices;
+		size_t numVertices = 0;
 		std::vector<index_type> indices;
+		size_t numIndices = 0;
 
 		glm::mat4 model;
 		glm::vec3 position, scale, angle;
@@ -261,18 +263,21 @@ namespace mesh {
 	template<typename vertices_type, typename vertex_type, typename index_type>
 	inline index_type Mesh<vertices_type, vertex_type, index_type>::add_vertex(const vertex_type & v) {
 		vertices.push_back(v);
+		++numVertices;
 		return static_cast<index_type>(vertices.size() - 1);
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
 	inline index_type Mesh<vertices_type, vertex_type, index_type>::add_vertex(vertex_type && v) {
 		vertices.push_back(std::move(v));
+		++numVertices;
 		return static_cast<index_type>(vertices.size() - 1);
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
 	inline void Mesh<vertices_type, vertex_type, index_type>::add_triangle(const index_type & i0, const index_type & i1, const index_type & i2) {
 		indices.insert(indices.end(), { i0, i1, i2 });
+		numIndices += 3;
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
@@ -287,11 +292,11 @@ namespace mesh {
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
 	inline glm::mat4 Mesh<vertices_type, vertex_type, index_type>::update_model_matrix() {
-		glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
-		glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
-		glm::mat4 rotX = glm::rotate(glm::mat4(1.0f), angle.x, glm::vec3(1.0f, 0.0f, 0.0f));
-		glm::mat4 rotY = glm::rotate(glm::mat4(1.0f), angle.y, glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 rotZ = glm::rotate(glm::mat4(1.0f), angle.z, glm::vec3(0.0f, 0.0f, 1.0f));
+		glm::mat4 scaleMatrix = glm::scale(glm::mat4(), scale);
+		glm::mat4 translationMatrix = glm::translate(glm::mat4(), position);
+		glm::mat4 rotX = glm::rotate(glm::mat4(), angle.x, glm::vec3(1.0f, 0.0f, 0.0f));
+		glm::mat4 rotY = glm::rotate(glm::mat4(), angle.y, glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::mat4 rotZ = glm::rotate(glm::mat4(), angle.z, glm::vec3(0.0f, 0.0f, 1.0f));
 		model = translationMatrix * rotX * rotY * rotZ * scaleMatrix;
 		return model;
 	}
@@ -335,7 +340,7 @@ namespace mesh {
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
 	inline void Mesh<vertices_type, vertex_type, index_type>::render(const VkCommandBuffer & cmd) const {
-		static const VkDeviceSize offsets[]{ 0 };
+		static const VkDeviceSize offsets[2]{ 0, 0 };
 		VkBuffer buffers[2]{ vbo[0]->vkHandle(), vbo[1]->vkHandle() };
 		vkCmdBindVertexBuffers(cmd, 0, 2, buffers, offsets);
 		if (typeid(index_type) == typeid(uint16_t)) {
@@ -345,7 +350,7 @@ namespace mesh {
 		else {
 			vkCmdBindIndexBuffer(cmd, ebo->vkHandle(), 0, VK_INDEX_TYPE_UINT32);
 		}
-		vkCmdDrawIndexed(cmd, static_cast<index_type>(indices.size()), 1, 0, 0, 0);
+		vkCmdDrawIndexed(cmd, static_cast<index_type>(numIndices), 1, 0, 0, 0);
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
@@ -364,7 +369,8 @@ namespace mesh {
 		vertices.positions.shrink_to_fit();
 		vertices.normals_uvs.clear();
 		vertices.normals_uvs.shrink_to_fit();
-		ready = false;
+		indices.clear();
+		indices.shrink_to_fit();
 	}
 
 	template<typename vertices_type, typename vertex_type, typename index_type>
@@ -378,7 +384,6 @@ namespace mesh {
 		if (ebo) {
 			ebo->Destroy();
 		}
-		ready = false;
 	}
 
 
