@@ -1,7 +1,7 @@
 MACRO(ADD_MSVC_PRECOMPILED_HEADER PrecompiledHeader PrecompiledSource SourcesVar)
 IF(MSVC)
   GET_FILENAME_COMPONENT(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
-  SET(PrecompiledBinary "${CMAKE_CURRENT_BINARY_DIR}/${PrecompiledBasename}.pch")
+  SET(PrecompiledBinary "${CMAKE_PROJECT_SOURCE_DIR}/${PrecompiledBasename}.pch")
   SET(Sources ${${SourcesVar}})
 
   SET_SOURCE_FILES_PROPERTIES(${PrecompiledSource}
@@ -33,14 +33,15 @@ FILE(GLOB GENERATION "src/engine/generation/*.cpp" "include/engine/generation/*.
 FILE(GLOB MESH "src/engine/mesh/*.cpp" "include/engine/mesh/*.hpp")
 FILE(GLOB OBJECTS "src/engine/objects/*.cpp" "include/engine/objects/*.hpp")
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/VulpesRender)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/ext)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR}/VulpesRender/imgui)
+INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/VulpesRender)
+INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/ext)
+INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/VulpesRender/imgui)
 INCLUDE_DIRECTORIES($ENV{VULKAN_SDK}/Include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/include)
 
 FILE(GLOB PROJECT_SOURCES "src/util/*.cpp" "src/engine/*.cpp")
-ADD_MSVC_PRECOMPILED_HEADER("stdafx.h" "stdafx.cpp")
+ADD_MSVC_PRECOMPILED_HEADER("stdafx.h" "src/stdafx.cpp" ${PROJECT_SOURCES})
 
 SOURCE_GROUP("util" FILES ${UTIL})
 SOURCE_GROUP("generation" FILES ${GENERATION})
@@ -54,4 +55,4 @@ IF(MSVC) # enable multi-threaded compile for release builds, when its available
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Gm") # minimal rebuild
 ENDIF()
 
-ADD_EXECUTABLE(HephaestusEngine "include/stdafx.h" "include/stdafx.cpp" "HephaestusEngine.cpp" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS})
+ADD_EXECUTABLE(HephaestusEngine "include/stdafx.h" "src/stdafx.cpp" "HephaestusEngine.cpp" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS})
