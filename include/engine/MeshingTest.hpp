@@ -3,9 +3,10 @@
 #define HEPH_ENGINE_MESHING_TEST_H
 
 #include "stdafx.h"
-#include "objects\ChunkManager.h"
-#include "BaseScene.h"
-#include "GUI_Elements.h"
+#include "objects\ChunkManager.hpp"
+#include "BaseScene.hpp"
+#include "GUI_Elements.hpp"
+
 namespace meshing_test {
 
 	using namespace vulpes;

@@ -2,12 +2,12 @@
 #ifndef CHUNK_MANAGER_H
 #define CHUNK_MANAGER_H
 #include "stdafx.h"
-#include "Chunk.h"
-#include "resource/PipelineCache.h"
-#include "render/GraphicsPipeline.h"
-#include "resource/ShaderModule.h"
-#include "command/TransferPool.h"
-#include "resource/Texture.h"
+#include "engine/objects/Chunk.hpp"
+#include "resource/PipelineCache.hpp"
+#include "render/GraphicsPipeline.hpp"
+#include "resource/ShaderModule.hpp"
+#include "command/TransferPool.hpp"
+#include "resource/Texture.hpp"
 
 namespace objects {
 

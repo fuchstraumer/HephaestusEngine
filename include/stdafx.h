@@ -27,40 +27,29 @@
 #include <future>
 #include <random>
 
-#define GLFW_INCLUDE_VULKAN
-#include "ext/include/glfw/glfw3.h"
-
-#ifdef _WIN32
-// Allows for easier hooking of window/context with ImGui.
-#undef APIENTRY
-#define GLFW_EXPOSE_NATIVE_WIN32
-#define GLFW_EXPOSE_NATIVE_WGL
-#include "ext/include/GLFW/glfw3native.h"
-#endif
-
-// hash used to allow inserting glm vec's into unordered containers.
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #define GLM_SWIZZLE
-#include "ext/include/glm/glm.hpp"
-#include "ext/include/glm/gtc/matrix_transform.hpp"
-#include "ext/include/glm/gtc/type_ptr.hpp"
-#include "ext/include/glm/gtx/hash.hpp"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/type_ptr.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "glm/gtx/hash.hpp"
 
-// Both of these have silly errors we can ignore.
+#include "gli/gli.hpp"
 
-#include "ext/include/gli/gli.hpp"
 #include "vulkan/vulkan.h"
 
+#define GLFW_INCLUDE_VULKAN
+#include "glfw/glfw3.h"
 
 // Number of odd/broken defines in this, as it includes windows.h 
 #define NOMINMAX
 #include "util/easylogging++.h"
 #undef NOMINMAX
 
-
-#include "common\Constants.h"
-#include "common\CommonUtil.h"
+#include "common\Constants.hpp"
+#include "common\CommonUtil.hpp"
 
 #pragma warning(pop)
 

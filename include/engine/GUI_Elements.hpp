@@ -3,8 +3,8 @@
 #define HEPHAESTUS_ENGINE_GUI_ELEMENTS_H
 
 #include "stdafx.h"
-#include "util/imguiTabs.h"
-#include "core/Instance.h"
+#include "util/imguiTabs.hpp"
+#include "core/Instance.hpp"
 
 static const char* tab_names[] = { "Lighting", "Renderer Settings", "Chunk Settings", "Debug Utilities" };
 static int tab_order[] = { 0, 1, 2, 3 };

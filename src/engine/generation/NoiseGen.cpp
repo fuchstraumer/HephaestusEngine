@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "NoiseGen.h"
+#include "engine/generation/NoiseGen.hpp"
 
 namespace noise {
 
