@@ -2,9 +2,9 @@
 #ifndef CHUNK_H
 #define CHUNK_H
 #include "stdafx.h"
-#include "Block.h"
-#include "..\mesh\mesh.h"
-#include "../generation/NoiseGen.h"
+#include "engine/objects/Block.hpp"
+#include "engine/mesh/Mesh.hpp"
+#include "engine/generation/NoiseGen.hpp"
 namespace objects {
 
 	class Chunk {

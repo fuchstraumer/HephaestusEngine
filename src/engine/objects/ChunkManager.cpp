@@ -1,6 +1,6 @@
 #include "stdafx.h"
-#include "ChunkManager.h"
-#include "core/Instance.h"
+#include "engine/objects/ChunkManager.hpp"
+#include "core/Instance.hpp"
 namespace objects {
 
 	using namespace vulpes;
@@ -33,7 +33,6 @@ namespace objects {
 
 		updateWriteDescriptors();
 
-		blockTexture->FreeStagingBuffer();
 	}
 
 	ChunkManager::~ChunkManager() {

@@ -15,13 +15,13 @@ namespace meshing_test {
 	class MeshingScene : public BaseScene {
 	public:
 
-		MeshingScene() : BaseScene(3) {
+		MeshingScene() : BaseScene(3, 1440, 900) {
 
 			SetupRenderpass(Instance::VulpesInstanceConfig.MSAA_SampleCount);
 			Instance::VulpesInstanceConfig.MovementSpeed = 0.05f;
 			chunkManager = std::make_unique<ChunkManager>(device.get(), 8);
 			chunkManager->Init(glm::vec3(0.0f), 2);
-			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
+			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), GetProjectionMatrix());
 			render_distance = static_cast<int>(chunkManager->GetRenderDistance());
 			SetupFramebuffers();
 
@@ -47,7 +47,7 @@ namespace meshing_test {
 		virtual void RecreateObjects() override {
 			chunkManager = std::make_unique<ChunkManager>(device.get(), 4);
 			chunkManager->Init(glm::vec3(0.0f), 2);
-			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), instance->GetProjectionMatrix());
+			chunkManager->CreatePipeline(renderPass->vkHandle(), swapchain.get(), GetProjectionMatrix());
 			auto gui_cache = std::make_shared<PipelineCache>(device.get(), static_cast<uint16_t>(typeid(imguiWrapper).hash_code()));
 			gui = std::make_unique<imguiWrapper>();
 			gui->Init(device.get(), renderPass->vkHandle());
@@ -73,7 +73,7 @@ namespace meshing_test {
 			};
 			renderpass_begin.renderPass = renderPass->vkHandle();
 
-			chunkManager->Update(instance->GetCamPos());
+			chunkManager->Update(CameraPosition());
 			static VkCommandBufferInheritanceInfo inherit_info = vk_command_buffer_inheritance_info_base;
 			inherit_info.renderPass = renderPass->vkHandle();
 			inherit_info.subpass = 0;
@@ -131,7 +131,7 @@ namespace meshing_test {
 				renderGUI(gui_buffer, begin_info, i);
 				secondaryBuffers[i].push_back(std::move(gui_buffer));
 
-				chunkManager->Render(terrain_buffer, begin_info, instance->GetViewMatrix(), instance->GetCamPos(), viewport, scissor);
+				chunkManager->Render(terrain_buffer, begin_info, GetViewMatrix(), CameraPosition(), viewport, scissor);
 				secondaryBuffers[i].push_back(std::move(terrain_buffer));
 
 				vkCmdExecuteCommands(graphicsPool->GetCmdBuffer(i), static_cast<uint32_t>(secondaryBuffers[i].size()), secondaryBuffers[i].data());
@@ -157,8 +157,6 @@ namespace meshing_test {
 		virtual void endFrame(const size_t& idx) override {
 			vkResetFences(device->vkHandle(), 1, &presentFences[idx]);
 		}
-
-		void imguiDrawcalls() override {}
 
 		std::unique_ptr<ChunkManager> chunkManager;
 		std::vector<std::vector<VkCommandBuffer>> secondaryBuffers;

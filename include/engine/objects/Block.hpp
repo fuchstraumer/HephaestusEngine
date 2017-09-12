@@ -2,7 +2,7 @@
 #ifndef BLOCK_H
 #define BLOCK_H
 #include "stdafx.h"
-#include "common\Constants.h"
+#include "common\Constants.hpp"
 
 namespace objects {
 

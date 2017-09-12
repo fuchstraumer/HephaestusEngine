@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "Chunk.h"
+#include "engine/objects/Chunk.hpp"
 
 namespace objects {
 

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "engine/objects/Light.hpp"
-#include "engine/objects/Chunk.cpp"
+#include "engine/objects/Chunk.hpp"
 
 namespace objects {
 
