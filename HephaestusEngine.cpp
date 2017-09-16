@@ -2,7 +2,7 @@
 //
 // Precompiled headers
 #include "stdafx.h"
-#include "engine\MeshingTest.hpp"
+#include "engine/scenes/MeshingTest.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 // Other includes.

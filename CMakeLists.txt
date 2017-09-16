@@ -1,7 +1,7 @@
 MACRO(ADD_MSVC_PRECOMPILED_HEADER PrecompiledHeader PrecompiledSource SourcesVar)
 IF(MSVC)
   GET_FILENAME_COMPONENT(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
-  SET(PrecompiledBinary "${CMAKE_PROJECT_SOURCE_DIR}/${PrecompiledBasename}.pch")
+  SET(PrecompiledBinary "${CMAKE_CURRENT_SOURCE_DIR}/${PrecompiledBasename}.pch")
   SET(Sources ${${SourcesVar}})
 
   SET_SOURCE_FILES_PROPERTIES(${PrecompiledSource}
@@ -32,21 +32,23 @@ FILE(GLOB COMMON "include/common/*.hpp")
 FILE(GLOB GENERATION "src/engine/generation/*.cpp" "include/engine/generation/*.hpp")
 FILE(GLOB MESH "src/engine/mesh/*.cpp" "include/engine/mesh/*.hpp")
 FILE(GLOB OBJECTS "src/engine/objects/*.cpp" "include/engine/objects/*.hpp")
+FILE(GLOB SCENES "src/engine/scenes/*.cpp" "include/engine/scenes/*.hpp")
 
-INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/VulpesRender)
-INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/ext)
-INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/VulpesRender/imgui)
-INCLUDE_DIRECTORIES($ENV{VULKAN_SDK}/Include)
-INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${CMAKE_PROJECT_SOURCE_DIR}/include)
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/include")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/ext")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/imgui")
+INCLUDE_DIRECTORIES("$ENV{VULKAN_SDK}/Include")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-FILE(GLOB PROJECT_SOURCES "src/util/*.cpp" "src/engine/*.cpp")
+FILE(GLOB PROJECT_SOURCES "src/util/*.cpp" "src/engine/scenes/*.cpp" "src/engine/mesh/*.cpp" "src/engine/objects/*.cpp" "src/engine/generation/*.cpp")
 ADD_MSVC_PRECOMPILED_HEADER("stdafx.h" "src/stdafx.cpp" ${PROJECT_SOURCES})
 
 SOURCE_GROUP("util" FILES ${UTIL})
 SOURCE_GROUP("generation" FILES ${GENERATION})
 SOURCE_GROUP("mesh" FILES ${MESH})
 SOURCE_GROUP("objects" FILES ${OBJECTS})
+SOURCE_GROUP("scenes" FILES ${SCENES})
 
 IF(MSVC) # enable multi-threaded compile for release builds, when its available
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP")
@@ -55,4 +57,6 @@ IF(MSVC) # enable multi-threaded compile for release builds, when its available
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Gm") # minimal rebuild
 ENDIF()
 
-ADD_EXECUTABLE(HephaestusEngine "include/stdafx.h" "src/stdafx.cpp" "HephaestusEngine.cpp" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS})
+ADD_EXECUTABLE(HephaestusEngine "include/stdafx.h" "src/stdafx.cpp" "HephaestusEngine.cpp" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS} ${SCENES})
+TARGET_LINK_LIBRARIES(HephaestusEngine debug "${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/build/Debug/VulpesRender.lib" optimized "${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/build/Release/VulpesRender.lib")
+TARGET_LINK_LIBRARIES(HephaestusEngine "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")

@@ -203,10 +203,6 @@ namespace objects {
 		VkResult result = vkBeginCommandBuffer(cmd, &begin_info);
 		VkAssert(result);
 
-		if (device->MarkersEnabled) {
-			device->vkCmdBeginDebugMarkerRegion(cmd, "Draw chunks", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
-		}
-
 		if (!renderChunks.empty()) {
 			vkCmdSetViewport(cmd, 0, 1, &viewport);
 			vkCmdSetScissor(cmd, 0, 1, &scissor);
