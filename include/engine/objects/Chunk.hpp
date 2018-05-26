@@ -46,7 +46,6 @@ namespace objects {
 
 		bool generated = false;
 		std::array<Block, BLOCKS_PER_CHUNK> terrainBlocks;
-		std::unique_ptr<mesh::Mesh<mesh::BlockVertices, block_vertex_t>> mesh;
 
 	};
 

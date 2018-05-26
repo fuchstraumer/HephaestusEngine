@@ -146,9 +146,5 @@ namespace objects {
 
 	};
 
-
-	// Ray-Intersection routine. Mainly used to check for collisions.
-
-
 }
 #endif // !BLOCK_H
