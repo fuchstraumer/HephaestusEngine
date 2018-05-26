@@ -1,48 +1,18 @@
-MACRO(ADD_MSVC_PRECOMPILED_HEADER PrecompiledHeader PrecompiledSource SourcesVar)
-IF(MSVC)
-  GET_FILENAME_COMPONENT(PrecompiledBasename ${PrecompiledHeader} NAME_WE)
-  SET(PrecompiledBinary "${CMAKE_CURRENT_SOURCE_DIR}/${PrecompiledBasename}.pch")
-  SET(Sources ${${SourcesVar}})
-
-  SET_SOURCE_FILES_PROPERTIES(${PrecompiledSource}
-                              PROPERTIES COMPILE_FLAGS "/Yc\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
-                                         OBJECT_OUTPUTS "${PrecompiledBinary}")
-  SET_SOURCE_FILES_PROPERTIES(${Sources}
-                              PROPERTIES COMPILE_FLAGS "/Yu\"${PrecompiledHeader}\" /FI\"${PrecompiledHeader}\" /Fp\"${PrecompiledBinary}\""
-                                         OBJECT_DEPENDS "${PrecompiledBinary}")  
-  # Add precompiled header to SourcesVar
-  LIST(APPEND ${SourcesVar} ${PrecompiledSource})
-ENDIF(MSVC)
-ENDMACRO(ADD_MSVC_PRECOMPILED_HEADER)
-
-INCLUDE(ExternalProject)
-CMAKE_MINIMUM_REQUIRED(VERSION 3.6)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(HephaestusEngine)
-
-SET_PROPERTY(GLOBAL PROPERTY USE_FOLDERS ON) 
-SET(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 IF(NOT MSVC) # compile commands used for clang-format and clang-tidy
     SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 ENDIF()
 
-FILE(GLOB UTIL "src/util/*.cc" "src/util/*.cpp" "include/util/*.h" "include/util/*.hpp")
-FILE(GLOB COMMON "include/common/*.hpp")
-FILE(GLOB GENERATION "src/engine/generation/*.cpp" "include/engine/generation/*.hpp")
-FILE(GLOB MESH "src/engine/mesh/*.cpp" "include/engine/mesh/*.hpp")
-FILE(GLOB OBJECTS "src/engine/objects/*.cpp" "include/engine/objects/*.hpp")
-FILE(GLOB SCENES "src/engine/scenes/*.cpp" "include/engine/scenes/*.hpp")
+ADD_SUBDIRECTORY("${CMAKE_CURRENT_SOURCE_DIR}/third_party/vulpesrender")
 
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/include")
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/ext")
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/imgui")
-INCLUDE_DIRECTORIES("$ENV{VULKAN_SDK}/Include")
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}")
-INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/include")
-
-FILE(GLOB PROJECT_SOURCES "src/util/*.cpp" "src/engine/scenes/*.cpp" "src/engine/mesh/*.cpp" "src/engine/objects/*.cpp" "src/engine/generation/*.cpp")
-ADD_MSVC_PRECOMPILED_HEADER("stdafx.h" "src/stdafx.cpp" ${PROJECT_SOURCES})
+FILE(GLOB UTIL "${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.cc" "${CMAKE_CURRENT_SOURCE_DIR}/src/util/*.cpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/*.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/util/*.hpp")
+FILE(GLOB COMMON "${CMAKE_CURRENT_SOURCE_DIR}/include/common/*.hpp")
+FILE(GLOB GENERATION "${CMAKE_CURRENT_SOURCE_DIR}/src/generation/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/include/generation/*.hpp")
+FILE(GLOB MESH "${CMAKE_CURRENT_SOURCE_DIR}/src/mesh/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/include/mesh/*.hpp")
+FILE(GLOB OBJECTS "${CMAKE_CURRENT_SOURCE_DIR}/src/objects/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/include/objects/*.hpp")
 
 SOURCE_GROUP("util" FILES ${UTIL})
 SOURCE_GROUP("generation" FILES ${GENERATION})
@@ -57,6 +27,16 @@ IF(MSVC) # enable multi-threaded compile for release builds, when its available
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Gm") # minimal rebuild
 ENDIF()
 
-ADD_EXECUTABLE(HephaestusEngine "include/stdafx.h" "src/stdafx.cpp" "HephaestusEngine.cpp" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS} ${SCENES})
-TARGET_LINK_LIBRARIES(HephaestusEngine debug "${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/build/Debug/VulpesRender.lib" optimized "${CMAKE_CURRENT_SOURCE_DIR}/VulpesRender/build/Release/VulpesRender.lib")
-TARGET_LINK_LIBRARIES(HephaestusEngine "$ENV{VULKAN_SDK}/Lib/vulkan-1.lib")
+ADD_LIBRARY(HephaestusEngine STATIC "include/stdafx.h" ${UTIL} ${MESH} ${GENERATION} ${OBJECTS} ${SCENES})
+IF(MSVC)
+    TARGET_COMPILE_OPTIONS(HephaestusEngine PUBLIC "/std:c++17")
+ELSE()
+    TARGET_COMPILE_OPTIONS(HephaestusEngine PUBLIC "-std=c++17")
+ENDIF()
+TARGET_LINK_LIBRARIES(HephaestusEngine INTERFACE VulpesRender)
+TARGET_INCLUDE_DIRECTORIES(HephaestusEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/vulpesrender/include" "${CMAKE_CURRENT_SOURCE_DIR}/ext/include" 
+    "$ENV{VULKAN_SDK}/include" "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+ADD_EXECUTABLE(MeshingTest "${CMAKE_CURRENT_SOURCE_DIR}/tests/GUI_Elements.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/HephaestusEngine.cpp" 
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/MeshingTest.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/MeshingTest.cpp")
+TARGET_LINK_LIBRARIES(MeshingTest PUBLIC HephaestusEngine VulpesRender)
