@@ -1,11 +1,18 @@
 #pragma once
-#ifndef CHUNK_H
-#define CHUNK_H
-#include "stdafx.h"
-#include "engine/objects/Block.hpp"
-#include "engine/mesh/Mesh.hpp"
-#include "engine/generation/NoiseGen.hpp"
+#ifndef HEPHAESTUS_ENGINE_CHUNK_HPP
+#define HEPHAESTUS_ENGINE_CHUNK_HPP
+#include "ecs/entity.hpp"
+#include "glm/vec2.hpp"
+#include "glm/vec3.hpp"
+#include <array>
+
 namespace objects {
+
+    struct ChunkComponent {
+        std::array<entity_t, BLOCKS_PER_CHUNK> Blocks;
+        glm::vec3 WorldPosition;
+        glm::ivec2 GridPosition;
+    };
 
 	class Chunk {
 		friend class ChunkManager;
@@ -50,4 +57,4 @@ namespace objects {
 	};
 
 }
-#endif // !LINEAR_CHUNK_H
+#endif // !HEPHAESTUS_ENGINE_CHUNK_HPP
