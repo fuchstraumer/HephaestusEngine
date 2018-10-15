@@ -1,103 +1,20 @@
 #pragma once
-#ifndef CONSTANTS_H
-#define CONSTANTS_H
-
-// Chunk size constants. 32x32 in XZ, and 128 in Y.
-// Just pi lol
-static constexpr float FLOAT_PI = 3.14159265359f;
+#ifndef HEPHAESTUS_ENGINE_CONSTANTS_HPP
+#define HEPHAESTUS_ENGINE_CONSTANTS_HPP
 
 // Light has a range from 0-15. 15 is absolute highest, equivalent to sunlight.
 // 14 is highest we allow for all non-sunlight sources.
 static constexpr int SUNLIGHT_LEVEL = 15;
 static constexpr int MAX_LIGHT_INTENSITY = 14;
 
-// Used to set width/height of screen rendered. Should eventually be a config file value.
-static constexpr size_t WIDTH = 1440, HEIGHT = 900;
-
-static constexpr bool SIMPLE_CULLING_GLOBAL = true;
-
-// Alias declarations for various constants.
-
-// Base block data type - 
-using BlockType = uint8_t;
-
-// Block types. Set here so that it can be globally accessed: this is probably unwise, and should be changed 
-// to a better solution when one is found.
-// Note that it automatically inherits a type from blockType. Usually a uint8, so maximum variety is 255 blocks
-// (or 127 blocks if we use RLE, but that's another problem)
-enum class BlockTypes : BlockType {
-	BEDROCK,
-	STONE,
-	GRASS,
-	SAND,
-	DIRT,
-	TALL_GRASS,
-	COAL_ORE,
-	IRON_ORE,
-	DIAMOND_ORE,
-	BRICK,
-	WOOD,
-	PLANK,
-	SNOW,
-	GLASS,
-	COBBLE,
-	LIGHT_STONE,
-	DARK_STONE,
-	CHEST,
-	LEAVES,
-	YELLOW_FLOWER,
-	RED_FLOWER,
-	PURPLE_FLOWER,
-	SUN_FLOWER,
-	WHITE_FLOWER,
-	BLUE_FLOWER,
-	COLOR_00,
-	COLOR_01,
-	COLOR_02,
-	COLOR_03,
-	COLOR_04,
-	COLOR_05,
-	COLOR_06,
-	COLOR_07,
-	COLOR_08,
-	COLOR_09,
-	COLOR_10,
-	COLOR_11,
-	COLOR_12,
-	COLOR_13,
-	COLOR_14,
-	COLOR_15,
-	COLOR_16,
-	COLOR_17,
-	COLOR_18,
-	COLOR_19,
-	COLOR_20,
-	COLOR_21,
-	COLOR_22,
-	COLOR_23,
-	COLOR_24,
-	COLOR_25,
-	COLOR_26,
-	COLOR_27,
-	COLOR_28,
-	COLOR_29,
-	COLOR_30,
-	COLOR_31,
-	AIR,
-};
-
-enum class ChunkStatus : uint8_t {
-	NEEDS_UPDATE,
-	NEEDS_TRANSFER,
-	READY,
-	NEEDS_DELETE,
-	REMOVED,
-};
-
+/*
+    These values should not be runtime-modifiable and should be set
+    based on profiling/optimization based on block size.
+*/
 static constexpr size_t CHUNK_SIZE = 32;
 static constexpr size_t CHUNK_SIZE_Y = 128;
 static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
 static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
 static constexpr size_t BLOCKS_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE_Y;
 
-#endif // !CONSTANTS_H
+#endif // !HEPHAESTUS_ENGINE_CONSTANTS_HPP
