@@ -1,6 +1,7 @@
 #pragma once
 #ifndef COMMON_UTIL_H
 #define COMMON_UTIL_H
+#include "common/Constants.hpp"
 
 // Same as above, with individual positions
 static constexpr inline size_t GetBlockIndex(const size_t& x, const size_t& y, const size_t& z) {
