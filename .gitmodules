@@ -1,0 +1,3 @@
+[submodule "third_party/diamond_dogs"]
+	path = third_party/diamond_dogs
+	url = https://github.com/fuchstraumer/DiamondDogs
