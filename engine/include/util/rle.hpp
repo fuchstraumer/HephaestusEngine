@@ -15,7 +15,7 @@ struct rle_system {
     constexpr static T COUNTER_BITS = std::numeric_limits<T>::max() / T(2);
     constexpr static T REPETITION_BIT = ~COUNTER_BITS;
 
-    constexpr static auto count_repetitions(data_iterator iter, data_iterator end) {
+    constexpr static auto count_repetitions(data_iterator iter, data_iterator end) noexcept {
         const auto first = iter;
 
         do ++iter;
@@ -24,7 +24,7 @@ struct rle_system {
         return std::distance(first, iter);
     }
 
-    constexpr static auto count_uniques(data_iterator iter, data_iterator end) {
+    constexpr static auto count_uniques(data_iterator iter, data_iterator end) noexcept {
         const auto first = iter;
         // Make sure to check the range
         // while not at the end and while the value of iter + 1
@@ -35,8 +35,8 @@ struct rle_system {
     }
 
     // This divides our N-items into chunks of the maximum size permitted by counter bits
-    template<typename T>
-    static auto split(std::ptrdiff_t num, T&& t) {
+    template<typename SplitFn>
+    static auto split(std::ptrdiff_t num, SplitFn&& t) {
         do {
             // Our count is the smallest of these two. This is only okay because we always know 
             // our count can never be negative. At worst, it'll be 0 or 1.
@@ -46,12 +46,13 @@ struct rle_system {
         } while (num > 0);
     }
 
-    static data_container encode(const data_container &data) {
+    static data_container encode(const data_container &input) {
         data_container out;
-        out.reserve(data.size());
-        for (auto iter = data.cbegin(); iter != data.cend();) {
+        out.reserve(input.size());
+
+        for (auto iter = input.cbegin(); iter != input.cend();) {
             // First attempt at checking for repetitions
-            auto num = count_repetitions(iter, data.cend());
+            auto num = count_repetitions(iter, input.cend());
             // If there's more than one repetition, we have a run
             if (num > 1) {
                 split(num, [&](T count) {
@@ -65,26 +66,31 @@ struct rle_system {
             }
             else {
                 // Count amount of non-repeated characters in a row/run (unique chars)
-                auto num = count_uniques(iter, data.cend());
+                auto num = count_uniques(iter, input.cend());
                 split(num, [&](T count) {
                     // No repetition bit, just counter
                     out.emplace_back(count);
                     std::copy(iter, iter + count, std::back_inserter(out));
-                    // Iterate down the data by how many unique chars we found
                     iter += count;
                 });
             }
         }
+
         out.shrink_to_fit();
         return out;
     }
 
-    static data_container decode(const data_container &data) {
+    static data_container decode(const data_container &compressed_input) {
         data_container out;
-        out.reserve(data.size());
-        for (auto iter = data.cbegin(); iter != data.cend();) {
+        // Over-estimate potential size
+        out.reserve(compressed_input.size() * 4);
+
+        for (auto iter = compressed_input.cbegin(); iter != compressed_input.cend();) {
+
             bool repeat = (*iter & REPETITION_BIT) > 0;
+
             auto count = *iter & COUNTER_BITS;
+
             if (repeat) {
                 for (auto i = 0; i < count;) {
                     out.emplace_back(*iter);
@@ -97,7 +103,9 @@ struct rle_system {
                     out.emplace_back(*++iter);
                 }
             }
+
         }
+
         out.shrink_to_fit();
         return out;
     }
