@@ -12,8 +12,8 @@ struct rle_system {
     using data_container = std::vector<T>;
     using data_iterator = data_container::const_iterator;
 
-    constexpr static T counterBits = std::numeric_limits<T>::max() / T(2);
-    constexpr static T repetitionBit = ~counterBits;
+    constexpr static T COUNTER_BITS = std::numeric_limits<T>::max() / T(2);
+    constexpr static T REPETITION_BIT = ~COUNTER_BITS;
 
     constexpr static auto count_repetitions(data_iterator iter, data_iterator end) {
         const auto first = iter;
@@ -40,7 +40,7 @@ struct rle_system {
         do {
             // Our count is the smallest of these two. This is only okay because we always know 
             // our count can never be negative. At worst, it'll be 0 or 1.
-            auto count = std::min(static_cast<unsigned int>(num), static_cast<unsigned int>(counterBits));
+            auto count = std::min(static_cast<unsigned int>(num), static_cast<unsigned int>(COUNTER_BITS));
             t(count);
             num -= count;
         } while (num > 0);
@@ -56,7 +56,7 @@ struct rle_system {
             if (num > 1) {
                 split(num, [&](T count) {
                     // Repetition bit plus the count
-                    out.emplace_back(repetitionBit | count);
+                    out.emplace_back(REPETITION_BIT | count);
                     // Insert the value that's being repeated
                     out.emplace_back(*iter);
                 });
@@ -67,10 +67,8 @@ struct rle_system {
                 // Count amount of non-repeated characters in a row/run (unique chars)
                 auto num = count_uniques(iter, data.cend());
                 split(num, [&](T count) {
-                    // No repeition bit, just counter
+                    // No repetition bit, just counter
                     out.emplace_back(count);
-                    // Instead of having to loop over the iter, we can
-                    // just copy values from one vector to another.
                     std::copy(iter, iter + count, std::back_inserter(out));
                     // Iterate down the data by how many unique chars we found
                     iter += count;
@@ -82,11 +80,11 @@ struct rle_system {
     }
 
     static data_container decode(const data_container &data) {
-        data_container out; // No good way to reserve - can't guess 
-        // size of decompressed data very easily.
+        data_container out;
+        out.reserve(data.size());
         for (auto iter = data.cbegin(); iter != data.cend();) {
-            bool repeat = (*iter & repetitionBit) > 0;
-            auto count = *iter & counterBits;
+            bool repeat = (*iter & REPETITION_BIT) > 0;
+            auto count = *iter & COUNTER_BITS;
             if (repeat) {
                 for (auto i = 0; i < count;) {
                     out.emplace_back(*iter);
@@ -100,6 +98,7 @@ struct rle_system {
                 }
             }
         }
+        out.shrink_to_fit();
         return out;
     }
 
