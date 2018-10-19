@@ -9,26 +9,22 @@ struct rle_system {
 
     static_assert(std::is_integral_v<T>, "Type used for run-length encoding must be an integral type!");
 
-    using dataContainer = std::vector<T>;
-    using dataIterator = dataContainer::const_iterator;
+    using data_container = std::vector<T>;
+    using data_iterator = data_container::const_iterator;
 
-    // Get the counter bits
     constexpr static T counterBits = std::numeric_limits<T>::max() / T(2);
-    // Get the repetition bits, or the binary inversion of the counterBits
     constexpr static T repetitionBit = ~counterBits;
 
-    constexpr static auto countRepetitions(dataIterator iter, dataIterator end) {
+    constexpr static auto count_repetitions(data_iterator iter, data_iterator end) {
         const auto first = iter;
-        // While our iter isn't at the end and our values are equal, iterate
-        // down iter until we find a new value. Return the distance we iterated 
-        // down iter compared to our starting value "*first"
+
         do ++iter;
         while (iter != end && *iter == *first);
 
         return std::distance(first, iter);
     }
 
-    constexpr static auto countUniques(dataIterator iter, dataIterator end) {
+    constexpr static auto count_uniques(data_iterator iter, data_iterator end) {
         const auto first = iter;
         // Make sure to check the range
         // while not at the end and while the value of iter + 1
@@ -41,7 +37,6 @@ struct rle_system {
     // This divides our N-items into chunks of the maximum size permitted by counter bits
     template<typename T>
     static auto split(std::ptrdiff_t num, T&& t) {
-        // ptrdiff is the standard type of the difference between two iterators
         do {
             // Our count is the smallest of these two. This is only okay because we always know 
             // our count can never be negative. At worst, it'll be 0 or 1.
@@ -51,12 +46,12 @@ struct rle_system {
         } while (num > 0);
     }
 
-    static dataContainer encode(const dataContainer &data) {
-        dataContainer out;
+    static data_container encode(const data_container &data) {
+        data_container out;
         out.reserve(data.size());
         for (auto iter = data.cbegin(); iter != data.cend();) {
             // First attempt at checking for repetitions
-            auto num = countRepetitions(iter, data.cend());
+            auto num = count_repetitions(iter, data.cend());
             // If there's more than one repetition, we have a run
             if (num > 1) {
                 split(num, [&](T count) {
@@ -70,7 +65,7 @@ struct rle_system {
             }
             else {
                 // Count amount of non-repeated characters in a row/run (unique chars)
-                auto num = countUniques(iter, data.cend());
+                auto num = count_uniques(iter, data.cend());
                 split(num, [&](T count) {
                     // No repeition bit, just counter
                     out.emplace_back(count);
@@ -86,8 +81,8 @@ struct rle_system {
         return out;
     }
 
-    static dataContainer decode(const dataContainer &data) {
-        dataContainer out; // No good way to reserve - can't guess 
+    static data_container decode(const data_container &data) {
+        data_container out; // No good way to reserve - can't guess 
         // size of decompressed data very easily.
         for (auto iter = data.cbegin(); iter != data.cend();) {
             bool repeat = (*iter & repetitionBit) > 0;
