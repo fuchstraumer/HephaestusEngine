@@ -32,18 +32,28 @@ set(engine_object_sources
     "${CMAKE_CURRENT_SOURCE_DIR}/src/objects/ChunkMesh.cpp"
 )
 
+set(engine_util_sources
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/CommonUtil.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/delegate.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/Morton.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/multicast_delegate.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/util/rle.hpp"
+)
+
 source_group("common" FILES ${engine_common_headers})
 source_group("ecs" FILES ${engine_ecs_sources})
 source_group("generation" FILES ${engine_generation_sources})
 source_group("objects" FILES ${engine_object_sources})
+source_group("util" FILES ${engine_util_sources})
 
-ADD_LIBRARY(HephaestusEngine STATIC ${engine_common_headers} ${engine_ecs_sources} ${engine_generation_sources} ${engine_object_sources})
+ADD_LIBRARY(HephaestusEngine STATIC ${engine_common_headers} ${engine_ecs_sources} ${engine_generation_sources} ${engine_object_sources}
+    ${engine_util_sources})
 SET_COMPILER_OPTIONS(HephaestusEngine)
 
-TARGET_LINK_LIBRARIES(HephaestusEngine INTERFACE resource_context rendering_context)
+TARGET_LINK_LIBRARIES(HephaestusEngine PUBLIC resource_context rendering_context ${Vulkan_LIBRARY})
 
-TARGET_INCLUDE_DIRECTORIES(HephaestusEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include" 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/diamond_dogs/modules/rendering_context/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/diamond_dogs/modules/resource_context/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/diamond_dogs/third_party/glm/"
+TARGET_INCLUDE_DIRECTORIES(HephaestusEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    ${Vulkan_INCLUDE_DIR}
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/rendering_context/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/resource_context/include"
 )

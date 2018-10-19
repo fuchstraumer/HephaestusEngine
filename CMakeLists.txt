@@ -19,7 +19,20 @@ ENDIF()
 SET_TARGET_PROPERTIES(${NAME} PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED YES)
 ENDFUNCTION()
 
-# exclude_from_all so we don't just have a ton of targets in IDE
-ADD_SUBDIRECTORY(third_party/diamond_dogs EXCLUDE_FROM_ALL)
+FIND_PACKAGE(Vulkan REQUIRED)
+ADD_SUBDIRECTORY(third_party/vulpesrender)
+ADD_SUBDIRECTORY(third_party/rendering_context)
+ADD_SUBDIRECTORY(third_party/resource_context)
+
+SET(VPR_INCLUDE_DIRS_RELATIVE
+    "../vulpesrender/alloc/include"
+    "../vulpesrender/command/include"
+    "../vulpesrender/common"
+    "../vulpesrender/core/include"
+    "../vulpesrender/render/include"
+    "../vulpesrender/resource/include"
+    "../vulpesrender/sync/include"
+)
+
 ADD_SUBDIRECTORY(engine)
 ADD_SUBDIRECTORY(tests)
