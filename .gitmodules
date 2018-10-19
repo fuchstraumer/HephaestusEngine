@@ -1,0 +1,6 @@
+[submodule "third_party/vulpesrender"]
+	path = third_party/vulpesrender
+	url = https://github.com/fuchstraumer/vulpesrender
+[submodule "third_party/json"]
+	path = third_party/json
+	url = https://github.com/nlohmann/json
