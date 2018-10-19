@@ -18,29 +18,31 @@ struct rle_system {
     constexpr static auto count_repetitions(data_iterator iter, data_iterator end) noexcept {
         const auto first = iter;
 
-        do ++iter;
-        while (iter != end && *iter == *first);
+        do {
+            ++iter;
+        } while (iter != end && *iter == *first);
 
         return std::distance(first, iter);
     }
 
     constexpr static auto count_uniques(data_iterator iter, data_iterator end) noexcept {
         const auto first = iter;
-        // Make sure to check the range
-        // while not at the end and while the value of iter + 1
-        // isn't equal to the current value of iter
-        while ((iter + 1) != end && *(iter + 1) != *iter)
+
+        while ((iter + 1) != end && *(iter + 1) != *iter) {
             ++iter;
+        }
+
         return std::distance(first, iter);
     }
 
     // This divides our N-items into chunks of the maximum size permitted by counter bits
     template<typename SplitFn>
     static auto split(std::ptrdiff_t num, SplitFn&& t) {
+        static_assert(std::is_invocable_v<decltype(t), T>, "Second parameter to split() must be an invocable object, e.g a lambda function!");
         do {
             // Our count is the smallest of these two. This is only okay because we always know 
             // our count can never be negative. At worst, it'll be 0 or 1.
-            auto count = std::min(static_cast<unsigned int>(num), static_cast<unsigned int>(COUNTER_BITS));
+            T count = std::min(static_cast<T>(num), COUNTER_BITS);
             t(count);
             num -= count;
         } while (num > 0);
