@@ -56,4 +56,5 @@ TARGET_INCLUDE_DIRECTORIES(HephaestusEngine PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/
     ${Vulkan_INCLUDE_DIR}
     "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/rendering_context/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/resource_context/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/glm"
 )
