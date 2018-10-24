@@ -17,4 +17,13 @@ static constexpr size_t Z_BLOCK_STRIDE = CHUNK_SIZE * CHUNK_SIZE;
 static constexpr size_t X_BLOCK_STRIDE = CHUNK_SIZE;
 static constexpr size_t BLOCKS_PER_CHUNK = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE_Y;
 
+enum class BlockFace : unsigned char {
+    FRONT,
+    RIGHT,
+    TOP,
+    LEFT,
+    BOTTOM,
+    BACK,
+};
+
 #endif // !HEPHAESTUS_ENGINE_CONSTANTS_HPP
