@@ -7,7 +7,7 @@
 template<typename T>
 struct rle_system {
 
-    static_assert(std::is_integral_v<T>, "Type used for run-length encoding must be an integral type!");
+    static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>, "Type used for run-length encoding must be an unsigned int type!");
 
     using data_container = std::vector<T>;
     using data_iterator = data_container::const_iterator;
@@ -48,7 +48,7 @@ struct rle_system {
         } while (num > 0);
     }
 
-    static data_container encode(const data_container &input) {
+    static data_container encode(const data_container& input) {
         data_container out;
         out.reserve(input.size());
 
@@ -82,7 +82,7 @@ struct rle_system {
         return out;
     }
 
-    static data_container decode(const data_container &compressed_input) {
+    static data_container decode(const data_container& compressed_input) {
         data_container out;
         // Over-estimate potential size
         out.reserve(compressed_input.size() * 4);
